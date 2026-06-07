@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FamiliApp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f4f4f5; }
+        .card-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    </style>
+</head>
+<body class="pb-10">
+
+    <!-- LOGIN -->
+    <div id="login-container" class="min-h-screen flex items-center justify-center p-6 bg-white">
+        <div class="text-center w-full max-w-xs">
+            <h1 class="text-4xl font-black mb-8">FamiliApp</h1>
+            <button onclick="loginTest()" class="w-full bg-black text-white py-4 rounded-2xl font-bold mb-4">Ingresar (Modo Prueba)</button>
+            <p class="text-xs text-gray-400">El botón de Google solo funcionará cuando subas esto a GitHub/Web.</p>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <main id="app-container" class="max-w-md mx-auto p-4 hidden">
+        
+        <!-- HEADER -->
+        <header class="flex justify-between items-center mb-6 bg-white p-4 rounded-3xl card-shadow">
+            <div>
+                <h1 id="greeting" class="text-xl font-black">Cargando...</h1>
+                <p id="current-date" class="text-xs text-gray-500 font-bold uppercase tracking-wider">Cargando...</p>
+            </div>
+            <button onclick="location.reload()" class="p-3 bg-gray-100 rounded-full"><i data-lucide="log-out" class="w-5 h-5"></i></button>
+        </header>
+
+        <!-- CLIMA GIGANTE -->
+        <section class="bg-white rounded-3xl p-6 mb-6 card-shadow flex justify-between items-center">
+            <div>
+                <p class="text-xs font-black text-gray-400 uppercase tracking-widest">CLIMA HOY</p>
+                <p id="weather-desc" class="text-2xl font-black">Cargando...</p>
+            </div>
+            <div class="flex gap-6">
+                <div class="text-center"><p class="text-xs text-red-500 font-bold">MÁX</p><p id="temp-max" class="text-2xl font-black">--°</p></div>
+                <div class="text-center"><p class="text-xs text-blue-500 font-bold">MÍN</p><p id="temp-min" class="text-2xl font-black">--°</p></div>
+            </div>
+        </section>
+
+        <!-- AVATARES Y MENUS -->
+        <div class="grid grid-cols-2 gap-4">
+            <!-- PIPE -->
+            <div class="bg-white rounded-[2rem] overflow-hidden card-shadow">
+                <img src="Avatar Pipe_2.png" onerror="this.src='https://placehold.co/400x600/eee/999?text=Falta+Pipe'" class="w-full h-80 object-cover">
+                <div class="p-4">
+                    <p id="ropa-pipe" class="text-xs font-bold text-blue-600 mb-2">Cargando sugerencia...</p>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase">Menú Primaria</p>
+                    <p id="menu-pipe" class="text-sm font-bold mt-1">...</p>
+                </div>
+            </div>
+            <!-- PILI -->
+            <div class="bg-white rounded-[2rem] overflow-hidden card-shadow">
+                <img src="Avatar Pili_2.png" onerror="this.src='https://placehold.co/400x600/eee/999?text=Falta+Pili'" class="w-full h-80 object-cover">
+                <div class="p-4">
+                    <p id="ropa-pili" class="text-xs font-bold text-pink-600 mb-2">Cargando sugerencia...</p>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase">Menú Jardín</p>
+                    <p id="menu-pili" class="text-sm font-bold mt-1">...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        function loginTest() {
+            document.getElementById('login-container').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('hidden');
+            initApp();
+        }
+
+        async function initApp() {
+            // Saludo
+            const now = new Date();
+            document.getElementById('greeting').innerText = now.getHours() < 12 ? "¡Buenos días!" : "¡Buenas tardes!";
+            document.getElementById('current-date').innerText = new Intl.DateTimeFormat('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }).format(now);
+
+            // Clima
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=-34.6370&longitude=-58.5231&current_weather=true&daily=temperature_2m_max,temperature_2m_min&timezone=America/Argentina/Buenos_Aires`);
+            const data = await res.json();
+            const temp = Math.round(data.current_weather.temperature);
+            document.getElementById('weather-desc').innerText = temp < 15 ? "Día frío" : "Día agradable";
+            document.getElementById('temp-max').innerText = Math.round(data.daily.temperature_2m_max[0]) + '°';
+            document.getElementById('temp-min').innerText = Math.round(data.daily.temperature_2m_min[0]) + '°';
+            
+            const ropa = temp < 15 ? "🧣 Agregar abrigo" : "🧥 Uniforme normal";
+            document.getElementById('ropa-pipe').innerText = ropa;
+            document.getElementById('ropa-pili').innerText = ropa;
+            
+            // Simulación de menú (lo podés conectar a Firebase cuando quieras)
+            document.getElementById('menu-pipe').innerText = "Milanesas con puré";
+            document.getElementById('menu-pili').innerText = "Fideos con tuco";
+        }
+    </script>
+</body>
+</html>
