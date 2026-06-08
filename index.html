@@ -30,61 +30,59 @@
     </div>
 
     <!-- APP -->
-    <main id="app-container" class="max-w-md mx-auto p-4 min-h-screen flex flex-col justify-between gap-4 hidden">
-        <header class="flex flex-col gap-2">
-            <div class="flex justify-between items-center px-1">
-                <span class="text-[0.65rem] font-black text-gray-400 tracking-widest uppercase">FamiliApp</span>
-                <button onclick="logout()" class="bg-white text-red-500 p-2 rounded-xl card-shadow"><i data-lucide="log-out" class="w-4 h-4"></i></button>
-            </div>
-            <div class="flex items-center justify-between bg-white px-4 py-3 rounded-[2rem] card-shadow border border-gray-100">
-                <button onclick="changeDate(-1)" class="p-2 text-gray-600"><i data-lucide="chevron-left"></i></button>
-                <div class="text-center cursor-pointer">
-                    <span id="current-date-display" class="text-lg font-black text-gray-800 capitalize">...</span>
-                    <input type="date" id="global-date-selector" onchange="onDateChanged()" class="hidden">
-                </div>
-                <button onclick="changeDate(1)" class="p-2 text-gray-600"><i data-lucide="chevron-right"></i></button>
+    <main id="app-container" class="max-w-md mx-auto p-4 min-h-screen flex flex-col gap-4 hidden">
+        <header class="flex justify-between items-center px-1">
+            <span class="text-[0.65rem] font-black text-gray-400 tracking-widest uppercase">FamiliApp</span>
+            <div class="flex gap-2">
+                <button onclick="toggleAdminPanel()" class="bg-blue-600 text-white p-3 rounded-2xl shadow-lg hover:bg-blue-700">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                </button>
+                <button onclick="logout()" class="bg-white text-red-500 p-3 rounded-2xl card-shadow"><i data-lucide="log-out" class="w-5 h-5"></i></button>
             </div>
         </header>
 
-        <section id="alert-banner" class="hidden"></section>
-
-        <!-- CLIMA -->
-        <section class="bg-white rounded-[2rem] p-4 card-shadow flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div id="weather-icon-container" class="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500"><i data-lucide="sun" class="w-5 h-5"></i></div>
-                <p id="weather-desc" class="text-gray-800 text-md font-black">Cargando...</p>
+        <!-- PANEL ADMIN -->
+        <section id="admin-panel" class="bg-white rounded-[2rem] p-5 card-shadow border border-gray-100 hidden">
+            <h2 class="font-black text-lg mb-4">Administración</h2>
+            <div class="flex gap-2 mb-4 bg-gray-100 p-1 rounded-xl">
+                <button onclick="switchTab('pdf')" class="flex-1 py-2 rounded-lg bg-white text-xs font-bold">PDFs</button>
+                <button onclick="switchTab('evento')" class="flex-1 py-2 rounded-lg text-gray-500 font-bold text-xs">Evento</button>
             </div>
-            <div class="flex gap-3 text-lg font-black"><span class="text-red-500" id="temp-max">--°</span><span class="text-blue-500" id="temp-min">--°</span></div>
+            <form id="form-pdf" onsubmit="submitPdfLinks(event)" class="space-y-3">
+                <input type="url" id="pdf-pipe-input" placeholder="Link PDF Primaria" class="w-full p-2 border rounded-lg text-xs">
+                <input type="url" id="pdf-pili-input" placeholder="Link PDF Jardín" class="w-full p-2 border rounded-lg text-xs">
+                <button type="submit" class="w-full bg-black text-white py-2 rounded-xl font-bold text-sm">Guardar Links</button>
+            </form>
+            <form id="form-evento" onsubmit="submitEvento(event)" class="space-y-3 hidden">
+                <input type="date" id="evento-fecha" required class="w-full p-2 border rounded-lg text-xs">
+                <input type="text" id="evento-titulo" placeholder="Evento" required class="w-full p-2 border rounded-lg text-xs">
+                <button type="submit" class="w-full bg-purple-600 text-white py-2 rounded-xl font-bold text-sm">Crear Evento</button>
+            </form>
+        </section>
+
+        <!-- FECHA Y CLIMA -->
+        <div class="bg-white px-4 py-3 rounded-[2rem] card-shadow flex items-center justify-between">
+            <button onclick="changeDate(-1)" class="p-2"><i data-lucide="chevron-left"></i></button>
+            <span id="current-date-display" class="font-black capitalize">...</span>
+            <button onclick="changeDate(1)" class="p-2"><i data-lucide="chevron-right"></i></button>
+        </div>
+
+        <section class="bg-white rounded-[2rem] p-4 card-shadow flex items-center justify-between">
+            <p id="weather-desc" class="font-black">Cargando...</p>
+            <div class="flex gap-3 font-black"><span class="text-red-500" id="temp-max">--°</span><span class="text-blue-500" id="temp-min">--°</span></div>
         </section>
 
         <!-- AVATARES -->
-        <section class="grid grid-cols-2 gap-3 flex-1 min-h-0">
-            <div class="bg-white rounded-[2rem] overflow-hidden card-shadow flex flex-col">
-                <img id="img-pipe" src="pipe_normal.png" class="w-full h-[30vh] object-cover object-top">
-                <div class="p-3 flex-1 flex flex-col justify-between">
-                    <div>
-                        <h3 class="text-[0.6rem] font-black text-blue-800 uppercase">Primaria</h3>
-                        <div id="menu-pipe" class="text-xs font-bold text-gray-800 mt-1">...</div>
-                    </div>
-                    <div id="specials-pipe" class="mt-2 border-t pt-2 hidden"></div>
-                </div>
+        <section class="grid grid-cols-2 gap-3 flex-1">
+            <div class="bg-white rounded-[2rem] overflow-hidden card-shadow">
+                <img id="img-pipe" src="pipe_normal.png" class="w-full h-64 object-cover object-top">
+                <div class="p-4"><h3 class="font-black text-xs uppercase">Pipe</h3><div id="menu-pipe" class="text-xs mt-1"></div><div id="specials-pipe" class="mt-2 text-[10px] font-bold text-blue-600"></div></div>
             </div>
-            <div class="bg-white rounded-[2rem] overflow-hidden card-shadow flex flex-col">
-                <img id="img-pili" src="pili_normal.png" class="w-full h-[30vh] object-cover object-top">
-                <div class="p-3 flex-1 flex flex-col justify-between">
-                    <div>
-                        <h3 class="text-[0.6rem] font-black text-pink-700 uppercase">Jardín</h3>
-                        <div id="menu-pili" class="text-xs font-bold text-gray-800 mt-1">...</div>
-                    </div>
-                </div>
+            <div class="bg-white rounded-[2rem] overflow-hidden card-shadow">
+                <img id="img-pili" src="pili_normal.png" class="w-full h-64 object-cover object-top">
+                <div class="p-4"><h3 class="font-black text-xs uppercase">Pili</h3><div id="menu-pili" class="text-xs mt-1"></div></div>
             </div>
         </section>
-
-        <footer class="flex-shrink-0">
-            <button onclick="toggleFutureEvents()" class="w-full bg-white font-bold py-3 px-6 rounded-[2rem] card-shadow flex items-center justify-between">
-                Ver Agenda Completa <i data-lucide="chevron-right" class="w-4 h-4"></i>
-            </button>
-        </footer>
     </main>
 
     <script>
@@ -99,34 +97,28 @@
                 document.getElementById('login-container').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
                 initApp();
-            }
+            } else { auth.signOut(); }
         });
 
-        async function loginWithGoogle() { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+        function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
         function logout() { auth.signOut(); location.reload(); }
+        function toggleAdminPanel() { document.getElementById('admin-panel').classList.toggle('hidden'); }
+        function switchTab(t) { document.getElementById('form-pdf').classList.toggle('hidden', t!=='pdf'); document.getElementById('form-evento').classList.toggle('hidden', t!=='evento'); }
 
-        function initApp() {
-            document.getElementById('global-date-selector').value = new Date().toISOString().split('T')[0];
-            onDateChanged();
-            fetchWeather();
+        async function initApp() {
+            document.getElementById('evento-fecha').value = new Date().toISOString().split('T')[0];
+            onDateChanged(); fetchWeather();
             lucide.createIcons();
         }
 
         async function onDateChanged() {
-            const date = document.getElementById('global-date-selector').value;
-            document.getElementById('current-date-display').innerText = new Intl.DateTimeFormat('es-AR', { weekday: 'long', day: 'numeric', month: 'short' }).format(new Date(date + 'T00:00:00'));
-            
-            // Menú
+            const date = new Date().toISOString().split('T')[0];
+            document.getElementById('current-date-display').innerText = new Intl.DateTimeFormat('es-AR', { weekday: 'long', day: 'numeric', month: 'short' }).format(new Date());
             const doc = await db.collection("menus_diarios").doc(date).get();
-            document.getElementById('menu-pipe').innerText = doc.exists ? doc.data().pipe : "Sin menú";
-            document.getElementById('menu-pili').innerText = doc.exists ? doc.data().pili : "Sin menú";
-            
-            // Materias (Lunes=1, Miercoles=3, Viernes=5)
-            const day = new Date(date + 'T00:00:00').getDay();
-            const spec = document.getElementById('specials-pipe');
-            if(day==1) spec.innerHTML = "⚽ Botines Fútbol", spec.classList.remove('hidden');
-            else if(day==3 || day==5) spec.innerHTML = "🎨 Plástica", spec.classList.remove('hidden');
-            else spec.classList.add('hidden');
+            if(doc.exists) {
+                document.getElementById('menu-pipe').innerText = doc.data().pipe;
+                document.getElementById('menu-pili').innerText = doc.data().pili;
+            }
         }
 
         async function fetchWeather() {
@@ -136,17 +128,21 @@
             document.getElementById('weather-desc').innerText = temp + '°C';
             document.getElementById('temp-max').innerText = Math.round(data.daily.temperature_2m_max[0]) + '°';
             document.getElementById('temp-min').innerText = Math.round(data.daily.temperature_2m_min[0]) + '°';
-            
             let s = temp < 12 ? 'mucho_frio' : (temp < 18 ? 'frio' : 'normal');
             document.getElementById('img-pipe').src = `pipe_${s}.png`;
             document.getElementById('img-pili').src = `pili_${s}.png`;
         }
 
-        function changeDate(off) {
-            let d = new Date(document.getElementById('global-date-selector').value + 'T00:00:00');
-            d.setDate(d.getDate() + off);
-            document.getElementById('global-date-selector').value = d.toISOString().split('T')[0];
-            onDateChanged();
+        async function submitPdfLinks(e) {
+            e.preventDefault();
+            await db.collection("configuracion").doc("pdf_menus").set({ pipe: document.getElementById('pdf-pipe-input').value, pili: document.getElementById('pdf-pili-input').value });
+            alert("Guardado!");
+        }
+
+        async function submitEvento(e) {
+            e.preventDefault();
+            await db.collection("eventos").add({ fecha: document.getElementById('evento-fecha').value, titulo: document.getElementById('evento-titulo').value });
+            alert("Evento creado!");
         }
     </script>
 </body>
