@@ -40,7 +40,6 @@
         <header class="flex items-center gap-2 px-1">
             <button onclick="changeDay(-1)" class="text-gray-400 p-2 shrink-0" aria-label="Día anterior"><i data-lucide="chevron-left" class="w-7 h-7"></i></button>
             <div class="flex-1 text-center min-w-0">
-                <p id="date-rel" class="text-[0.6rem] font-black uppercase tracking-widest text-blue-500 h-3"></p>
                 <p id="today-date" class="font-black text-xl leading-tight truncate">—</p>
             </div>
             <button onclick="changeDay(1)" class="text-gray-400 p-2 shrink-0" aria-label="Día siguiente"><i data-lucide="chevron-right" class="w-7 h-7"></i></button>
@@ -66,9 +65,8 @@
                     <img id="img-pipe" src="" alt="Pipe" class="w-full h-72 object-contain img-placeholder">
                 </div>
                 <div class="px-4 pb-4 flex-1">
-                    <div class="bg-amber-50 rounded-2xl px-3 py-2">
-                        <p class="text-[0.6rem] font-black uppercase tracking-wide text-amber-500 flex items-center gap-1"><i data-lucide="utensils" class="w-3 h-3"></i> Comedor</p>
-                        <div id="menu-pipe" class="text-sm font-semibold text-gray-700 leading-snug mt-0.5"></div>
+                    <div class="bg-amber-50 rounded-2xl px-3 py-2.5">
+                        <div id="menu-pipe" class="text-base font-bold text-gray-800 leading-snug"></div>
                     </div>
                     <ul id="specials-pipe" class="text-xs mt-2 space-y-1 font-bold text-gray-700"></ul>
                 </div>
@@ -78,9 +76,8 @@
                     <img id="img-pili" src="" alt="Pili" class="w-full h-72 object-contain img-placeholder">
                 </div>
                 <div class="px-4 pb-4 flex-1">
-                    <div class="bg-pink-50 rounded-2xl px-3 py-2">
-                        <p class="text-[0.6rem] font-black uppercase tracking-wide text-pink-500 flex items-center gap-1"><i data-lucide="utensils" class="w-3 h-3"></i> Comedor</p>
-                        <div id="menu-pili" class="text-sm font-semibold text-gray-700 leading-snug mt-0.5"></div>
+                    <div class="bg-pink-50 rounded-2xl px-3 py-2.5">
+                        <div id="menu-pili" class="text-base font-bold text-gray-800 leading-snug"></div>
                     </div>
                     <ul id="specials-pili" class="text-xs mt-2 space-y-1 font-bold text-gray-700"></ul>
                 </div>
@@ -258,8 +255,6 @@
             // Etiqueta de fecha
             let s = selDate.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
             document.getElementById('today-date').innerText = s.charAt(0).toUpperCase() + s.slice(1);
-            const off = dayOffset(selDate);
-            document.getElementById('date-rel').innerText = off === 0 ? 'Hoy' : off === -1 ? 'Ayer' : off === 1 ? 'Mañana' : '';
             applyWeather(ds);
             loadMenuFor(ds);
             renderSpecials(ds);
