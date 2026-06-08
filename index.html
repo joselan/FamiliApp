@@ -60,7 +60,7 @@
             </div>
 
             <!-- CONFIG (en el medio) -->
-            <button onclick="toggleAdminPanel()" class="bg-blue-600 text-white p-3 rounded-2xl shadow-lg shrink-0 self-center" aria-label="Configuración"><i data-lucide="settings" class="w-5 h-5"></i></button>
+            <button onclick="toggleAdminPanel()" class="bg-blue-600 text-white p-3 rounded-2xl shadow-lg shrink-0 self-center" aria-label="Menú"><i data-lucide="menu" class="w-6 h-6"></i></button>
 
             <!-- TARJETA CLIMA (clickable): actual, ícono, mínima (azul), máxima (rojo) -->
             <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" rel="noopener" class="flex-1 bg-white px-2 py-3 rounded-[2rem] card-shadow flex items-center justify-center min-w-0">
@@ -100,7 +100,7 @@
 
     <!-- PANEL CONFIG -->
     <div id="admin-panel" class="hidden fixed inset-0 z-50 flex items-end justify-center bg-black/40">
-        <div class="bg-white w-full max-w-md rounded-t-[2.5rem] p-6 pb-8 card-shadow max-h-[92vh] overflow-y-auto">
+        <div class="bg-white w-full max-w-md rounded-t-[2.5rem] p-6 pb-8 card-shadow h-[92dvh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-black">Configuración</h2>
                 <button onclick="toggleAdminPanel()" class="text-gray-400 p-1" aria-label="Cerrar"><i data-lucide="x" class="w-6 h-6"></i></button>
@@ -326,8 +326,7 @@
                 now.innerText = '--°';
                 document.getElementById('temp-max').innerText = '--°';
                 document.getElementById('temp-min').innerText = '--°';
-                setLucide('weather-icon', 'cloud-off', 'w-7 h-7');
-                document.getElementById('weather-icon').className = 'text-gray-300';
+                document.getElementById('weather-icon').textContent = '☁️';
                 // Sin datos de clima: solo caemos al uniforme 'normal' si ya intentamos
                 // traer el pronóstico. Así evitamos mostrar la ropa de calor y después
                 // cambiarla al de frío (el parpadeo) en la carga inicial.
@@ -338,24 +337,23 @@
             const info = describeWeather(w.code);
             document.getElementById('temp-max').innerText = Math.round(w.max) + '°';
             document.getElementById('temp-min').innerText = Math.round(w.min) + '°';
-            setLucide('weather-icon', info.icon, 'w-7 h-7');
-            document.getElementById('weather-icon').className = info.color;
+            document.getElementById('weather-icon').textContent = info.emoji;
             // La ropa se decide con la temperatura del día (actual si es hoy, media si no).
             const rep = (isToday && currentTemp != null) ? currentTemp : Math.round(w.mean);
             setAvatars(rep < 12 ? 'mucho_frio' : (rep < 18 ? 'frio' : 'normal'));
         }
-        // Devuelve ícono Lucide, color y texto según el código WMO
+        // Devuelve emoji a color (estilo Google) y texto según el código WMO
         function describeWeather(c) {
-            if (c === 0) return { icon: 'sun', color: 'text-amber-400', txt: 'Despejado' };
-            if (c === 1) return { icon: 'sun', color: 'text-amber-400', txt: 'Algo despejado' };
-            if (c === 2) return { icon: 'cloud-sun', color: 'text-amber-400', txt: 'Parcial nublado' };
-            if (c === 3) return { icon: 'cloud', color: 'text-gray-400', txt: 'Nublado' };
-            if ([45, 48].includes(c)) return { icon: 'cloud-fog', color: 'text-gray-400', txt: 'Niebla' };
-            if ([51, 53, 55, 56, 57].includes(c)) return { icon: 'cloud-drizzle', color: 'text-blue-400', txt: 'Llovizna' };
-            if ([61, 63, 65, 66, 67, 80, 81, 82].includes(c)) return { icon: 'cloud-rain', color: 'text-blue-500', txt: 'Lluvia' };
-            if ([71, 73, 75, 77, 85, 86].includes(c)) return { icon: 'cloud-snow', color: 'text-sky-300', txt: 'Nieve' };
-            if ([95, 96, 99].includes(c)) return { icon: 'cloud-lightning', color: 'text-amber-500', txt: 'Tormenta' };
-            return { icon: 'cloud', color: 'text-gray-400', txt: 'Variable' };
+            if (c === 0) return { emoji: '☀️', txt: 'Despejado' };
+            if (c === 1) return { emoji: '🌤️', txt: 'Algo despejado' };
+            if (c === 2) return { emoji: '⛅', txt: 'Parcial nublado' };
+            if (c === 3) return { emoji: '☁️', txt: 'Nublado' };
+            if ([45, 48].includes(c)) return { emoji: '🌫️', txt: 'Niebla' };
+            if ([51, 53, 55, 56, 57].includes(c)) return { emoji: '🌦️', txt: 'Llovizna' };
+            if ([61, 63, 65, 66, 67, 80, 81, 82].includes(c)) return { emoji: '🌧️', txt: 'Lluvia' };
+            if ([71, 73, 75, 77, 85, 86].includes(c)) return { emoji: '❄️', txt: 'Nieve' };
+            if ([95, 96, 99].includes(c)) return { emoji: '⛈️', txt: 'Tormenta' };
+            return { emoji: '☁️', txt: 'Variable' };
         }
 
         // ---- Materias especiales / horario ----
