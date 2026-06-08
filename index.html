@@ -795,7 +795,8 @@
             });
         }
         // Datos del último flyer leído (para la vista previa con resaltado)
-        let flyerWords = [], flyerURL = null;
+        let flyerWords = [], flyerURL = null, flyerImgEl = null, flyerNatW = 0, flyerNatH = 0;
+        function loadImageEl(src) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
         async function processFlyer(file) {
             if (!file) return;
             const st = document.getElementById('flyer-status');
@@ -805,7 +806,13 @@
                 st.innerText = 'Cargando lector...';
                 await loadScript('https://unpkg.com/tesseract.js@5/dist/tesseract.min.js');
                 st.innerText = 'Leyendo flyer... (puede tardar unos segundos)';
-                const { data } = await Tesseract.recognize(file, 'spa', {
+                // Dibujamos a un canvas a tamaño real: así los recuadros del OCR coinciden con la imagen
+                flyerImgEl = await loadImageEl(flyerURL);
+                flyerNatW = flyerImgEl.naturalWidth || 1; flyerNatH = flyerImgEl.naturalHeight || 1;
+                const cv = document.createElement('canvas');
+                cv.width = flyerNatW; cv.height = flyerNatH;
+                cv.getContext('2d').drawImage(flyerImgEl, 0, 0);
+                const { data } = await Tesseract.recognize(cv, 'spa', {
                     logger: m => { if (m.status === 'recognizing text') st.innerText = `Leyendo... ${Math.round(m.progress * 100)}%`; }
                 });
                 const text = data.text || '';
@@ -866,21 +873,53 @@
             if (el) el.style.boxShadow = color ? `0 0 0 2px ${color} inset` : '';
         }
 
-        // Muestra el flyer y pinta el borde de cada campo con el color de su dato
+        // Dibuja un rectángulo redondeado en un canvas
+        function roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath(); ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+        }
+        // Muestra el flyer haciendo ZOOM a la zona de los datos, con recuadros de color,
+        // y pinta el borde de cada campo del mismo color para validar de un vistazo.
         function renderFlyerPreview(parsed) {
             const wrap = document.getElementById('flyer-preview');
             ['titulo', 'fecha', 'hora', 'lugar'].forEach(k => tintField(k, null));
-            if (!flyerURL) { wrap.classList.add('hidden'); return; }
-            const legend = [];
-            for (const k of ['titulo', 'fecha', 'hora', 'lugar']) {
-                if (!parsed[k]) continue;
+            if (!flyerImgEl) { wrap.classList.add('hidden'); return; }
+            const fields = ['titulo', 'fecha', 'hora', 'lugar'].filter(k => parsed[k]);
+            const items = [];
+            for (const k of fields) {
                 tintField(k, FIELD_COLORS[k]);
-                legend.push(`<span class="inline-flex items-center gap-1"><span style="width:.9em;height:.9em;background:${FIELD_COLORS[k]};border-radius:3px;display:inline-block"></span>${FIELD_LABEL[k]}</span>`);
+                const bb = matchBox(flyerWords, (parsed.spans && parsed.spans[k]) || parsed[k]);
+                if (bb) items.push({ bb, color: FIELD_COLORS[k] });
             }
-            wrap.innerHTML = `
-                <img class="w-full block rounded-2xl border border-gray-200" src="${flyerURL}" alt="flyer">
-                <p class="text-xs text-gray-400 mt-1 mb-1">Compará con el flyer. Cada campo de abajo tiene el color de su dato; revisá y corregí lo que haga falta.</p>
-                <div class="flex flex-wrap gap-3 text-sm font-bold text-gray-600">${legend.join('')}</div>`;
+            const legend = fields.map(k => `<span class="inline-flex items-center gap-1"><span style="width:.9em;height:.9em;background:${FIELD_COLORS[k]};border-radius:3px;display:inline-block"></span>${FIELD_LABEL[k]}</span>`).join('');
+            const W = flyerNatW, H = flyerNatH;
+            // Región a mostrar: si hay datos ubicados, recortamos a su zona (zoom); si no, imagen entera
+            let rx0 = 0, ry0 = 0, rx1 = W, ry1 = H;
+            if (items.length) {
+                rx0 = Math.min(...items.map(o => o.bb.x0)); ry0 = Math.min(...items.map(o => o.bb.y0));
+                rx1 = Math.max(...items.map(o => o.bb.x1)); ry1 = Math.max(...items.map(o => o.bb.y1));
+                const padX = (rx1 - rx0) * 0.10 + W * 0.03, padY = (ry1 - ry0) * 0.14 + H * 0.03;
+                rx0 = Math.max(0, rx0 - padX); ry0 = Math.max(0, ry0 - padY);
+                rx1 = Math.min(W, rx1 + padX); ry1 = Math.min(H, ry1 + padY);
+            }
+            const cw = Math.max(1, rx1 - rx0), ch = Math.max(1, ry1 - ry0);
+            const scale = Math.min(1000, cw) / cw;
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(cw * scale); canvas.height = Math.round(ch * scale);
+            canvas.className = 'w-full block';
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(flyerImgEl, rx0, ry0, cw, ch, 0, 0, canvas.width, canvas.height);
+            items.forEach(o => {
+                const x = (o.bb.x0 - rx0) * scale, y = (o.bb.y0 - ry0) * scale, w = (o.bb.x1 - o.bb.x0) * scale, h = (o.bb.y1 - o.bb.y0) * scale;
+                ctx.lineWidth = Math.max(2, canvas.width * 0.005);
+                ctx.strokeStyle = o.color; ctx.fillStyle = o.color + '33';
+                roundRect(ctx, x, y, w, h, 8); ctx.fill(); ctx.stroke();
+            });
+            wrap.innerHTML = `<div id="flyer-canvas-box" class="rounded-2xl overflow-hidden border border-gray-200"></div>
+                <p class="text-xs text-gray-400 mt-1 mb-1">Zoom a los datos detectados. Cada recuadro y campo tiene su color; revisá y corregí lo que haga falta.</p>
+                <div class="flex flex-wrap gap-3 text-sm font-bold text-gray-600">${legend}</div>`;
+            document.getElementById('flyer-canvas-box').appendChild(canvas);
             wrap.classList.remove('hidden');
         }
 
@@ -1035,10 +1074,15 @@
                 } catch (e) { /* si Google falla, sigue con OpenStreetMap abajo */ }
             }
             try {
-                const q = streetQuery(lugar);
-                const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=ar&limit=10&q=${encodeURIComponent(q)}`;
-                const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                // Buscamos con lo que escribió el usuario completo (incluye la localidad)
+                const base = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=ar&limit=10&q=`;
+                let res = await fetch(base + encodeURIComponent(lugar), { headers: { 'Accept': 'application/json' } });
                 _addrResults = await res.json();
+                // Si no encontró nada con la dirección completa, probamos solo la calle
+                if (!_addrResults.length && streetQuery(lugar) !== lugar) {
+                    res = await fetch(base + encodeURIComponent(streetQuery(lugar)), { headers: { 'Accept': 'application/json' } });
+                    _addrResults = await res.json();
+                }
                 const mapsBtn = `<a href="${mapsLink(lugar)}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-blue-600 font-bold text-sm mt-1">📍 Ver en Google Maps</a>`;
                 if (!_addrResults.length) {
                     box.innerHTML = `<p class="text-sm text-gray-600 mb-2">No la encontré automáticamente. Escribí la dirección a mano en el campo de arriba, o abrila en Google Maps:</p>${mapsBtn}`;
