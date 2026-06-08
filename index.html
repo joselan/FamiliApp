@@ -25,6 +25,12 @@
         /* Ícono del clima al mismo tamaño que los números de temperatura */
         #weather-icon { display: inline-flex; align-items: center; }
         #weather-icon svg { width: 1em !important; height: 1em !important; }
+        /* Letra más grande y legible en el panel de configuración */
+        .panel-text .text-xs   { font-size: 1rem    !important; }
+        .panel-text .text-sm   { font-size: 1.15rem !important; }
+        .panel-text .text-base { font-size: 1.3rem  !important; }
+        .panel-text .text-xl   { font-size: 1.7rem  !important; }
+        .panel-text input, .panel-text select { font-size: 1.15rem !important; }
         /* Texto al doble de tamaño en las zonas de contenido (no en el encabezado ni la config) */
         .big .text-xs   { font-size: 1.5rem  !important; line-height: 1.3  !important; }
         .big .text-sm   { font-size: 1.75rem !important; line-height: 1.3  !important; }
@@ -100,7 +106,7 @@
 
     <!-- PANEL CONFIG -->
     <div id="admin-panel" class="hidden fixed inset-0 z-50 flex items-end justify-center bg-black/40">
-        <div class="bg-white w-full max-w-md rounded-t-[2.5rem] p-6 pb-8 card-shadow h-[92dvh] overflow-y-auto">
+        <div class="bg-white w-full max-w-md rounded-t-[2.5rem] p-6 pb-8 card-shadow max-h-[92dvh] overflow-y-auto panel-text">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-black">Configuración</h2>
                 <button onclick="toggleAdminPanel()" class="text-gray-400 p-1" aria-label="Cerrar"><i data-lucide="x" class="w-6 h-6"></i></button>
