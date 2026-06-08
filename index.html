@@ -14,6 +14,8 @@
         body { font-family: 'Inter', sans-serif; background-color: #f4f4f5; }
         .card-shadow { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02); }
         .hidden { display: none !important; }
+        .img-placeholder { opacity: 0; transition: opacity 0.3s ease-in; }
+        .img-ready { opacity: 1; }
     </style>
 </head>
 <body class="antialiased min-h-screen">
@@ -25,7 +27,6 @@
             <button onclick="loginWithGoogle()" class="w-full bg-black text-white font-bold py-4 px-4 rounded-2xl flex items-center justify-center gap-3">
                 <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6"> Ingresar con Google
             </button>
-            <p id="login-error" class="text-red-500 text-sm mt-4 hidden font-bold"></p>
         </div>
     </div>
 
@@ -33,53 +34,23 @@
     <main id="app-container" class="max-w-md mx-auto p-4 min-h-screen flex flex-col gap-4 hidden">
         <header class="flex justify-between items-center px-1">
             <span class="text-[0.65rem] font-black text-gray-400 tracking-widest uppercase">FamiliApp</span>
-            <div class="flex gap-2">
-                <button onclick="toggleAdminPanel()" class="bg-blue-600 text-white p-3 rounded-2xl shadow-lg hover:bg-blue-700">
-                    <i data-lucide="settings" class="w-5 h-5"></i>
-                </button>
-                <button onclick="logout()" class="bg-white text-red-500 p-3 rounded-2xl card-shadow"><i data-lucide="log-out" class="w-5 h-5"></i></button>
-            </div>
+            <button onclick="toggleAdminPanel()" class="bg-blue-600 text-white p-3 rounded-2xl shadow-lg"><i data-lucide="settings" class="w-5 h-5"></i></button>
         </header>
 
-        <!-- PANEL ADMIN -->
-        <section id="admin-panel" class="bg-white rounded-[2rem] p-5 card-shadow border border-gray-100 hidden">
-            <h2 class="font-black text-lg mb-4">Administración</h2>
-            <div class="flex gap-2 mb-4 bg-gray-100 p-1 rounded-xl">
-                <button onclick="switchTab('pdf')" class="flex-1 py-2 rounded-lg bg-white text-xs font-bold">PDFs</button>
-                <button onclick="switchTab('evento')" class="flex-1 py-2 rounded-lg text-gray-500 font-bold text-xs">Evento</button>
-            </div>
-            <form id="form-pdf" onsubmit="submitPdfLinks(event)" class="space-y-3">
-                <input type="url" id="pdf-pipe-input" placeholder="Link PDF Primaria" class="w-full p-2 border rounded-lg text-xs">
-                <input type="url" id="pdf-pili-input" placeholder="Link PDF Jardín" class="w-full p-2 border rounded-lg text-xs">
-                <button type="submit" class="w-full bg-black text-white py-2 rounded-xl font-bold text-sm">Guardar Links</button>
-            </form>
-            <form id="form-evento" onsubmit="submitEvento(event)" class="space-y-3 hidden">
-                <input type="date" id="evento-fecha" required class="w-full p-2 border rounded-lg text-xs">
-                <input type="text" id="evento-titulo" placeholder="Evento" required class="w-full p-2 border rounded-lg text-xs">
-                <button type="submit" class="w-full bg-purple-600 text-white py-2 rounded-xl font-bold text-sm">Crear Evento</button>
-            </form>
-        </section>
-
-        <!-- FECHA Y CLIMA -->
-        <div class="bg-white px-4 py-3 rounded-[2rem] card-shadow flex items-center justify-between">
-            <button onclick="changeDate(-1)" class="p-2"><i data-lucide="chevron-left"></i></button>
-            <span id="current-date-display" class="font-black capitalize">...</span>
-            <button onclick="changeDate(1)" class="p-2"><i data-lucide="chevron-right"></i></button>
-        </div>
-
-        <section class="bg-white rounded-[2rem] p-4 card-shadow flex items-center justify-between">
+        <!-- CLIMA CLICKABLE -->
+        <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" class="bg-white px-4 py-3 rounded-[2rem] card-shadow flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors">
             <p id="weather-desc" class="font-black">Cargando...</p>
             <div class="flex gap-3 font-black"><span class="text-red-500" id="temp-max">--°</span><span class="text-blue-500" id="temp-min">--°</span></div>
-        </section>
+        </a>
 
-        <!-- AVATARES -->
+        <!-- AVATARES (Con opacidad 0 hasta cargar) -->
         <section class="grid grid-cols-2 gap-3 flex-1">
             <div class="bg-white rounded-[2rem] overflow-hidden card-shadow">
-                <img id="img-pipe" src="pipe_normal.png" class="w-full h-64 object-cover object-top">
-                <div class="p-4"><h3 class="font-black text-xs uppercase">Pipe</h3><div id="menu-pipe" class="text-xs mt-1"></div><div id="specials-pipe" class="mt-2 text-[10px] font-bold text-blue-600"></div></div>
+                <img id="img-pipe" src="" class="w-full h-64 object-cover object-top img-placeholder">
+                <div class="p-4"><h3 class="font-black text-xs uppercase">Pipe</h3><div id="menu-pipe" class="text-xs mt-1"></div></div>
             </div>
             <div class="bg-white rounded-[2rem] overflow-hidden card-shadow">
-                <img id="img-pili" src="pili_normal.png" class="w-full h-64 object-cover object-top">
+                <img id="img-pili" src="" class="w-full h-64 object-cover object-top img-placeholder">
                 <div class="p-4"><h3 class="font-black text-xs uppercase">Pili</h3><div id="menu-pili" class="text-xs mt-1"></div></div>
             </div>
         </section>
@@ -90,35 +61,24 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
-        const ALLOWED = ['florenciabressan@gmail.com', 'joselanglois@gmail.com'];
 
         auth.onAuthStateChanged(user => {
-            if(user && ALLOWED.includes(user.email)) {
+            if(user && ['florenciabressan@gmail.com', 'joselanglois@gmail.com'].includes(user.email)) {
                 document.getElementById('login-container').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
                 initApp();
-            } else { auth.signOut(); }
+            }
         });
 
-        function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
-        function logout() { auth.signOut(); location.reload(); }
-        function toggleAdminPanel() { document.getElementById('admin-panel').classList.toggle('hidden'); }
-        function switchTab(t) { document.getElementById('form-pdf').classList.toggle('hidden', t!=='pdf'); document.getElementById('form-evento').classList.toggle('hidden', t!=='evento'); }
-
         async function initApp() {
-            document.getElementById('evento-fecha').value = new Date().toISOString().split('T')[0];
-            onDateChanged(); fetchWeather();
-            lucide.createIcons();
-        }
-
-        async function onDateChanged() {
+            await fetchWeather();
             const date = new Date().toISOString().split('T')[0];
-            document.getElementById('current-date-display').innerText = new Intl.DateTimeFormat('es-AR', { weekday: 'long', day: 'numeric', month: 'short' }).format(new Date());
             const doc = await db.collection("menus_diarios").doc(date).get();
             if(doc.exists) {
                 document.getElementById('menu-pipe').innerText = doc.data().pipe;
                 document.getElementById('menu-pili').innerText = doc.data().pili;
             }
+            lucide.createIcons();
         }
 
         async function fetchWeather() {
@@ -128,22 +88,21 @@
             document.getElementById('weather-desc').innerText = temp + '°C';
             document.getElementById('temp-max').innerText = Math.round(data.daily.temperature_2m_max[0]) + '°';
             document.getElementById('temp-min').innerText = Math.round(data.daily.temperature_2m_min[0]) + '°';
+            
             let s = temp < 12 ? 'mucho_frio' : (temp < 18 ? 'frio' : 'normal');
-            document.getElementById('img-pipe').src = `pipe_${s}.png`;
-            document.getElementById('img-pili').src = `pili_${s}.png`;
+            
+            // Asignar src y hacer visible solo cuando cargue
+            const pipe = document.getElementById('img-pipe');
+            const pili = document.getElementById('img-pili');
+            
+            pipe.onload = () => pipe.classList.add('img-ready');
+            pili.onload = () => pili.classList.add('img-ready');
+            
+            pipe.src = `pipe_${s}.png`;
+            pili.src = `pili_${s}.png`;
         }
 
-        async function submitPdfLinks(e) {
-            e.preventDefault();
-            await db.collection("configuracion").doc("pdf_menus").set({ pipe: document.getElementById('pdf-pipe-input').value, pili: document.getElementById('pdf-pili-input').value });
-            alert("Guardado!");
-        }
-
-        async function submitEvento(e) {
-            e.preventDefault();
-            await db.collection("eventos").add({ fecha: document.getElementById('evento-fecha').value, titulo: document.getElementById('evento-titulo').value });
-            alert("Evento creado!");
-        }
+        function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
     </script>
 </body>
 </html>
