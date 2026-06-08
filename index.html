@@ -59,7 +59,7 @@
     </div>
 
     <!-- APP -->
-    <main id="app-container" class="w-full mx-auto p-3 min-h-screen flex flex-col gap-3 hidden">
+    <main id="app-container" class="w-full mx-auto p-3 pb-36 min-h-screen flex flex-col gap-3 hidden">
         <!-- FECHA + CONFIG + CLIMA: en el mismo renglón -->
         <header class="flex items-stretch gap-2">
             <!-- TARJETA FECHA (una sola línea grande, con flechas para cambiar de día) -->
@@ -83,20 +83,33 @@
             </a>
         </header>
 
-        <!-- AVATARES -->
+        <!-- AVATARES + COMIDA -->
         <section class="grid grid-cols-2 gap-3 big">
             <div onclick="openKidDetail('pipe')" class="bg-white rounded-[2rem] overflow-hidden card-shadow flex flex-col cursor-pointer active:scale-[0.98] transition-transform">
                 <img id="img-pipe" src="" alt="Pipe" class="w-full aspect-[3/4] object-cover object-top block img-placeholder">
                 <div class="px-3 py-3 flex-1 border-t border-gray-100">
                     <div id="menu-pipe" class="leading-snug"></div>
-                    <ul id="specials-pipe" class="text-base mt-2 space-y-1 font-bold text-gray-700"></ul>
                 </div>
             </div>
             <div onclick="openKidDetail('pili')" class="bg-white rounded-[2rem] overflow-hidden card-shadow flex flex-col cursor-pointer active:scale-[0.98] transition-transform">
                 <img id="img-pili" src="" alt="Pili" class="w-full aspect-[3/4] object-cover object-top block img-placeholder">
                 <div class="px-3 py-3 flex-1 border-t border-gray-100">
                     <div id="menu-pili" class="leading-snug"></div>
-                    <ul id="specials-pili" class="text-base mt-2 space-y-1 font-bold text-gray-700"></ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ACTIVIDADES EXTRACURRICULARES / PARA LLEVAR -->
+        <section class="bg-white rounded-[2rem] card-shadow p-4 big">
+            <h3 class="font-black text-sm uppercase text-gray-400 mb-3">Actividades</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <p class="font-black text-blue-600 mb-1">Pipe</p>
+                    <ul id="specials-pipe" class="space-y-1 font-bold text-gray-700"></ul>
+                </div>
+                <div>
+                    <p class="font-black text-pink-600 mb-1">Pili</p>
+                    <ul id="specials-pili" class="space-y-1 font-bold text-gray-700"></ul>
                 </div>
             </div>
         </section>
@@ -107,6 +120,22 @@
             <ul id="events-list" class="space-y-2 text-base"><li class="text-gray-400 text-sm">Cargando...</li></ul>
         </section>
     </main>
+
+    <!-- ASISTENTE (IA) -->
+    <div id="ai-bar" class="hidden fixed bottom-0 inset-x-0 z-40 p-3">
+        <div id="ai-response" class="hidden max-w-3xl mx-auto mb-2 bg-white rounded-2xl card-shadow border border-gray-100 px-4 py-3 text-base text-gray-700"></div>
+        <div id="ai-menu" class="hidden max-w-3xl mx-auto mb-2 bg-white rounded-2xl card-shadow border border-gray-100 p-2 space-y-1 font-bold text-gray-700">
+            <button onclick="aiAddEvent()" class="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-50 flex items-center gap-2"><i data-lucide="calendar-plus" class="w-5 h-5 text-blue-600"></i> Agregar evento a mano</button>
+            <button onclick="aiPickFile()" class="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-50 flex items-center gap-2"><i data-lucide="paperclip" class="w-5 h-5 text-emerald-600"></i> Subir flyer / archivo</button>
+        </div>
+        <div class="max-w-3xl mx-auto bg-white rounded-[2rem] card-shadow border border-gray-200 flex items-center gap-1.5 px-2 py-2">
+            <button onclick="aiPlus()" aria-label="Más" class="shrink-0 bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center"><i data-lucide="plus" class="w-6 h-6"></i></button>
+            <input id="ai-input" type="text" placeholder="Escribí o pedí algo…" onkeydown="if(event.key==='Enter')aiSend()" class="flex-1 min-w-0 bg-transparent outline-none text-lg px-1">
+            <button onclick="aiMic()" id="ai-mic" aria-label="Hablar" class="shrink-0 text-gray-500 w-10 h-10 rounded-full flex items-center justify-center"><i data-lucide="mic" class="w-6 h-6"></i></button>
+            <button onclick="aiSend()" aria-label="Enviar" class="shrink-0 bg-black text-white w-10 h-10 rounded-full flex items-center justify-center"><i data-lucide="arrow-up" class="w-6 h-6"></i></button>
+        </div>
+    </div>
+    <input id="ai-file" type="file" accept="image/*" class="hidden" onchange="aiUpload(this.files[0])">
 
     <!-- PANEL CONFIG -->
     <div id="admin-panel" class="hidden fixed inset-0 z-50 flex items-start justify-center bg-black/50 px-4 pt-5 pb-4">
@@ -239,6 +268,7 @@
             if (user && ALLOWED.includes(user.email)) {
                 document.getElementById('login-container').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
+                document.getElementById('ai-bar').classList.remove('hidden');
                 if (!appStarted) { appStarted = true; initApp(); }
             } else if (user) {
                 const err = document.getElementById('login-error');
@@ -403,7 +433,8 @@
             for (const kid of ['pipe', 'pili']) {
                 const items = (schedule[kid] && schedule[kid][dia]) || [];
                 document.getElementById('specials-' + kid).innerHTML =
-                    items.map(i => `<li>${escapeHtml(i)}</li>`).join('');
+                    items.length ? items.map(i => `<li>${escapeHtml(i)}</li>`).join('')
+                                 : '<li class="text-gray-300 font-semibold">Sin actividades</li>';
             }
         }
 
@@ -1169,6 +1200,69 @@
         function escapeAttr(s) { return escapeHtml(s).replace(/"/g, '&quot;'); }
 
         function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+
+        // ---- Asistente (IA) ----
+        function aiRespond(msg) {
+            const r = document.getElementById('ai-response');
+            r.innerHTML = msg; r.classList.remove('hidden');
+        }
+        function aiPlus() {
+            const m = document.getElementById('ai-menu');
+            m.classList.toggle('hidden');
+            lucide.createIcons();
+        }
+        function aiAddEvent() {
+            document.getElementById('ai-menu').classList.add('hidden');
+            if (document.getElementById('admin-panel').classList.contains('hidden')) toggleAdminPanel();
+            showTab('eventos'); lucide.createIcons();
+        }
+        function aiPickFile() {
+            document.getElementById('ai-menu').classList.add('hidden');
+            document.getElementById('ai-file').click();
+        }
+        function aiUpload(file) {
+            if (!file) return;
+            if (document.getElementById('admin-panel').classList.contains('hidden')) toggleAdminPanel();
+            showTab('eventos'); lucide.createIcons();
+            processFlyer(file);
+            aiRespond('📎 Subí el archivo y lo estoy leyendo en <b>Eventos</b>. Revisá los datos.');
+        }
+        // Dictado por voz (gratis, del navegador)
+        let _recog = null;
+        function aiMic() {
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SR) { aiRespond('Tu navegador no permite dictado por voz. Probá con Chrome.'); return; }
+            if (_recog) { _recog.stop(); _recog = null; return; }
+            _recog = new SR();
+            _recog.lang = 'es-AR'; _recog.interimResults = false; _recog.maxAlternatives = 1;
+            const mic = document.getElementById('ai-mic');
+            mic.classList.add('text-red-500');
+            _recog.onresult = e => { document.getElementById('ai-input').value = e.results[0][0].transcript; };
+            _recog.onend = () => { mic.classList.remove('text-red-500'); _recog = null; };
+            _recog.onerror = () => { mic.classList.remove('text-red-500'); _recog = null; };
+            _recog.start();
+        }
+        // Por ahora la "IA" entiende pedidos de crear eventos (sin costo). La IA
+        // conversacional se enciende cuando conectemos el servicio (ver chat).
+        function aiSend() {
+            const input = document.getElementById('ai-input');
+            const text = input.value.trim();
+            if (!text) return;
+            const p = parseFlyer(text);
+            if (p.fecha) {
+                if (document.getElementById('admin-panel').classList.contains('hidden')) toggleAdminPanel();
+                showTab('eventos');
+                if (p.titulo) document.getElementById('ev-titulo').value = p.titulo;
+                document.getElementById('ev-fecha').value = p.fecha;
+                if (p.hora) document.getElementById('ev-hora').value = p.hora;
+                if (p.lugar) document.getElementById('ev-lugar').value = p.lugar;
+                lucide.createIcons();
+                aiRespond('📅 Te preparé el evento con lo que entendí. Revisalo y tocá <b>"Agregar evento"</b>.');
+            } else {
+                aiRespond('Puedo crear eventos si me los decís con fecha, por ejemplo:<br><b>"Cumple de Juan el 9 de julio a las 16 en Camacua 2655"</b>.<br>También podés tocar <b>+</b> para subir un flyer. (La IA para charlar de todo se activa al conectar el servicio.)');
+            }
+            input.value = '';
+        }
 
         // Deslizar en la pantalla principal: hacia la derecha = ayer, hacia la izquierda = mañana
         (function () {
