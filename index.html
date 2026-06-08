@@ -25,6 +25,8 @@
         /* Ícono del clima al mismo tamaño que los números de temperatura */
         #weather-icon { display: inline-flex; align-items: center; }
         #weather-icon svg { width: 1em !important; height: 1em !important; }
+        /* Desplegable del autocompletado de Google por encima de la ventana de config */
+        .pac-container { z-index: 100000 !important; }
         /* Letra grande en el panel de configuración (similar al menú principal) */
         .panel-text { font-size: 1.5rem; line-height: 1.3; }            /* botones y texto suelto */
         .panel-text .text-xs   { font-size: 1.25rem !important; }       /* etiquetas FECHA, PIPE... */
@@ -461,6 +463,7 @@
                 buildHorarioForm();
                 loadComedor();
                 loadEventosAdmin();
+                initAddressAutocomplete();
                 lucide.createIcons();
             }
         }
@@ -919,7 +922,54 @@
             return out;
         }
 
-        // ---- Verificar dirección con OpenStreetMap (gratis, sin API key) ----
+        // ---- Google Maps (autocompletado + verificación de direcciones) ----
+        // Pegá tu API key entre las comillas. Mientras esté vacía, se usa el
+        // verificador gratis (OpenStreetMap). Acordate de restringir la key por
+        // dominio (joselan.github.io) en la consola de Google Cloud.
+        const GMAPS_KEY = '';
+        let _gmapsPromise = null;
+        function loadGoogleMaps() {
+            if (!GMAPS_KEY) return Promise.reject('sin key');
+            if (_gmapsPromise) return _gmapsPromise;
+            _gmapsPromise = new Promise((resolve, reject) => {
+                window.__gmapsReady = () => resolve();
+                const s = document.createElement('script');
+                s.src = `https://maps.googleapis.com/maps/api/js?key=${GMAPS_KEY}&libraries=places&language=es&region=AR&callback=__gmapsReady`;
+                s.async = true; s.onerror = () => reject('no cargó');
+                document.head.appendChild(s);
+            });
+            return _gmapsPromise;
+        }
+        // Autocompletado de Google en el campo Lugar (sugiere direcciones y localidades)
+        let _acInit = false;
+        async function initAddressAutocomplete() {
+            if (_acInit || !GMAPS_KEY) return;
+            try {
+                await loadGoogleMaps();
+                const input = document.getElementById('ev-lugar');
+                const ac = new google.maps.places.Autocomplete(input, {
+                    componentRestrictions: { country: 'ar' },
+                    fields: ['formatted_address']
+                });
+                ac.addListener('place_changed', () => {
+                    const p = ac.getPlace();
+                    if (p && p.formatted_address) { input.value = p.formatted_address; input.style.boxShadow = ''; }
+                });
+                _acInit = true;
+            } catch (e) { /* sin key o falló: queda el verificador gratis */ }
+        }
+        // Geocodificación con Google (devuelve opciones de dirección/localidad)
+        function geocodeGoogle(q) {
+            return new Promise((resolve, reject) => {
+                const g = new google.maps.Geocoder();
+                g.geocode({ address: q, componentRestrictions: { country: 'AR' } }, (results, status) => {
+                    if (status === 'OK' && results && results.length) resolve(results);
+                    else resolve([]);
+                });
+            });
+        }
+
+        // ---- Verificar dirección (Google si hay key, si no OpenStreetMap gratis) ----
         function mapsLink(q) { return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`; }
         function streetQuery(s) {
             const m = (s || '').match(/([A-Za-zÁÉÍÓÚÑáéíóúñ.'´]+(?:\s+[A-Za-zÁÉÍÓÚÑáéíóúñ.'´]+){0,2}\s+\d{1,5})\b/);
@@ -943,6 +993,26 @@
             box.classList.remove('hidden');
             if (!lugar) { box.innerHTML = '<p class="text-sm text-gray-500">Escribí o detectá una dirección primero.</p>'; return; }
             box.innerHTML = '<p class="text-sm text-gray-500">Buscando en el mapa…</p>';
+            const mapsBtnFor = q => `<a href="${mapsLink(q)}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-blue-600 font-bold text-sm mt-1">📍 Ver en Google Maps</a>`;
+            // Con Google Maps: más preciso para distinguir localidades
+            if (GMAPS_KEY) {
+                try {
+                    await loadGoogleMaps();
+                    const results = await geocodeGoogle(lugar);
+                    if (results.length) {
+                        _addrResults = results.map(r => ({ display: r.formatted_address }));
+                        const head = results.length > 1
+                            ? '<p class="text-sm font-bold text-gray-600 mb-2">Varias coincidencias. Tocá la correcta:</p>'
+                            : '<p class="text-sm font-bold text-gray-600 mb-2">Dirección encontrada (tocá para usarla):</p>';
+                        box.innerHTML = head + results.map((r, i) =>
+                            `<button type="button" onclick="pickGoogle(${i})" class="w-full text-left bg-gray-100 hover:bg-emerald-50 rounded-2xl px-4 py-3 text-sm font-semibold">${escapeHtml(r.formatted_address)}</button>`
+                        ).join('') + `<p class="text-xs text-gray-400 mt-1">¿Ninguna es la correcta? Editá el campo "Lugar" a mano.</p>${mapsBtnFor(lugar)}`;
+                        return;
+                    }
+                    box.innerHTML = `<p class="text-sm text-gray-600 mb-2">Google no la encontró. Escribila a mano o abrila en Maps:</p>${mapsBtnFor(lugar)}`;
+                    return;
+                } catch (e) { /* si Google falla, sigue con OpenStreetMap abajo */ }
+            }
             try {
                 const q = streetQuery(lugar);
                 const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=ar&limit=10&q=${encodeURIComponent(q)}`;
@@ -969,6 +1039,14 @@
             const r = _addrResults[i];
             if (!r) return;
             document.getElementById('ev-lugar').value = shortAddr(r);
+            document.getElementById('ev-lugar').style.boxShadow = '';
+            document.getElementById('addr-options').innerHTML = '<p class="text-sm font-bold text-emerald-600">✓ Dirección confirmada</p>';
+        }
+        function pickGoogle(i) {
+            const r = _addrResults[i];
+            if (!r) return;
+            document.getElementById('ev-lugar').value = r.display || '';
+            document.getElementById('ev-lugar').style.boxShadow = '';
             document.getElementById('addr-options').innerHTML = '<p class="text-sm font-bold text-emerald-600">✓ Dirección confirmada</p>';
         }
         async function loadEventosAdmin() {
