@@ -26,6 +26,16 @@ service cloud.firestore {
       allow read, write: if esFamilia();
     }
 
+    // Eventos (cumpleaños, actos, etc.) creados a mano o desde flyers.
+    match /eventos/{id} {
+      allow read, write: if esFamilia();
+    }
+
+    // Configuración compartida: horario de materias y links del comedor.
+    match /config/{doc} {
+      allow read, write: if esFamilia();
+    }
+
     // Cualquier otra colección queda denegada por defecto.
     match /{document=**} {
       allow read, write: if false;

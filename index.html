@@ -19,6 +19,7 @@
         .hidden { display: none !important; }
         .img-placeholder { opacity: 0; transition: opacity 0.3s ease-in; }
         .img-ready { opacity: 1; }
+        .tab-active { background: #000; color: #fff; }
     </style>
 </head>
 <body class="antialiased min-h-screen">
@@ -37,8 +38,11 @@
     <!-- APP -->
     <main id="app-container" class="max-w-md mx-auto p-4 min-h-screen flex flex-col gap-4 hidden">
         <header class="flex justify-between items-center px-1">
-            <span class="text-[0.65rem] font-black text-gray-400 tracking-widest uppercase">FamiliApp</span>
-            <button onclick="toggleAdminPanel()" class="bg-blue-600 text-white p-3 rounded-2xl shadow-lg" aria-label="Editar menú"><i data-lucide="settings" class="w-5 h-5"></i></button>
+            <div>
+                <span class="text-[0.65rem] font-black text-gray-400 tracking-widest uppercase">FamiliApp</span>
+                <p id="today-date" class="font-black text-lg leading-tight capitalize">—</p>
+            </div>
+            <button onclick="toggleAdminPanel()" class="bg-blue-600 text-white p-3 rounded-2xl shadow-lg" aria-label="Configuración"><i data-lucide="settings" class="w-5 h-5"></i></button>
         </header>
 
         <!-- CLIMA CLICKABLE -->
@@ -47,49 +51,123 @@
             <div class="flex gap-3 font-black"><span class="text-red-500" id="temp-max">--°</span><span class="text-blue-500" id="temp-min">--°</span></div>
         </a>
 
-        <!-- AVATARES (Con opacidad 0 hasta cargar) -->
-        <section class="grid grid-cols-2 gap-3 flex-1">
-            <div class="bg-white rounded-[2rem] overflow-hidden card-shadow">
-                <img id="img-pipe" src="" alt="Pipe" class="w-full h-64 object-cover object-top img-placeholder">
-                <div class="p-4"><h3 class="font-black text-xs uppercase">Pipe</h3><div id="menu-pipe" class="text-xs mt-1 text-gray-500"></div></div>
+        <!-- AVATARES -->
+        <section class="grid grid-cols-2 gap-3">
+            <div class="bg-white rounded-[2rem] overflow-hidden card-shadow flex flex-col">
+                <img id="img-pipe" src="" alt="Pipe" class="w-full h-56 object-cover object-top img-placeholder">
+                <div class="p-4 flex-1">
+                    <h3 class="font-black text-xs uppercase">Pipe <span class="text-gray-300">· Primaria</span></h3>
+                    <div id="menu-pipe" class="text-xs mt-1 text-gray-500"></div>
+                    <ul id="specials-pipe" class="text-xs mt-2 space-y-1 font-bold"></ul>
+                </div>
             </div>
-            <div class="bg-white rounded-[2rem] overflow-hidden card-shadow">
-                <img id="img-pili" src="" alt="Pili" class="w-full h-64 object-cover object-top img-placeholder">
-                <div class="p-4"><h3 class="font-black text-xs uppercase">Pili</h3><div id="menu-pili" class="text-xs mt-1 text-gray-500"></div></div>
+            <div class="bg-white rounded-[2rem] overflow-hidden card-shadow flex flex-col">
+                <img id="img-pili" src="" alt="Pili" class="w-full h-56 object-cover object-top img-placeholder">
+                <div class="p-4 flex-1">
+                    <h3 class="font-black text-xs uppercase">Pili <span class="text-gray-300">· Jardín</span></h3>
+                    <div id="menu-pili" class="text-xs mt-1 text-gray-500"></div>
+                    <ul id="specials-pili" class="text-xs mt-2 space-y-1 font-bold"></ul>
+                </div>
             </div>
+        </section>
+
+        <!-- EVENTOS -->
+        <section class="bg-white rounded-[2rem] card-shadow p-4">
+            <h3 class="font-black text-xs uppercase text-gray-400 mb-2">Próximos eventos</h3>
+            <ul id="events-list" class="space-y-2 text-sm"><li class="text-gray-400 text-xs">Cargando...</li></ul>
         </section>
     </main>
 
-    <!-- PANEL ADMIN -->
+    <!-- PANEL CONFIG -->
     <div id="admin-panel" class="hidden fixed inset-0 z-50 flex items-end justify-center bg-black/40">
-        <div class="bg-white w-full max-w-md rounded-t-[2.5rem] p-6 pb-8 card-shadow">
-            <div class="flex justify-between items-center mb-5">
-                <h2 class="text-xl font-black">Menú del día</h2>
+        <div class="bg-white w-full max-w-md rounded-t-[2.5rem] p-6 pb-8 card-shadow max-h-[92vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-black">Configuración</h2>
                 <button onclick="toggleAdminPanel()" class="text-gray-400 p-1" aria-label="Cerrar"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
 
-            <label class="block text-xs font-black uppercase text-gray-400 mb-1">Fecha</label>
-            <input id="admin-date" type="date" onchange="loadMenuForDate(this.value)" class="w-full bg-gray-100 rounded-2xl px-4 py-3 font-bold mb-4 outline-none focus:ring-2 focus:ring-blue-500">
+            <!-- TABS -->
+            <div class="grid grid-cols-4 gap-1 bg-gray-100 p-1 rounded-2xl mb-5 text-xs font-bold">
+                <button data-tab="menu"    onclick="showTab('menu')"    class="py-2 rounded-xl tab-active">Menú</button>
+                <button data-tab="comedor" onclick="showTab('comedor')" class="py-2 rounded-xl">Comedor</button>
+                <button data-tab="horario" onclick="showTab('horario')" class="py-2 rounded-xl">Horario</button>
+                <button data-tab="eventos" onclick="showTab('eventos')" class="py-2 rounded-xl">Eventos</button>
+            </div>
 
-            <label class="block text-xs font-black uppercase text-gray-400 mb-1">Pipe</label>
-            <input id="admin-pipe" type="text" placeholder="Qué come Pipe..." class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-4 outline-none focus:ring-2 focus:ring-blue-500">
+            <!-- TAB: MENÚ MANUAL -->
+            <div data-pane="menu">
+                <label class="block text-xs font-black uppercase text-gray-400 mb-1">Fecha</label>
+                <input id="admin-date" type="date" onchange="loadMenuForDate(this.value)" class="w-full bg-gray-100 rounded-2xl px-4 py-3 font-bold mb-4 outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-xs font-black uppercase text-gray-400 mb-1">Pipe</label>
+                <input id="admin-pipe" type="text" placeholder="Qué come Pipe..." class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-4 outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-xs font-black uppercase text-gray-400 mb-1">Pili</label>
+                <input id="admin-pili" type="text" placeholder="Qué come Pili..." class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-5 outline-none focus:ring-2 focus:ring-blue-500">
+                <button onclick="saveMenu()" id="admin-save" class="w-full bg-black text-white font-bold py-4 rounded-2xl">Guardar menú</button>
+                <p id="admin-status" class="text-center text-sm font-bold mt-3 h-5"></p>
+            </div>
 
-            <label class="block text-xs font-black uppercase text-gray-400 mb-1">Pili</label>
-            <input id="admin-pili" type="text" placeholder="Qué come Pili..." class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-5 outline-none focus:ring-2 focus:ring-blue-500">
+            <!-- TAB: COMEDOR (links mensuales) -->
+            <div data-pane="comedor" class="hidden">
+                <p class="text-xs text-gray-500 mb-4">Pegá los PDF que sube el colegio cada mes. Quedan a un toque desde la app.</p>
+                <label class="block text-xs font-black uppercase text-gray-400 mb-1">Mes</label>
+                <input id="comedor-mes" type="month" class="w-full bg-gray-100 rounded-2xl px-4 py-3 font-bold mb-4 outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-xs font-black uppercase text-gray-400 mb-1">Link menú Primaria (Pipe)</label>
+                <input id="comedor-pipe" type="url" placeholder="https://..." class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-4 outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-xs font-black uppercase text-gray-400 mb-1">Link menú Jardín (Pili)</label>
+                <input id="comedor-pili" type="url" placeholder="https://..." class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-5 outline-none focus:ring-2 focus:ring-blue-500">
+                <button onclick="saveComedor()" class="w-full bg-black text-white font-bold py-4 rounded-2xl">Guardar links</button>
+                <p id="comedor-status" class="text-center text-sm font-bold mt-3 h-5"></p>
+            </div>
 
-            <button onclick="saveMenu()" id="admin-save" class="w-full bg-black text-white font-bold py-4 rounded-2xl">Guardar</button>
-            <p id="admin-status" class="text-center text-sm font-bold mt-3 h-5"></p>
+            <!-- TAB: HORARIO -->
+            <div data-pane="horario" class="hidden">
+                <p class="text-xs text-gray-500 mb-4">Qué llevar cada día (botines, carpeta, natación…). Separá los ítems con coma.</p>
+                <div id="horario-form" class="space-y-5"></div>
+                <button onclick="saveHorario()" class="w-full bg-black text-white font-bold py-4 rounded-2xl mt-5">Guardar horario</button>
+                <p id="horario-status" class="text-center text-sm font-bold mt-3 h-5"></p>
+            </div>
+
+            <!-- TAB: EVENTOS -->
+            <div data-pane="eventos" class="hidden">
+                <label class="block text-xs font-black uppercase text-gray-400 mb-1">Título</label>
+                <input id="ev-titulo" type="text" placeholder="Cumple de..." class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-blue-500">
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div><label class="block text-xs font-black uppercase text-gray-400 mb-1">Fecha</label><input id="ev-fecha" type="date" class="w-full bg-gray-100 rounded-2xl px-3 py-3 outline-none focus:ring-2 focus:ring-blue-500"></div>
+                    <div><label class="block text-xs font-black uppercase text-gray-400 mb-1">Hora</label><input id="ev-hora" type="time" class="w-full bg-gray-100 rounded-2xl px-3 py-3 outline-none focus:ring-2 focus:ring-blue-500"></div>
+                </div>
+                <label class="block text-xs font-black uppercase text-gray-400 mb-1">Lugar</label>
+                <input id="ev-lugar" type="text" placeholder="Dónde es..." class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-xs font-black uppercase text-gray-400 mb-1">Para</label>
+                <select id="ev-nino" class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-5 outline-none focus:ring-2 focus:ring-blue-500 font-bold">
+                    <option value="ambos">Los dos</option><option value="pipe">Pipe</option><option value="pili">Pili</option>
+                </select>
+                <button onclick="saveEvento()" class="w-full bg-black text-white font-bold py-4 rounded-2xl">Agregar evento</button>
+                <p id="ev-status" class="text-center text-sm font-bold mt-3 h-5"></p>
+                <div id="ev-admin-list" class="mt-5 space-y-2"></div>
+            </div>
         </div>
     </div>
 
     <script>
         const ALLOWED = ['florenciabressan@gmail.com', 'joselanglois@gmail.com'];
+        const DAYS = ['dom', 'lun', 'mar', 'mie', 'jue', 'vie', 'sab'];
+        const WEEKDAYS = [['lun', 'Lunes'], ['mar', 'Martes'], ['mie', 'Miércoles'], ['jue', 'Jueves'], ['vie', 'Viernes']];
+
+        // Horario por defecto (editable desde Config > Horario).
+        const SCHEDULE_DEFAULTS = {
+            pipe: {
+                lun: ['⚽ Botines — fútbol extra hasta 18:30'],
+                mie: ['📁 Carpeta y cartuchera de plástica'],
+                vie: ['📁 Carpeta y cartuchera de plástica', '🏊 Mochila de natación']
+            },
+            pili: {}
+        };
+        let schedule = JSON.parse(JSON.stringify(SCHEDULE_DEFAULTS));
 
         const firebaseConfig = { apiKey: "AIzaSyDGI5P_DT4dD60MjT2vq_qyEh2rH0J8bY0", authDomain: "familiapp-aa48d.firebaseapp.com", projectId: "familiapp-aa48d", storageBucket: "familiapp-aa48d.firebasestorage.app", messagingSenderId: "898854281124", appId: "1:898854281124:web:9bffe249bb3249deffeb31" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
-
         let appStarted = false;
 
         auth.onAuthStateChanged(user => {
@@ -98,7 +176,6 @@
                 document.getElementById('app-container').classList.remove('hidden');
                 if (!appStarted) { appStarted = true; initApp(); }
             } else if (user) {
-                // Cuenta de Google que no está autorizada.
                 const err = document.getElementById('login-error');
                 err.innerText = 'Esta cuenta no tiene acceso.';
                 err.classList.remove('hidden');
@@ -106,23 +183,33 @@
             }
         });
 
-        function initApp() {
-            loadAvatars();   // independiente del clima: nunca se queda sin avatares
-            fetchWeather();  // si falla, los avatares igual se ven (modo "normal")
+        async function initApp() {
+            renderDate();
+            loadAvatars();
+            fetchWeather();
+            await loadSchedule();
+            renderSpecials();
             loadTodayMenu();
+            loadEvents();
             lucide.createIcons();
+        }
+
+        // ---- Fecha ----
+        function todayStr() { return new Date().toISOString().split('T')[0]; }
+        function renderDate() {
+            const s = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+            document.getElementById('today-date').innerText = s;
         }
 
         // ---- Avatares ----
         function setAvatars(state) {
-            const pipe = document.getElementById('img-pipe');
-            const pili = document.getElementById('img-pili');
+            const pipe = document.getElementById('img-pipe'), pili = document.getElementById('img-pili');
             pipe.onload = () => pipe.classList.add('img-ready');
             pili.onload = () => pili.classList.add('img-ready');
             pipe.src = `pipe_${state}.webp`;
             pili.src = `pili_${state}.webp`;
         }
-        function loadAvatars() { setAvatars('normal'); } // estado por defecto
+        function loadAvatars() { setAvatars('normal'); }
 
         // ---- Clima ----
         async function fetchWeather() {
@@ -134,41 +221,83 @@
                 document.getElementById('weather-desc').innerText = describeWeather(data.current_weather.weathercode) + ' ' + temp + '°';
                 document.getElementById('temp-max').innerText = Math.round(data.daily.temperature_2m_max[0]) + '°';
                 document.getElementById('temp-min').innerText = Math.round(data.daily.temperature_2m_min[0]) + '°';
-
-                const state = temp < 12 ? 'mucho_frio' : (temp < 18 ? 'frio' : 'normal');
-                setAvatars(state);
+                setAvatars(temp < 12 ? 'mucho_frio' : (temp < 18 ? 'frio' : 'normal'));
             } catch (e) {
                 document.getElementById('weather-desc').innerText = 'Clima no disponible';
             }
         }
-
-        function describeWeather(code) {
-            if (code === 0) return '☀️';
-            if ([1, 2, 3].includes(code)) return '⛅';
-            if ([45, 48].includes(code)) return '🌫️';
-            if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return '🌧️';
-            if ([71, 73, 75, 77, 85, 86].includes(code)) return '❄️';
-            if ([95, 96, 99].includes(code)) return '⛈️';
+        function describeWeather(c) {
+            if (c === 0) return '☀️';
+            if ([1, 2, 3].includes(c)) return '⛅';
+            if ([45, 48].includes(c)) return '🌫️';
+            if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(c)) return '🌧️';
+            if ([71, 73, 75, 77, 85, 86].includes(c)) return '❄️';
+            if ([95, 96, 99].includes(c)) return '⛈️';
             return '';
         }
 
-        // ---- Menú ----
-        function todayStr() { return new Date().toISOString().split('T')[0]; }
+        // ---- Materias especiales / horario ----
+        async function loadSchedule() {
+            try {
+                const doc = await db.collection('config').doc('horario').get();
+                if (doc.exists && doc.data()) schedule = Object.assign({ pipe: {}, pili: {} }, doc.data());
+            } catch (e) { /* usa defaults */ }
+        }
+        function renderSpecials() {
+            const today = DAYS[new Date().getDay()];
+            for (const kid of ['pipe', 'pili']) {
+                const items = (schedule[kid] && schedule[kid][today]) || [];
+                document.getElementById('specials-' + kid).innerHTML =
+                    items.map(i => `<li>${escapeHtml(i)}</li>`).join('');
+            }
+        }
 
+        // ---- Menú ----
         async function loadTodayMenu() {
             try {
                 const doc = await db.collection("menus_diarios").doc(todayStr()).get();
-                const pipe = doc.exists ? (doc.data().pipe || '') : '';
-                const pili = doc.exists ? (doc.data().pili || '') : '';
-                document.getElementById('menu-pipe').innerText = pipe || 'Sin menú aún';
-                document.getElementById('menu-pili').innerText = pili || 'Sin menú aún';
+                const d = doc.exists ? doc.data() : {};
+                document.getElementById('menu-pipe').innerText = (d.pipe || '').trim() || 'Sin menú aún';
+                document.getElementById('menu-pili').innerText = (d.pili || '').trim() || 'Sin menú aún';
             } catch (e) {
                 document.getElementById('menu-pipe').innerText = '—';
                 document.getElementById('menu-pili').innerText = '—';
             }
         }
 
-        // ---- Panel Admin ----
+        // ---- Eventos ----
+        async function loadEvents() {
+            const list = document.getElementById('events-list');
+            try {
+                const snap = await db.collection('eventos').get();
+                const hoy = todayStr();
+                const evs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                    .filter(e => e.fecha >= hoy)
+                    .sort((a, b) => (a.fecha + (a.hora || '')).localeCompare(b.fecha + (b.hora || '')));
+                if (!evs.length) { list.innerHTML = '<li class="text-gray-400 text-xs">No hay eventos próximos</li>'; return; }
+                list.innerHTML = evs.slice(0, 6).map(e => `
+                    <li class="flex items-center gap-3">
+                        <div class="text-center leading-none w-10 shrink-0">
+                            <div class="text-lg font-black">${new Date(e.fecha + 'T00:00').getDate()}</div>
+                            <div class="text-[0.6rem] uppercase text-gray-400 font-bold">${new Date(e.fecha + 'T00:00').toLocaleDateString('es-AR', { month: 'short' })}</div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-bold truncate">${escapeHtml(e.titulo)}</p>
+                            <p class="text-xs text-gray-400 truncate">${e.hora ? e.hora + ' · ' : ''}${escapeHtml(e.lugar || '')}</p>
+                        </div>
+                        ${kidBadge(e.nino)}
+                    </li>`).join('');
+            } catch (e) {
+                list.innerHTML = '<li class="text-gray-400 text-xs">No se pudieron cargar</li>';
+            }
+        }
+        function kidBadge(n) {
+            const map = { pipe: ['Pipe', 'bg-blue-100 text-blue-700'], pili: ['Pili', 'bg-pink-100 text-pink-700'], ambos: ['Los dos', 'bg-gray-100 text-gray-600'] };
+            const [t, c] = map[n] || map.ambos;
+            return `<span class="text-[0.6rem] font-black px-2 py-1 rounded-full ${c} shrink-0">${t}</span>`;
+        }
+
+        // ---- Panel Config ----
         function toggleAdminPanel() {
             const panel = document.getElementById('admin-panel');
             const opening = panel.classList.contains('hidden');
@@ -177,48 +306,148 @@
                 const d = document.getElementById('admin-date');
                 if (!d.value) d.value = todayStr();
                 loadMenuForDate(d.value);
+                document.getElementById('ev-fecha').value = todayStr();
+                buildHorarioForm();
+                loadComedor();
+                loadEventosAdmin();
                 lucide.createIcons();
             }
         }
+        function showTab(name) {
+            document.querySelectorAll('[data-pane]').forEach(p => p.classList.toggle('hidden', p.dataset.pane !== name));
+            document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('tab-active', b.dataset.tab === name));
+        }
 
+        // Menú manual
         async function loadMenuForDate(date) {
             document.getElementById('admin-status').innerText = '';
             try {
                 const doc = await db.collection("menus_diarios").doc(date).get();
                 document.getElementById('admin-pipe').value = doc.exists ? (doc.data().pipe || '') : '';
                 document.getElementById('admin-pili').value = doc.exists ? (doc.data().pili || '') : '';
-            } catch (e) {
-                document.getElementById('admin-status').innerText = 'No se pudo cargar';
-            }
+            } catch (e) { document.getElementById('admin-status').innerText = 'No se pudo cargar'; }
         }
-
         async function saveMenu() {
             const date = document.getElementById('admin-date').value || todayStr();
-            const btn = document.getElementById('admin-save');
-            const status = document.getElementById('admin-status');
-            btn.disabled = true;
-            status.className = 'text-center text-sm font-bold mt-3 h-5 text-gray-400';
-            status.innerText = 'Guardando...';
+            const btn = document.getElementById('admin-save'), st = document.getElementById('admin-status');
+            btn.disabled = true; setStatus(st, 'Guardando...', 'gray');
             try {
                 await db.collection("menus_diarios").doc(date).set({
                     pipe: document.getElementById('admin-pipe').value.trim(),
                     pili: document.getElementById('admin-pili').value.trim()
                 }, { merge: true });
-                status.className = 'text-center text-sm font-bold mt-3 h-5 text-green-600';
-                status.innerText = '¡Guardado!';
+                setStatus(st, '¡Guardado!', 'green');
                 if (date === todayStr()) loadTodayMenu();
-                setTimeout(() => toggleAdminPanel(), 700);
-            } catch (e) {
-                status.className = 'text-center text-sm font-bold mt-3 h-5 text-red-500';
-                status.innerText = 'Error al guardar';
-            } finally {
-                btn.disabled = false;
-            }
+            } catch (e) { setStatus(st, 'Error al guardar', 'red'); }
+            finally { btn.disabled = false; }
         }
+
+        // Comedor (links)
+        async function loadComedor() {
+            try {
+                const doc = await db.collection('config').doc('comedor').get();
+                const d = doc.exists ? doc.data() : {};
+                document.getElementById('comedor-mes').value = d.mes || new Date().toISOString().slice(0, 7);
+                document.getElementById('comedor-pipe').value = d.linkPipe || '';
+                document.getElementById('comedor-pili').value = d.linkPili || '';
+            } catch (e) { /* noop */ }
+        }
+        async function saveComedor() {
+            const st = document.getElementById('comedor-status');
+            setStatus(st, 'Guardando...', 'gray');
+            try {
+                await db.collection('config').doc('comedor').set({
+                    mes: document.getElementById('comedor-mes').value,
+                    linkPipe: document.getElementById('comedor-pipe').value.trim(),
+                    linkPili: document.getElementById('comedor-pili').value.trim()
+                }, { merge: true });
+                setStatus(st, '¡Guardado!', 'green');
+            } catch (e) { setStatus(st, 'Error al guardar', 'red'); }
+        }
+
+        // Horario
+        function buildHorarioForm() {
+            const form = document.getElementById('horario-form');
+            const kids = [['pipe', 'Pipe'], ['pili', 'Pili']];
+            form.innerHTML = kids.map(([k, label]) => `
+                <div>
+                    <h4 class="font-black text-sm mb-2">${label}</h4>
+                    ${WEEKDAYS.map(([d, dl]) => `
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-xs font-bold text-gray-400 w-16 shrink-0">${dl}</span>
+                            <input data-kid="${k}" data-day="${d}" type="text"
+                                value="${escapeAttr(((schedule[k] && schedule[k][d]) || []).join(', '))}"
+                                class="flex-1 bg-gray-100 rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>`).join('')}
+                </div>`).join('');
+        }
+        async function saveHorario() {
+            const st = document.getElementById('horario-status');
+            const next = { pipe: {}, pili: {} };
+            document.querySelectorAll('#horario-form input[data-kid]').forEach(inp => {
+                const items = inp.value.split(',').map(s => s.trim()).filter(Boolean);
+                if (items.length) next[inp.dataset.kid][inp.dataset.day] = items;
+            });
+            setStatus(st, 'Guardando...', 'gray');
+            try {
+                await db.collection('config').doc('horario').set(next);
+                schedule = next; renderSpecials();
+                setStatus(st, '¡Guardado!', 'green');
+            } catch (e) { setStatus(st, 'Error al guardar', 'red'); }
+        }
+
+        // Eventos (alta/baja a mano)
+        async function saveEvento() {
+            const titulo = document.getElementById('ev-titulo').value.trim();
+            const fecha = document.getElementById('ev-fecha').value;
+            const st = document.getElementById('ev-status');
+            if (!titulo || !fecha) { setStatus(st, 'Poné al menos título y fecha', 'red'); return; }
+            setStatus(st, 'Guardando...', 'gray');
+            try {
+                await db.collection('eventos').add({
+                    titulo, fecha,
+                    hora: document.getElementById('ev-hora').value,
+                    lugar: document.getElementById('ev-lugar').value.trim(),
+                    nino: document.getElementById('ev-nino').value,
+                    createdAt: Date.now()
+                });
+                document.getElementById('ev-titulo').value = '';
+                document.getElementById('ev-lugar').value = '';
+                setStatus(st, '¡Evento agregado!', 'green');
+                loadEvents(); loadEventosAdmin();
+            } catch (e) { setStatus(st, 'Error al guardar', 'red'); }
+        }
+        async function loadEventosAdmin() {
+            const box = document.getElementById('ev-admin-list');
+            try {
+                const snap = await db.collection('eventos').get();
+                const hoy = todayStr();
+                const evs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                    .filter(e => e.fecha >= hoy)
+                    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+                box.innerHTML = evs.length ? evs.map(e => `
+                    <div class="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
+                        <span class="text-xs"><b>${escapeHtml(e.titulo)}</b> · ${e.fecha}${e.hora ? ' ' + e.hora : ''}</span>
+                        <button onclick="deleteEvento('${e.id}')" class="text-red-500" aria-label="Borrar"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>`).join('') : '<p class="text-xs text-gray-400">Sin eventos próximos</p>';
+                lucide.createIcons();
+            } catch (e) { box.innerHTML = ''; }
+        }
+        async function deleteEvento(id) {
+            try { await db.collection('eventos').doc(id).delete(); loadEvents(); loadEventosAdmin(); } catch (e) {}
+        }
+
+        // ---- Helpers ----
+        function setStatus(el, msg, color) {
+            const c = { gray: 'text-gray-400', green: 'text-green-600', red: 'text-red-500' }[color] || '';
+            el.className = 'text-center text-sm font-bold mt-3 h-5 ' + c;
+            el.innerText = msg;
+        }
+        function escapeHtml(s) { const d = document.createElement('div'); d.innerText = s == null ? '' : s; return d.innerHTML; }
+        function escapeAttr(s) { return escapeHtml(s).replace(/"/g, '&quot;'); }
 
         function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
-        // ---- PWA ----
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
         }
