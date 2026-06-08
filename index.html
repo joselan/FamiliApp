@@ -22,6 +22,14 @@
         .img-placeholder { opacity: 0; transition: opacity 0.3s ease-in; }
         .img-ready { opacity: 1; }
         .tab-active { background: #000; color: #fff; }
+        /* Texto al doble de tamaño en las zonas de contenido (no en el encabezado ni la config) */
+        .big .text-xs   { font-size: 1.5rem  !important; line-height: 1.3  !important; }
+        .big .text-sm   { font-size: 1.75rem !important; line-height: 1.3  !important; }
+        .big .text-base { font-size: 2rem    !important; line-height: 1.3  !important; }
+        .big .text-lg   { font-size: 2.25rem !important; line-height: 1.25 !important; }
+        .big .text-xl   { font-size: 2.5rem  !important; line-height: 1.2  !important; }
+        .big .text-2xl  { font-size: 3rem    !important; line-height: 1.15 !important; }
+        .big .text-3xl  { font-size: 3.75rem !important; line-height: 1.1  !important; }
     </style>
 </head>
 <body class="antialiased min-h-screen">
@@ -49,12 +57,12 @@
             </div>
 
             <!-- TARJETA CLIMA (clickable) -->
-            <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" rel="noopener" class="flex-[4] bg-white px-3 py-2 rounded-[2rem] card-shadow flex items-center justify-between gap-1 cursor-pointer hover:bg-gray-50 transition-colors min-w-0">
+            <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" rel="noopener" class="flex-[4] bg-white px-2 py-2 rounded-[2rem] card-shadow flex flex-col items-center justify-center gap-0.5 cursor-pointer hover:bg-gray-50 transition-colors min-w-0">
                 <div class="flex items-center gap-1 min-w-0">
                     <span id="weather-icon" class="text-amber-400 shrink-0"><i data-lucide="loader" class="w-8 h-8"></i></span>
-                    <span id="weather-now" class="font-black text-4xl leading-none truncate">--°</span>
+                    <span id="weather-now" class="font-black text-4xl leading-none">--°</span>
                 </div>
-                <div class="flex flex-col items-end leading-none font-black shrink-0">
+                <div class="flex items-center gap-3 leading-none font-black">
                     <span class="text-xl text-red-500" id="temp-max">--°</span>
                     <span class="text-xl text-sky-400" id="temp-min">--°</span>
                 </div>
@@ -65,7 +73,7 @@
         </header>
 
         <!-- AVATARES -->
-        <section class="grid grid-cols-2 gap-3">
+        <section class="grid grid-cols-2 gap-3 big">
             <div onclick="openKidDetail('pipe')" class="bg-white rounded-[2rem] overflow-hidden card-shadow flex flex-col cursor-pointer active:scale-[0.98] transition-transform">
                 <img id="img-pipe" src="" alt="Pipe" class="w-full aspect-[3/4] object-cover object-top block img-placeholder">
                 <div class="px-3 py-3 flex-1 border-t border-gray-100">
@@ -83,7 +91,7 @@
         </section>
 
         <!-- EVENTOS -->
-        <section class="bg-white rounded-[2rem] card-shadow p-4">
+        <section class="bg-white rounded-[2rem] card-shadow p-4 big">
             <h3 class="font-black text-sm uppercase text-gray-400 mb-2">Próximos eventos</h3>
             <ul id="events-list" class="space-y-2 text-base"><li class="text-gray-400 text-sm">Cargando...</li></ul>
         </section>
@@ -186,7 +194,7 @@
     <div id="detail-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-5" onclick="closeDetail(event)">
         <div class="bg-white rounded-[2rem] card-shadow max-w-sm w-full max-h-[90vh] overflow-y-auto relative">
             <button onclick="closeDetail()" class="absolute top-3 right-3 z-10 bg-white/80 backdrop-blur text-gray-500 p-1.5 rounded-full shadow" aria-label="Cerrar"><i data-lucide="x" class="w-5 h-5"></i></button>
-            <div id="detail-content"></div>
+            <div id="detail-content" class="big"></div>
         </div>
     </div>
 
@@ -316,7 +324,7 @@
                 now.innerText = '--°';
                 document.getElementById('temp-max').innerText = '--°';
                 document.getElementById('temp-min').innerText = '--°';
-                setLucide('weather-icon', 'cloud-off', 'w-10 h-10');
+                setLucide('weather-icon', 'cloud-off', 'w-8 h-8');
                 document.getElementById('weather-icon').className = 'text-gray-300';
                 // Sin datos de clima: solo caemos al uniforme 'normal' si ya intentamos
                 // traer el pronóstico. Así evitamos mostrar la ropa de calor y después
@@ -328,7 +336,7 @@
             const info = describeWeather(w.code);
             document.getElementById('temp-max').innerText = Math.round(w.max) + '°';
             document.getElementById('temp-min').innerText = Math.round(w.min) + '°';
-            setLucide('weather-icon', info.icon, 'w-10 h-10');
+            setLucide('weather-icon', info.icon, 'w-8 h-8');
             document.getElementById('weather-icon').className = info.color;
             // La ropa se decide con la temperatura del día (actual si es hoy, media si no).
             const rep = (isToday && currentTemp != null) ? currentTemp : Math.round(w.mean);
@@ -406,9 +414,9 @@
                 if (!currentEvents.length) { list.innerHTML = '<li class="text-gray-400 text-xs">No hay eventos próximos</li>'; return; }
                 list.innerHTML = currentEvents.slice(0, 6).map(e => `
                     <li onclick="openEventDetail('${e.id}')" class="flex items-center gap-3 cursor-pointer active:opacity-60">
-                        <div class="text-center leading-none w-10 shrink-0">
+                        <div class="text-center leading-none w-14 shrink-0">
                             <div class="text-lg font-black">${new Date(e.fecha + 'T00:00').getDate()}</div>
-                            <div class="text-[0.6rem] uppercase text-gray-400 font-bold">${new Date(e.fecha + 'T00:00').toLocaleDateString('es-AR', { month: 'short' })}</div>
+                            <div class="text-xs uppercase text-gray-400 font-bold">${new Date(e.fecha + 'T00:00').toLocaleDateString('es-AR', { month: 'short' })}</div>
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="font-bold truncate">${escapeHtml(e.titulo)}</p>
@@ -425,7 +433,7 @@
         function kidBadge(n) {
             const map = { pipe: ['Pipe', 'bg-blue-100 text-blue-700'], pili: ['Pili', 'bg-pink-100 text-pink-700'], ambos: ['Los dos', 'bg-gray-100 text-gray-600'] };
             const [t, c] = map[n] || map.ambos;
-            return `<span class="text-[0.6rem] font-black px-2 py-1 rounded-full ${c} shrink-0">${t}</span>`;
+            return `<span class="text-xs font-black px-2 py-1 rounded-full ${c} shrink-0">${t}</span>`;
         }
 
         // ---- Panel Config ----
