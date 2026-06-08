@@ -262,6 +262,27 @@
             await fetchWeather();  // trae el pronóstico/histórico
             renderDay();          // vuelve a pintar ya con el clima
             lucide.createIcons();
+            handleSharedFile();   // si llegó un flyer compartido desde WhatsApp, procesarlo
+        }
+
+        // Si la app se abrió por "Compartir" (WhatsApp, etc.), toma el archivo
+        // guardado por el service worker, abre Eventos y lo procesa con el OCR.
+        async function handleSharedFile() {
+            if (!/[?&]share=1/.test(location.search)) return;
+            history.replaceState(null, '', location.pathname);
+            try {
+                const cache = await caches.open('familiapp-share');
+                const res = await cache.match('shared-file');
+                if (!res) return;
+                const blob = await res.blob();
+                await cache.delete('shared-file');
+                if (!blob || !blob.size) return;
+                const file = new File([blob], 'invitacion.jpg', { type: blob.type || 'image/jpeg' });
+                if (document.getElementById('admin-panel').classList.contains('hidden')) toggleAdminPanel();
+                showTab('eventos');
+                lucide.createIcons();
+                processFlyer(file);
+            } catch (e) { /* ignorar */ }
         }
 
         // ---- Fechas ----

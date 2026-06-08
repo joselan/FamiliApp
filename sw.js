@@ -2,7 +2,10 @@
 // Estrategia: "red primero" para TODO lo del mismo origen, con la caché solo
 // como respaldo offline. Así, estando con internet, siempre se ve la última
 // versión (HTML e imágenes) sin quedar pegado en versiones viejas.
-const CACHE = 'familiapp-v28';
+const CACHE = 'familiapp-v29';
+// Caché aparte (no se borra al actualizar) para el archivo que se comparte
+// desde WhatsApp u otras apps hacia FamiliApp.
+const SHARE_CACHE = 'familiapp-share';
 
 // Lo mínimo para que abra offline. Se cachea al instalar y, además, cada
 // pedido exitoso refresca la caché (ver fetch).
@@ -28,15 +31,33 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+      Promise.all(keys.filter((k) => k !== CACHE && k !== SHARE_CACHE).map((k) => caches.delete(k)))
     )
   );
   self.clients.claim();
 });
 
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
+
+  // Compartir hacia FamiliApp (Web Share Target): llega un POST con el archivo.
+  // Lo guardamos y redirigimos a la app con ?share=1 para que lo procese.
+  if (e.request.method === 'POST' && url.pathname.endsWith('/share-target')) {
+    e.respondWith((async () => {
+      try {
+        const form = await e.request.formData();
+        const file = form.get('file');
+        if (file) {
+          const cache = await caches.open(SHARE_CACHE);
+          await cache.put('shared-file', new Response(file, { headers: { 'content-type': file.type || 'image/jpeg' } }));
+        }
+      } catch (err) { /* ignorar */ }
+      return Response.redirect('./index.html?share=1', 303);
+    })());
+    return;
+  }
+
+  if (e.request.method !== 'GET') return;
 
   // Solo manejamos pedidos del mismo origen (no Firebase, clima ni CDNs).
   if (url.origin !== self.location.origin) return;
