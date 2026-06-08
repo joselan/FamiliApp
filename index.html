@@ -303,8 +303,11 @@
         function applyWeather(ds) {
             const w = weatherByDate[ds];
             const isToday = ds === todayStr();
+            const now = document.getElementById('weather-now');
+            // El número grande de "temperatura actual" solo tiene sentido hoy.
+            now.classList.toggle('hidden', !isToday);
             if (!w) {
-                document.getElementById('weather-now').innerText = '--°';
+                now.innerText = '--°';
                 document.getElementById('temp-max').innerText = '--°';
                 document.getElementById('temp-min').innerText = '--°';
                 setLucide('weather-icon', 'cloud-off', 'w-10 h-10');
@@ -312,13 +315,14 @@
                 setAvatars('normal');
                 return;
             }
-            const rep = (isToday && currentTemp != null) ? currentTemp : Math.round(w.mean);
+            if (isToday) now.innerText = (currentTemp != null ? currentTemp : Math.round(w.mean)) + '°';
             const info = describeWeather(w.code);
-            document.getElementById('weather-now').innerText = rep + '°';
             document.getElementById('temp-max').innerText = Math.round(w.max) + '°';
             document.getElementById('temp-min').innerText = Math.round(w.min) + '°';
             setLucide('weather-icon', info.icon, 'w-10 h-10');
             document.getElementById('weather-icon').className = info.color;
+            // La ropa se decide con la temperatura del día (actual si es hoy, media si no).
+            const rep = (isToday && currentTemp != null) ? currentTemp : Math.round(w.mean);
             setAvatars(rep < 12 ? 'mucho_frio' : (rep < 18 ? 'frio' : 'normal'));
         }
         // Devuelve ícono Lucide, color y texto según el código WMO
