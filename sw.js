@@ -2,7 +2,7 @@
 // Estrategia: "red primero" para TODO lo del mismo origen, con la caché solo
 // como respaldo offline. Así, estando con internet, siempre se ve la última
 // versión (HTML e imágenes) sin quedar pegado en versiones viejas.
-const CACHE = 'familiapp-v22';
+const CACHE = 'familiapp-v23';
 
 // Lo mínimo para que abra offline. Se cachea al instalar y, además, cada
 // pedido exitoso refresca la caché (ver fetch).

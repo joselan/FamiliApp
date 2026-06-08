@@ -105,38 +105,35 @@
     </main>
 
     <!-- PANEL CONFIG -->
-    <div id="admin-panel" class="hidden fixed inset-0 z-50 flex items-end justify-center bg-black/40">
-        <div class="bg-white w-full max-w-md rounded-t-[2.5rem] p-6 pb-8 card-shadow h-[90dvh] flex flex-col panel-text">
-            <div class="flex justify-between items-center mb-4 shrink-0">
+    <div id="admin-panel" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-6 card-shadow max-h-[90dvh] overflow-y-auto panel-text">
+            <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-black">Configuración</h2>
                 <button onclick="toggleAdminPanel()" class="text-gray-400 p-1" aria-label="Cerrar"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
 
             <!-- TABS -->
-            <div class="grid grid-cols-4 gap-1 bg-gray-100 p-1 rounded-2xl mb-5 text-xs font-bold shrink-0">
+            <div class="grid grid-cols-4 gap-1 bg-gray-100 p-1 rounded-2xl mb-5 text-xs font-bold">
                 <button data-tab="menu"    onclick="showTab('menu')"    class="py-2 rounded-xl tab-active">Menú</button>
                 <button data-tab="comedor" onclick="showTab('comedor')" class="py-2 rounded-xl">Comedor</button>
                 <button data-tab="horario" onclick="showTab('horario')" class="py-2 rounded-xl">Horario</button>
                 <button data-tab="eventos" onclick="showTab('eventos')" class="py-2 rounded-xl">Eventos</button>
             </div>
 
-            <!-- Zona de contenido: ocupa el resto del panel y scrollea si hace falta -->
-            <div class="flex-1 min-h-0 overflow-y-auto -mr-3 pr-3">
-
             <!-- TAB: MENÚ MANUAL -->
-            <div data-pane="menu" class="flex flex-col min-h-full">
+            <div data-pane="menu">
                 <label class="block text-xs font-black uppercase text-gray-400 mb-1">Fecha</label>
                 <input id="admin-date" type="date" onchange="loadMenuForDate(this.value)" class="w-full bg-gray-100 rounded-2xl px-4 py-3 font-bold mb-4 outline-none focus:ring-2 focus:ring-blue-500">
                 <label class="block text-xs font-black uppercase text-gray-400 mb-1">Pipe</label>
                 <input id="admin-pipe" type="text" placeholder="Qué come Pipe..." class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-4 outline-none focus:ring-2 focus:ring-blue-500">
                 <label class="block text-xs font-black uppercase text-gray-400 mb-1">Pili</label>
                 <input id="admin-pili" type="text" placeholder="Qué come Pili..." class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-5 outline-none focus:ring-2 focus:ring-blue-500">
-                <button onclick="saveMenu()" id="admin-save" class="w-full bg-black text-white font-bold py-4 rounded-2xl mt-auto">Guardar menú</button>
+                <button onclick="saveMenu()" id="admin-save" class="w-full bg-black text-white font-bold py-4 rounded-2xl mt-2">Guardar menú</button>
                 <p id="admin-status" class="text-center text-sm font-bold mt-3 h-5"></p>
             </div>
 
             <!-- TAB: COMEDOR (PDF mensual del colegio) -->
-            <div data-pane="comedor" class="hidden flex flex-col min-h-full">
+            <div data-pane="comedor" class="hidden">
                 <p class="text-xs text-gray-500 mb-4">Subí el PDF del comedor que sube el colegio cada mes. Se lee acá en el celular y carga el menú de cada día solo.</p>
 
                 <label for="pdf-pipe" class="flex items-center justify-center gap-2 w-full bg-blue-50 text-blue-700 font-bold py-3 rounded-2xl mb-1 cursor-pointer border-2 border-dashed border-blue-200">
@@ -151,7 +148,7 @@
 
                 <p id="comedor-status" class="text-center text-sm font-bold mt-4 h-5"></p>
 
-                <details class="mt-auto pt-4">
+                <details class="mt-4">
                     <summary class="text-xs font-bold text-gray-400 cursor-pointer">Guardar links para abrir los PDF (opcional)</summary>
                     <div class="mt-3">
                         <input id="comedor-pipe" type="url" placeholder="Link PDF Primaria" class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-3 text-sm outline-none focus:ring-2 focus:ring-blue-500">
@@ -162,15 +159,15 @@
             </div>
 
             <!-- TAB: HORARIO -->
-            <div data-pane="horario" class="hidden flex flex-col min-h-full">
+            <div data-pane="horario" class="hidden">
                 <p class="text-xs text-gray-500 mb-4">Qué llevar cada día (botines, carpeta, natación…). Separá los ítems con coma.</p>
                 <div id="horario-form" class="space-y-5"></div>
-                <button onclick="saveHorario()" class="w-full bg-black text-white font-bold py-4 rounded-2xl mt-auto">Guardar horario</button>
+                <button onclick="saveHorario()" class="w-full bg-black text-white font-bold py-4 rounded-2xl mt-5">Guardar horario</button>
                 <p id="horario-status" class="text-center text-sm font-bold mt-3 h-5"></p>
             </div>
 
             <!-- TAB: EVENTOS -->
-            <div data-pane="eventos" class="hidden flex flex-col min-h-full">
+            <div data-pane="eventos" class="hidden">
                 <!-- Subir flyer: OCR en el navegador para autocompletar -->
                 <label for="ev-flyer" class="flex items-center justify-center gap-2 w-full bg-blue-50 text-blue-700 font-bold py-3 rounded-2xl mb-2 cursor-pointer border-2 border-dashed border-blue-200">
                     <i data-lucide="image-up" class="w-5 h-5"></i> Subir flyer / invitación
@@ -197,7 +194,6 @@
                 <p id="ev-status" class="text-center text-sm font-bold mt-3 h-5"></p>
                 <div id="ev-admin-list" class="mt-5 space-y-2"></div>
             </div>
-            </div><!-- /zona de contenido -->
         </div>
     </div>
 
