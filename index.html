@@ -106,17 +106,30 @@
                 <p id="admin-status" class="text-center text-sm font-bold mt-3 h-5"></p>
             </div>
 
-            <!-- TAB: COMEDOR (links mensuales) -->
+            <!-- TAB: COMEDOR (PDF mensual del colegio) -->
             <div data-pane="comedor" class="hidden">
-                <p class="text-xs text-gray-500 mb-4">Pegá los PDF que sube el colegio cada mes. Quedan a un toque desde la app.</p>
-                <label class="block text-xs font-black uppercase text-gray-400 mb-1">Mes</label>
-                <input id="comedor-mes" type="month" class="w-full bg-gray-100 rounded-2xl px-4 py-3 font-bold mb-4 outline-none focus:ring-2 focus:ring-blue-500">
-                <label class="block text-xs font-black uppercase text-gray-400 mb-1">Link menú Primaria (Pipe)</label>
-                <input id="comedor-pipe" type="url" placeholder="https://..." class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-4 outline-none focus:ring-2 focus:ring-blue-500">
-                <label class="block text-xs font-black uppercase text-gray-400 mb-1">Link menú Jardín (Pili)</label>
-                <input id="comedor-pili" type="url" placeholder="https://..." class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-5 outline-none focus:ring-2 focus:ring-blue-500">
-                <button onclick="saveComedor()" class="w-full bg-black text-white font-bold py-4 rounded-2xl">Guardar links</button>
-                <p id="comedor-status" class="text-center text-sm font-bold mt-3 h-5"></p>
+                <p class="text-xs text-gray-500 mb-4">Subí el PDF del comedor que sube el colegio cada mes. Se lee acá en el celular y carga el menú de cada día solo.</p>
+
+                <label for="pdf-pipe" class="flex items-center justify-center gap-2 w-full bg-blue-50 text-blue-700 font-bold py-3 rounded-2xl mb-1 cursor-pointer border-2 border-dashed border-blue-200">
+                    <i data-lucide="file-up" class="w-5 h-5"></i> PDF Primaria (Pipe)
+                </label>
+                <input id="pdf-pipe" type="file" accept="application/pdf" class="hidden" onchange="processComedorPdf(this.files[0], 'pipe')">
+
+                <label for="pdf-pili" class="flex items-center justify-center gap-2 w-full bg-pink-50 text-pink-700 font-bold py-3 rounded-2xl mt-3 mb-1 cursor-pointer border-2 border-dashed border-pink-200">
+                    <i data-lucide="file-up" class="w-5 h-5"></i> PDF Jardín (Pili)
+                </label>
+                <input id="pdf-pili" type="file" accept="application/pdf" class="hidden" onchange="processComedorPdf(this.files[0], 'pili')">
+
+                <p id="comedor-status" class="text-center text-sm font-bold mt-4 h-5"></p>
+
+                <details class="mt-4">
+                    <summary class="text-xs font-bold text-gray-400 cursor-pointer">Guardar links para abrir los PDF (opcional)</summary>
+                    <div class="mt-3">
+                        <input id="comedor-pipe" type="url" placeholder="Link PDF Primaria" class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-3 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        <input id="comedor-pili" type="url" placeholder="Link PDF Jardín" class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-3 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        <button onclick="saveComedor()" class="w-full bg-black text-white font-bold py-3 rounded-2xl text-sm">Guardar links</button>
+                    </div>
+                </details>
             </div>
 
             <!-- TAB: HORARIO -->
@@ -352,12 +365,11 @@
             finally { btn.disabled = false; }
         }
 
-        // Comedor (links)
+        // Comedor: links opcionales
         async function loadComedor() {
             try {
                 const doc = await db.collection('config').doc('comedor').get();
                 const d = doc.exists ? doc.data() : {};
-                document.getElementById('comedor-mes').value = d.mes || new Date().toISOString().slice(0, 7);
                 document.getElementById('comedor-pipe').value = d.linkPipe || '';
                 document.getElementById('comedor-pili').value = d.linkPili || '';
             } catch (e) { /* noop */ }
@@ -367,12 +379,94 @@
             setStatus(st, 'Guardando...', 'gray');
             try {
                 await db.collection('config').doc('comedor').set({
-                    mes: document.getElementById('comedor-mes').value,
                     linkPipe: document.getElementById('comedor-pipe').value.trim(),
                     linkPili: document.getElementById('comedor-pili').value.trim()
                 }, { merge: true });
                 setStatus(st, '¡Guardado!', 'green');
             } catch (e) { setStatus(st, 'Error al guardar', 'red'); }
+        }
+
+        // Comedor: leer el PDF mensual con pdf.js y cargar el menú de cada día
+        const PDFJS_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        async function processComedorPdf(file, kid) {
+            if (!file) return;
+            const st = document.getElementById('comedor-status');
+            const nombre = kid === 'pipe' ? 'Primaria' : 'Jardín';
+            setStatus(st, 'Cargando lector...', 'gray');
+            try {
+                await loadScript(PDFJS_SRC);
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                setStatus(st, 'Leyendo PDF...', 'gray');
+                const buf = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+                const items = [];
+                for (let p = 1; p <= pdf.numPages; p++) {
+                    const page = await pdf.getPage(p);
+                    const tc = await page.getTextContent();
+                    tc.items.forEach(it => {
+                        const s = (it.str || '').replace(/\s+/g, ' ').trim();
+                        if (s) items.push({ s, x: Math.round(it.transform[4]), y: Math.round(it.transform[5]) });
+                    });
+                }
+                const menu = parseMenuGrid(items);
+                const dias = Object.keys(menu);
+                if (!dias.length) { setStatus(st, 'No reconocí la grilla del PDF', 'red'); return; }
+                const batch = db.batch();
+                dias.forEach(date => batch.set(db.collection('menus_diarios').doc(date), { [kid]: menu[date] }, { merge: true }));
+                await batch.commit();
+                setStatus(st, `✓ ${nombre}: cargué ${dias.length} días`, 'green');
+                loadTodayMenu();
+            } catch (e) {
+                setStatus(st, 'No se pudo leer el PDF', 'red');
+            }
+        }
+
+        // Reconstruye la grilla del menú usando las coordenadas (x,y) de cada texto.
+        // Validado contra los PDF reales de Las Nieves (primaria e inicial).
+        function parseMenuGrid(items) {
+            const MES = { ene: 0, feb: 1, mar: 2, abr: 3, may: 4, jun: 5, jul: 6, ago: 7, sep: 8, set: 8, oct: 9, nov: 10, dic: 11 };
+            const dateRe = /^(\d{1,2})-([a-záéíóúñ]{3,4})\.?$/i;
+            const anchors = [];
+            let year = new Date().getFullYear();
+            for (const it of items) {
+                const m = it.s.match(dateRe);
+                if (m) { const ab = m[2].toLowerCase().slice(0, 3); if (ab in MES) anchors.push({ day: +m[1], mo: MES[ab], x: it.x, y: it.y }); }
+                const ym = it.s.match(/\b(20\d{2})\b/); if (ym) year = +ym[1];
+            }
+            if (!anchors.length) return {};
+            const centers = [];
+            anchors.slice().sort((a, b) => a.x - b.x).forEach(a => { if (!centers.some(c => Math.abs(c - a.x) < 40)) centers.push(a.x); });
+            centers.sort((a, b) => a - b);
+            const colOf = x => { let bi = 0, bd = 1e9; centers.forEach((c, i) => { const d = Math.abs(c - x); if (d < bd) { bd = d; bi = i; } }); return bi; };
+            anchors.forEach(a => a.col = colOf(a.x));
+            const rowYs = [];
+            anchors.slice().sort((a, b) => b.y - a.y).forEach(a => { if (!rowYs.some(y => Math.abs(y - a.y) < 15)) rowYs.push(a.y); });
+            rowYs.sort((a, b) => b - a);
+            const diffs = []; for (let i = 1; i < rowYs.length; i++) diffs.push(rowYs[i - 1] - rowYs[i]);
+            diffs.sort((a, b) => a - b);
+            const rowH = diffs.length ? diffs[Math.floor(diffs.length / 2)] : 76;
+            const bandBottom = rowY => { const below = rowYs.filter(y => y < rowY - 1); return below.length ? Math.max(...below) : rowY - rowH; };
+            const markers = items.filter(it => /^opci[oó]n$/i.test(it.s)).map(it => it.y);
+            const footerRe = /^(lic\.|m\.n|m\.p|colegiado|opci[oó]n de salad|postres|\*\*|y variedad|:\s)/i;
+            const out = {};
+            const pad = n => String(n).padStart(2, '0');
+            for (const a of anchors) {
+                const top = a.y, bottom = bandBottom(a.y);
+                const marker = markers.find(y => y < top && y > bottom);
+                const cell = items.filter(it => {
+                    if (it === a) return false;
+                    if (dateRe.test(it.s) || /^opci[oó]n$/i.test(it.s) || footerRe.test(it.s)) return false;
+                    if (it.y >= top || it.y <= bottom) return false;
+                    return colOf(it.x) === a.col;
+                });
+                const main = cell.filter(it => !marker || it.y > marker).sort((p, q) => q.y - p.y || p.x - q.x).map(it => it.s);
+                const opt = cell.filter(it => marker && it.y < marker).sort((p, q) => q.y - p.y || p.x - q.x).map(it => it.s);
+                let txt = main.join(' ').trim();
+                const optTxt = opt.join(' ').trim();
+                if (optTxt) txt += (txt ? ' · ' : '') + 'Opción: ' + optTxt;
+                if (txt) out[`${year}-${pad(a.mo + 1)}-${pad(a.day)}`] = txt;
+            }
+            return out;
         }
 
         // Horario
