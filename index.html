@@ -4,506 +4,150 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FamiliApp</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-    
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] }
-                }
-            }
-        }
-    </script>
     <style>
-        body { background-color: #f4f4f5; color: #2d3748; }
+        body { font-family: 'Inter', sans-serif; background-color: #f4f4f5; }
         .card-shadow { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02); }
         .hidden { display: none !important; }
-        .no-select {
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -user-select: none;
-        }
-        /* Ocultar barra de scroll para un look más limpio */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
     </style>
 </head>
-<body class="antialiased min-h-screen flex flex-col">
+<body class="antialiased min-h-screen">
 
-    <!-- ========================================== -->
-    <!-- PANTALLA DE LOGUEO -->
-    <!-- ========================================== -->
-    <div id="login-container" class="flex flex-col items-center justify-center flex-1 p-5 bg-white h-screen">
+    <!-- LOGIN -->
+    <div id="login-container" class="flex flex-col items-center justify-center min-h-screen p-5 bg-white">
         <div class="bg-white p-8 rounded-[2.5rem] card-shadow border border-gray-100 text-center max-w-sm w-full">
-            <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-600">
-                <i data-lucide="home" class="w-10 h-10"></i>
-            </div>
-            <h1 class="text-3xl font-black mb-2 text-gray-800 tracking-tight">FamiliApp</h1>
-            <p class="text-gray-500 mb-8 font-medium">Panel de Joe y Florencia.</p>
-            
-            <button onclick="loginWithGoogle()" class="w-full bg-white border-2 border-gray-200 text-gray-800 font-bold py-4 px-4 rounded-2xl flex items-center justify-center gap-3 hover:bg-gray-50 transition-all shadow-sm mb-3">
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-6 h-6">
-                Ingresar con Google
+            <h1 class="text-3xl font-black mb-8">FamiliApp</h1>
+            <button onclick="loginWithGoogle()" class="w-full bg-black text-white font-bold py-4 px-4 rounded-2xl flex items-center justify-center gap-3">
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6"> Ingresar con Google
             </button>
-            
-            <button onclick="loginTest()" class="w-full bg-gray-100 text-gray-700 font-bold py-3 px-4 rounded-xl text-xs hover:bg-gray-200 transition-all">
-                Ingresar (Modo Prueba)
-            </button>
-            <p id="login-error" class="text-red-500 text-sm mt-4 hidden font-semibold"></p>
+            <p id="login-error" class="text-red-500 text-sm mt-4 hidden font-bold"></p>
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- APP PRINCIPAL (Pantalla Completa) -->
-    <!-- ========================================== -->
-    <main id="app-container" class="max-w-md mx-auto w-full p-4 h-screen flex flex-col gap-4 hidden">
-        
-        <!-- CABECERA ULTRA MINIMALISTA -->
-        <header class="flex flex-col gap-2 flex-shrink-0">
-            <!-- Menú superior -->
+    <!-- APP -->
+    <main id="app-container" class="max-w-md mx-auto p-4 min-h-screen flex flex-col justify-between gap-4 hidden">
+        <header class="flex flex-col gap-2">
             <div class="flex justify-between items-center px-1">
                 <span class="text-[0.65rem] font-black text-gray-400 tracking-widest uppercase">FamiliApp</span>
-                <div class="flex gap-2">
-                    <button onclick="toggleAdminPanel()" class="bg-white text-gray-500 hover:text-gray-700 p-2 rounded-xl card-shadow border border-gray-100">
-                        <i data-lucide="settings-2" class="w-4 h-4"></i>
-                    </button>
-                    <button onclick="logout()" class="bg-white text-red-400 hover:text-red-600 p-2 rounded-xl card-shadow border border-gray-100">
-                        <i data-lucide="log-out" class="w-4 h-4"></i>
-                    </button>
-                </div>
+                <button onclick="logout()" class="bg-white text-red-500 p-2 rounded-xl card-shadow"><i data-lucide="log-out" class="w-4 h-4"></i></button>
             </div>
-            
-            <!-- Fecha Gigante con Navegación -->
-            <div class="flex items-center justify-between bg-white px-4 py-3 rounded-[2rem] card-shadow border border-gray-100 no-select">
-                <button onclick="changeDate(-1)" class="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors">
-                    <i data-lucide="chevron-left" class="w-6 h-6"></i>
-                </button>
-                <div class="text-center flex flex-col items-center cursor-pointer relative flex-1">
-                    <span id="current-date-display" class="text-lg font-black text-gray-800 tracking-tight leading-tight capitalize">Cargando...</span>
-                    <!-- Selector de fecha nativo oculto pero tocable -->
-                    <input type="date" id="global-date-selector" onchange="onDateChanged()" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer">
+            <div class="flex items-center justify-between bg-white px-4 py-3 rounded-[2rem] card-shadow border border-gray-100">
+                <button onclick="changeDate(-1)" class="p-2 text-gray-600"><i data-lucide="chevron-left"></i></button>
+                <div class="text-center cursor-pointer">
+                    <span id="current-date-display" class="text-lg font-black text-gray-800 capitalize">...</span>
+                    <input type="date" id="global-date-selector" onchange="onDateChanged()" class="hidden">
                 </div>
-                <button onclick="changeDate(1)" class="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors">
-                    <i data-lucide="chevron-right" class="w-6 h-6"></i>
-                </button>
+                <button onclick="changeDate(1)" class="p-2 text-gray-600"><i data-lucide="chevron-right"></i></button>
             </div>
         </header>
 
-        <!-- PANEL DE ADMINISTRACIÓN -->
-        <section id="admin-panel" class="bg-white rounded-[2rem] p-5 card-shadow border border-gray-100 flex-shrink-0 hidden">
-            <h2 class="font-black text-xl mb-4 text-gray-800">Ajustes</h2>
-            
-            <div class="flex gap-2 mb-4 bg-gray-100 p-1 rounded-xl">
-                <button onclick="switchTab('pdf')" id="tab-pdf" class="flex-1 py-1.5 rounded-lg bg-white text-gray-800 font-bold text-xs shadow-sm">PDFs</button>
-                <button onclick="switchTab('evento')" id="tab-evento" class="flex-1 py-1.5 rounded-lg text-gray-500 font-bold text-xs">Evento</button>
-                <button onclick="switchTab('mes')" id="tab-mes" class="flex-1 py-1.5 rounded-lg text-gray-500 font-bold text-xs">Menú Base</button>
+        <section id="alert-banner" class="hidden"></section>
+
+        <!-- CLIMA -->
+        <section class="bg-white rounded-[2rem] p-4 card-shadow flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div id="weather-icon-container" class="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500"><i data-lucide="sun" class="w-5 h-5"></i></div>
+                <p id="weather-desc" class="text-gray-800 text-md font-black">Cargando...</p>
             </div>
-
-            <!-- Form PDFs -->
-            <form id="form-pdf" onsubmit="submitPdfLinks(event)" class="space-y-3">
-                <input type="url" id="pdf-pipe-input" placeholder="Link PDF Primaria (Pipe)" class="w-full p-2 border border-blue-200 rounded-lg bg-blue-50 text-xs font-medium text-blue-800">
-                <input type="url" id="pdf-pili-input" placeholder="Link PDF Jardín (Pili)" class="w-full p-2 border border-pink-200 rounded-lg bg-pink-50 text-xs font-medium text-pink-800">
-                <button type="submit" id="btn-submit-pdf" class="w-full bg-gray-800 text-white py-2.5 rounded-xl font-bold text-sm">Guardar PDFs</button>
-            </form>
-
-            <!-- Form Evento -->
-            <form id="form-evento" onsubmit="submitEvento(event)" class="space-y-3 hidden">
-                <input type="date" id="evento-fecha" required class="w-full p-2 border border-gray-200 rounded-lg text-sm bg-gray-50">
-                <input type="text" id="evento-titulo" placeholder="Ej: Cumpleaños Tomás" required class="w-full p-2 border border-gray-200 rounded-lg text-sm">
-                <input type="file" id="evento-flyer" accept="image/*" onchange="compressAndPreviewFlyer(event)" class="w-full text-xs p-1 border border-gray-200 rounded-lg bg-gray-50">
-                <input type="hidden" id="evento-flyer-data">
-                <div id="flyer-preview-container" class="hidden">
-                    <img id="flyer-preview" src="" class="w-full h-24 object-cover rounded-lg border border-gray-200">
-                    <button type="button" onclick="clearFlyer()" class="text-xs text-red-500 font-bold mt-1">Quitar</button>
-                </div>
-                <button type="submit" id="btn-submit-evento" class="w-full bg-purple-600 text-white py-2.5 rounded-xl font-bold text-sm">Crear Evento</button>
-            </form>
-
-            <!-- Cargar Mes -->
-            <div id="form-mes" class="hidden text-center">
-                <button onclick="cargarMesMagico()" id="btn-magico" class="w-full bg-orange-500 text-white py-3 rounded-xl font-bold text-sm">Cargar Junio 2026</button>
-            </div>
+            <div class="flex gap-3 text-lg font-black"><span class="text-red-500" id="temp-max">--°</span><span class="text-blue-500" id="temp-min">--°</span></div>
         </section>
 
-        <!-- ALERTA GIGANTE (EVENTOS DE HOY) -->
-        <div id="alert-banner" class="hidden transition-all duration-300 flex-shrink-0">
-            <!-- Inyectado por JS -->
-        </div>
-
-        <!-- CLIMA GIGANTE (Liniers) -->
-        <section class="bg-white rounded-[2rem] p-4 card-shadow border border-gray-100 flex items-center justify-between flex-shrink-0">
-            <div class="flex items-center gap-4">
-                <div id="weather-icon-container" class="w-12 h-12 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl flex items-center justify-center text-blue-500 shadow-inner">
-                    <i data-lucide="sun" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <p id="weather-desc" class="text-gray-800 text-base font-black capitalize leading-tight">Cargando...</p>
-                </div>
-            </div>
-            <div class="flex gap-3 items-center bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100">
-                <div class="text-lg font-black text-red-500 flex items-center"><i data-lucide="arrow-up" class="w-3.5 h-3.5"></i><span id="temp-max">--°</span></div>
-                <div class="w-px h-5 bg-gray-200"></div>
-                <div class="text-lg font-black text-blue-500 flex items-center"><i data-lucide="arrow-down" class="w-3.5 h-3.5"></i><span id="temp-min">--°</span></div>
-            </div>
-        </section>
-
-        <!-- FOTOS Y MENÚS (Flex-1 para ocupar espacio restante) -->
+        <!-- AVATARES -->
         <section class="grid grid-cols-2 gap-3 flex-1 min-h-0">
-            
-            <!-- TARJETA PIPE -->
-            <div class="bg-white rounded-[2rem] overflow-hidden card-shadow border border-gray-100 flex flex-col h-full">
-                <!-- Foto Dinámica -->
-                <div class="relative w-full h-[32vh] bg-gray-200 overflow-hidden flex-shrink-0">
-                    <img id="img-pipe" src="pipe_normal.png" onerror="this.onerror=null; this.src='https://placehold.co/400x600/e2e8f0/94a3b8?text=Pipe';" class="absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-300">
-                </div>
-                <!-- Info -->
-                <div class="p-3 bg-gradient-to-b from-white to-blue-50/30 flex-1 flex flex-col justify-between overflow-y-auto">
-                    <div class="flex flex-col gap-2">
-                        <h3 class="text-[0.6rem] font-black text-blue-800 tracking-widest uppercase">Primaria</h3>
-                        <div id="menu-pipe" class="text-[0.65rem] sm:text-xs font-bold text-gray-800 leading-tight">Buscando menú...</div>
-                        <div id="pdf-container-pipe" class="hidden">
-                            <a id="pdf-link-pipe" href="#" target="_blank" class="inline-flex items-center gap-1 text-[9px] text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-lg">
-                                <i data-lucide="file-text" class="w-3 h-3"></i> Menú Mes
-                            </a>
-                        </div>
+            <div class="bg-white rounded-[2rem] overflow-hidden card-shadow flex flex-col">
+                <img id="img-pipe" src="pipe_normal.png" class="w-full h-[30vh] object-cover object-top">
+                <div class="p-3 flex-1 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-[0.6rem] font-black text-blue-800 uppercase">Primaria</h3>
+                        <div id="menu-pipe" class="text-xs font-bold text-gray-800 mt-1">...</div>
                     </div>
-                    <!-- Especiales -->
-                    <div id="specials-pipe" class="mt-2 hidden"></div>
+                    <div id="specials-pipe" class="mt-2 border-t pt-2 hidden"></div>
                 </div>
             </div>
-
-            <!-- TARJETA PILI -->
-            <div class="bg-white rounded-[2rem] overflow-hidden card-shadow border border-gray-100 flex flex-col h-full">
-                <!-- Foto Dinámica -->
-                <div class="relative w-full h-[32vh] bg-gray-200 overflow-hidden flex-shrink-0">
-                    <img id="img-pili" src="pili_normal.png" onerror="this.onerror=null; this.src='https://placehold.co/400x600/e2e8f0/94a3b8?text=Pili';" class="absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-300">
-                </div>
-                <!-- Info -->
-                <div class="p-3 bg-gradient-to-b from-white to-pink-50/30 flex-1 flex flex-col justify-between overflow-y-auto">
-                    <div class="flex flex-col gap-2">
-                        <h3 class="text-[0.6rem] font-black text-pink-700 tracking-widest uppercase">Jardín</h3>
-                        <div id="menu-pili" class="text-[0.65rem] sm:text-xs font-bold text-gray-800 leading-tight">Buscando menú...</div>
-                        <div id="pdf-container-pili" class="hidden">
-                            <a id="pdf-link-pili" href="#" target="_blank" class="inline-flex items-center gap-1 text-[9px] text-pink-600 font-bold bg-pink-50 px-2 py-1 rounded-lg">
-                                <i data-lucide="file-text" class="w-3 h-3"></i> Menú Mes
-                            </a>
-                        </div>
+            <div class="bg-white rounded-[2rem] overflow-hidden card-shadow flex flex-col">
+                <img id="img-pili" src="pili_normal.png" class="w-full h-[30vh] object-cover object-top">
+                <div class="p-3 flex-1 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-[0.6rem] font-black text-pink-700 uppercase">Jardín</h3>
+                        <div id="menu-pili" class="text-xs font-bold text-gray-800 mt-1">...</div>
                     </div>
                 </div>
             </div>
-
         </section>
 
-        <!-- AGENDA FUTURA (Botón en el pie) -->
-        <footer class="flex-shrink-0 pb-2">
-            <button onclick="toggleFutureEventsModal(true)" class="w-full bg-white hover:bg-gray-50 text-gray-700 font-bold py-3.5 px-6 rounded-[2rem] card-shadow border border-gray-100 flex items-center justify-between transition-all">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 bg-purple-50 rounded-xl flex items-center justify-center text-purple-500">
-                        <i data-lucide="calendar-days" class="w-4.5 h-4.5"></i>
-                    </div>
-                    <div class="text-left">
-                        <p class="font-black text-xs text-gray-800">Ver Agenda Completa</p>
-                    </div>
-                </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+        <footer class="flex-shrink-0">
+            <button onclick="toggleFutureEvents()" class="w-full bg-white font-bold py-3 px-6 rounded-[2rem] card-shadow flex items-center justify-between">
+                Ver Agenda Completa <i data-lucide="chevron-right" class="w-4 h-4"></i>
             </button>
         </footer>
     </main>
 
-    <!-- ========================================== -->
-    <!-- MODALES -->
-    <!-- ========================================== -->
-    <div id="future-events-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center transition-opacity duration-300 opacity-0 pointer-events-none p-4">
-        <div class="bg-white w-full max-w-md rounded-[2.5rem] card-shadow max-h-[85vh] flex flex-col overflow-hidden transform translate-y-10 transition-transform duration-300">
-            <div class="p-5 border-b border-gray-100 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="calendar-range" class="w-5 h-5 text-purple-500"></i>
-                    <h3 class="text-lg font-black text-gray-800">Eventos Futuros</h3>
-                </div>
-                <button onclick="toggleFutureEventsModal(false)" class="p-2 bg-gray-50 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <div class="p-5 overflow-y-auto space-y-3 flex-1" id="future-events-list"></div>
-        </div>
-    </div>
-
-    <div id="flyer-zoom-modal" class="fixed inset-0 bg-black/95 z-[60] hidden flex items-center justify-center p-4">
-        <button onclick="closeFlyerZoom()" class="absolute top-5 right-5 p-3 text-white"><i data-lucide="x" class="w-8 h-8"></i></button>
-        <img id="flyer-zoom-img" src="" class="max-w-full max-h-[90vh] object-contain rounded-xl">
-    </div>
-
-    <div id="toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-5 py-2.5 rounded-full font-bold text-xs shadow-xl opacity-0 pointer-events-none transition-opacity z-50"></div>
-
-    <!-- ========================================== -->
-    <!-- JAVASCRIPT -->
-    <!-- ========================================== -->
     <script>
-        let currentSelectedDate = '';
+        const firebaseConfig = { apiKey: "AIzaSyDGI5P_DT4dD60MjT2vq_qyEh2rH0J8bY0", authDomain: "familiapp-aa48d.firebaseapp.com", projectId: "familiapp-aa48d", storageBucket: "familiapp-aa48d.firebasestorage.app", messagingSenderId: "898854281124", appId: "1:898854281124:web:9bffe249bb3249deffeb31" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        const ALLOWED = ['florenciabressan@gmail.com', 'joselanglois@gmail.com'];
 
-        function safeInitIcons() {
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-            else setTimeout(safeInitIcons, 50);
-        }
-
-        function showToast(msg, isError = false) {
-            const toast = document.getElementById('toast');
-            toast.innerText = msg;
-            toast.style.backgroundColor = isError ? '#ef4444' : '#10b981';
-            toast.style.opacity = '1';
-            setTimeout(() => { toast.style.opacity = '0'; }, 3000);
-        }
-
-        // FIREBASE CONFIG
-        const firebaseConfig = {
-            apiKey: "AIzaSyDGI5P_DT4dD60MjT2vq_qyEh2rH0J8bY0",
-            authDomain: "familiapp-aa48d.firebaseapp.com",
-            projectId: "familiapp-aa48d",
-            storageBucket: "familiapp-aa48d.firebasestorage.app",
-            messagingSenderId: "898854281124",
-            appId: "1:898854281124:web:9bffe249bb3249deffeb31"
-        };
-
-        let db, auth;
-        try {
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.firestore();
-            auth = firebase.auth();
-        } catch (e) { console.log("Firebase Init Error"); }
-
-        const ALLOWED_EMAILS = ['florenciabressan@gmail.com', 'joselanglois@gmail.com'];
-
-        auth.onAuthStateChanged((user) => {
-            if (user && ALLOWED_EMAILS.includes(user.email)) {
+        auth.onAuthStateChanged(user => {
+            if(user && ALLOWED.includes(user.email)) {
                 document.getElementById('login-container').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
                 initApp();
-            } else if (user) {
-                auth.signOut();
-                document.getElementById('login-error').innerText = "Acceso denegado.";
-                document.getElementById('login-error').classList.remove('hidden');
-            } else {
-                document.getElementById('login-container').classList.remove('hidden');
-                document.getElementById('app-container').classList.add('hidden');
             }
         });
 
-        async function loginWithGoogle() {
-            try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); } 
-            catch (e) { loginTest(); }
-        }
-
-        function loginTest() {
-            document.getElementById('login-container').classList.add('hidden');
-            document.getElementById('app-container').classList.remove('hidden');
-            initApp();
-        }
-
+        async function loginWithGoogle() { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
         function logout() { auth.signOut(); location.reload(); }
 
-        // --- CLIMA Y ROPA INTELIGENTE ---
-        function updateOutfits(temp) {
-            let suffix = 'normal';
-            if (temp < 12) suffix = 'mucho_frio';
-            else if (temp < 18) suffix = 'frio';
+        function initApp() {
+            document.getElementById('global-date-selector').value = new Date().toISOString().split('T')[0];
+            onDateChanged();
+            fetchWeather();
+            lucide.createIcons();
+        }
+
+        async function onDateChanged() {
+            const date = document.getElementById('global-date-selector').value;
+            document.getElementById('current-date-display').innerText = new Intl.DateTimeFormat('es-AR', { weekday: 'long', day: 'numeric', month: 'short' }).format(new Date(date + 'T00:00:00'));
             
-            document.getElementById('img-pipe').src = `pipe_${suffix}.png`;
-            document.getElementById('img-pili').src = `pili_${suffix}.png`;
+            // Menú
+            const doc = await db.collection("menus_diarios").doc(date).get();
+            document.getElementById('menu-pipe').innerText = doc.exists ? doc.data().pipe : "Sin menú";
+            document.getElementById('menu-pili').innerText = doc.exists ? doc.data().pili : "Sin menú";
+            
+            // Materias (Lunes=1, Miercoles=3, Viernes=5)
+            const day = new Date(date + 'T00:00:00').getDay();
+            const spec = document.getElementById('specials-pipe');
+            if(day==1) spec.innerHTML = "⚽ Botines Fútbol", spec.classList.remove('hidden');
+            else if(day==3 || day==5) spec.innerHTML = "🎨 Plástica", spec.classList.remove('hidden');
+            else spec.classList.add('hidden');
         }
 
         async function fetchWeather() {
-            try {
-                const url = `https://api.open-meteo.com/v1/forecast?latitude=-34.6370&longitude=-58.5231&current_weather=true&daily=temperature_2m_max,temperature_2m_min&timezone=America/Argentina/Buenos_Aires`;
-                const res = await fetch(url);
-                const data = await res.json();
-                
-                const temp = Math.round(data.current_weather.temperature);
-                const max = Math.round(data.daily.temperature_2m_max[0]);
-                const min = Math.round(data.daily.temperature_2m_min[0]);
-                const code = data.current_weather.weathercode;
-                
-                let desc = "Despejado"; let icon = 'sun';
-                if (code >= 1 && code <= 3) { desc = "Nublado"; icon = 'cloud-sun'; }
-                else if (code >= 51 && code <= 65) { desc = "Lluvia"; icon = 'cloud-rain'; }
-                
-                document.getElementById('weather-desc').innerText = `${desc} (${temp}°C)`;
-                document.getElementById('temp-max').innerText = max + '°';
-                document.getElementById('temp-min').innerText = min + '°';
-                document.getElementById('weather-icon-container').innerHTML = `<i data-lucide="${icon}" class="w-6 h-6"></i>`;
-                
-                updateOutfits(temp);
-                safeInitIcons();
-            } catch (e) { updateOutfits(20); }
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=-34.6370&longitude=-58.5231&current_weather=true&daily=temperature_2m_max,temperature_2m_min&timezone=America/Argentina/Buenos_Aires`);
+            const data = await res.json();
+            const temp = Math.round(data.current_weather.temperature);
+            document.getElementById('weather-desc').innerText = temp + '°C';
+            document.getElementById('temp-max').innerText = Math.round(data.daily.temperature_2m_max[0]) + '°';
+            document.getElementById('temp-min').innerText = Math.round(data.daily.temperature_2m_min[0]) + '°';
+            
+            let s = temp < 12 ? 'mucho_frio' : (temp < 18 ? 'frio' : 'normal');
+            document.getElementById('img-pipe').src = `pipe_${s}.png`;
+            document.getElementById('img-pili').src = `pili_${s}.png`;
         }
 
-        // --- MATERIAS DINÁMICAS (PIPE) ---
-        function updateSpecials(dateStr) {
-            const day = new Date(dateStr + 'T00:00:00').getDay();
-            const box = document.getElementById('specials-pipe');
-            let html = '';
-
-            if (day === 1) html = `<div class="bg-blue-50 p-2 rounded-xl border border-blue-100 text-[9px] shadow-sm"><span class="font-black text-blue-600 block mb-0.5">ESPECIAL HOY</span><p class="font-black flex items-center gap-1"><i data-lucide="dumbbell" class="w-3 h-3"></i> ⚽ Botines</p><p class="text-blue-500 font-bold">Fútbol hasta 18:30.</p></div>`;
-            else if (day === 3) html = `<div class="bg-blue-50 p-2 rounded-xl border border-blue-100 text-[9px] shadow-sm"><span class="font-black text-blue-600 block mb-0.5">ESPECIAL HOY</span><p class="font-black flex items-center gap-1"><i data-lucide="palette" class="w-3 h-3"></i> 🎨 Plástica</p><p class="text-blue-500 font-bold">Carpeta y cartuchera.</p></div>`;
-            else if (day === 5) html = `<div class="bg-blue-50 p-2 rounded-xl border border-blue-100 text-[9px] shadow-sm"><span class="font-black text-blue-600 block mb-0.5">ESPECIAL HOY</span><p class="font-black flex items-center gap-1 mb-1"><i data-lucide="palette" class="w-3 h-3"></i> 🎨 Plástica</p><p class="font-black flex items-center gap-1 pt-1 border-t border-blue-100"><i data-lucide="waves" class="w-3 h-3"></i> 🏊 Natación</p></div>`;
-
-            if (html) { box.innerHTML = html; box.classList.remove('hidden'); }
-            else box.classList.add('hidden');
-            safeInitIcons();
-        }
-
-        // --- NAVEGACIÓN DE FECHA ---
-        function getToday() {
-            const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-            return d.toISOString().split('T')[0];
-        }
-
-        function changeDate(offset) {
-            let d = new Date((document.getElementById('global-date-selector').value || getToday()) + 'T00:00:00');
-            d.setDate(d.getDate() + offset);
+        function changeDate(off) {
+            let d = new Date(document.getElementById('global-date-selector').value + 'T00:00:00');
+            d.setDate(d.getDate() + off);
             document.getElementById('global-date-selector').value = d.toISOString().split('T')[0];
             onDateChanged();
         }
-
-        function onDateChanged() {
-            currentSelectedDate = document.getElementById('global-date-selector').value;
-            const dObj = new Date(currentSelectedDate + 'T00:00:00');
-            document.getElementById('current-date-display').innerText = new Intl.DateTimeFormat('es-AR', { weekday: 'long', day: 'numeric', month: 'short' }).format(dObj);
-            document.getElementById('evento-fecha').value = currentSelectedDate;
-            fetchData(); updateSpecials(currentSelectedDate);
-        }
-
-        // --- DATOS PRINCIPALES ---
-        async function fetchData() {
-            if(!db) return;
-            // Menú
-            try {
-                const doc = await db.collection("menus_diarios").doc(currentSelectedDate).get();
-                if (doc.exists) {
-                    document.getElementById('menu-pipe').innerText = doc.data().pipe || "-";
-                    document.getElementById('menu-pili').innerText = doc.data().pili || "-";
-                } else {
-                    document.getElementById('menu-pipe').innerText = "Sin datos";
-                    document.getElementById('menu-pili').innerText = "Sin datos";
-                }
-            } catch (e) { console.log(e); }
-
-            // Alerta Día
-            try {
-                const snap = await db.collection("eventos").where("fecha", "==", currentSelectedDate).get();
-                const banner = document.getElementById('alert-banner');
-                if (!snap.empty) {
-                    let ev = snap.docs[0].data();
-                    banner.innerHTML = `<div class="bg-red-500 text-white p-3 rounded-2xl shadow-lg animate-pulse flex items-center gap-3"><i data-lucide="bell-ring" class="w-6 h-6"></i><div><p class="text-[10px] font-black uppercase">¡Atención Hoy!</p><p class="text-sm font-black">${ev.titulo}</p></div>${ev.flyer ? `<button onclick="zoomFlyer('${ev.flyer}')" class="ml-auto bg-white/20 px-2 py-1 rounded text-xs font-bold">Ver Flyer</button>` : ''}</div>`;
-                    banner.classList.remove('hidden'); safeInitIcons();
-                } else banner.classList.add('hidden');
-            } catch (e) { }
-        }
-
-        // --- FLYER Y EVENTOS ---
-        function compressAndPreviewFlyer(e) {
-            const f = e.target.files[0]; if(!f) return;
-            const r = new FileReader();
-            r.onload = (evt) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let w = img.width, h = img.height;
-                    if(w > 500) { h *= 500/w; w = 500; }
-                    canvas.width = w; canvas.height = h;
-                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    const b64 = canvas.toDataURL('image/jpeg', 0.7);
-                    document.getElementById('evento-flyer-data').value = b64;
-                    document.getElementById('flyer-preview').src = b64;
-                    document.getElementById('flyer-preview-container').classList.remove('hidden');
-                }; img.src = evt.target.result;
-            }; r.readAsDataURL(f);
-        }
-
-        function clearFlyer() { document.getElementById('evento-flyer').value = ''; document.getElementById('evento-flyer-data').value = ''; document.getElementById('flyer-preview-container').classList.add('hidden'); }
-        function zoomFlyer(src) { document.getElementById('flyer-zoom-img').src = src; document.getElementById('flyer-zoom-modal').classList.remove('hidden'); }
-        function closeFlyerZoom() { document.getElementById('flyer-zoom-modal').classList.add('hidden'); }
-
-        async function submitEvento(e) {
-            e.preventDefault();
-            const btn = document.getElementById('btn-submit-evento'); btn.innerText = "...";
-            try {
-                await db.collection("eventos").add({
-                    fecha: document.getElementById('evento-fecha').value,
-                    titulo: document.getElementById('evento-titulo').value,
-                    flyer: document.getElementById('evento-flyer-data').value || null
-                });
-                showToast("Guardado"); e.target.reset(); clearFlyer(); fetchData();
-            } catch(err){} btn.innerText = "Crear Evento";
-        }
-
-        async function renderFutureEventsList() {
-            const lst = document.getElementById('future-events-list');
-            if(!db) return;
-            try {
-                const snap = await db.collection("eventos").where("fecha", ">=", getToday()).orderBy("fecha").get();
-                if(snap.empty) { lst.innerHTML = `<p class="text-center text-sm text-gray-400 py-4 font-bold">No hay eventos próximos.</p>`; return; }
-                let h = '';
-                snap.forEach(d => {
-                    const ev = d.data();
-                    const fDt = new Intl.DateTimeFormat('es-AR', { weekday: 'long', day: 'numeric', month: 'short' }).format(new Date(ev.fecha + 'T00:00:00'));
-                    h += `<div class="p-3 bg-gray-50 border border-gray-100 rounded-xl relative"><button onclick="db.collection('eventos').doc('${d.id}').delete().then(()=>{renderFutureEventsList();fetchData();})" class="absolute top-2 right-2 text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button><p class="text-[10px] font-black text-purple-600 uppercase">${fDt}</p><h4 class="font-black text-gray-800 text-sm">${ev.titulo}</h4>${ev.flyer ? `<img src="${ev.flyer}" onclick="zoomFlyer('${ev.flyer}')" class="w-full h-20 object-cover rounded-lg mt-2 cursor-pointer">` : ''}</div>`;
-                });
-                lst.innerHTML = h; safeInitIcons();
-            } catch(e){}
-        }
-
-        function toggleFutureEventsModal(show) {
-            const m = document.getElementById('future-events-modal');
-            const p = m.querySelector('div');
-            if(show) { m.classList.remove('pointer-events-none','opacity-0'); p.classList.remove('translate-y-10'); renderFutureEventsList(); }
-            else { m.classList.add('pointer-events-none','opacity-0'); p.classList.add('translate-y-10'); }
-        }
-
-        // --- CONFIG & ADMIN ---
-        function toggleAdminPanel() { document.getElementById('admin-panel').classList.toggle('hidden'); }
-        function switchTab(t) { ['pdf','evento','mes'].forEach(x => document.getElementById('form-'+x).classList.add('hidden')); document.getElementById('form-'+t).classList.remove('hidden'); }
-        
-        async function submitPdfLinks(e) {
-            e.preventDefault();
-            if(!db) return;
-            await db.collection("configuracion").doc("pdf_menus").set({ pipe_pdf: document.getElementById('pdf-pipe-input').value, pili_pdf: document.getElementById('pdf-pili-input').value });
-            showToast("PDFs guardados"); fetchPdfLinks();
-        }
-
-        async function fetchPdfLinks() {
-            if(!db) return;
-            const doc = await db.collection("configuracion").doc("pdf_menus").get();
-            if(doc.exists) {
-                const d = doc.data();
-                if(d.pipe_pdf) { document.getElementById('pdf-link-pipe').href = d.pipe_pdf; document.getElementById('pdf-container-pipe').classList.remove('hidden'); document.getElementById('pdf-pipe-input').value = d.pipe_pdf; }
-                if(d.pili_pdf) { document.getElementById('pdf-link-pili').href = d.pili_pdf; document.getElementById('pdf-container-pili').classList.remove('hidden'); document.getElementById('pdf-pili-input').value = d.pili_pdf; }
-            }
-        }
-
-        async function cargarMesMagico() {
-            if(!db) return;
-            const btn = document.getElementById('btn-magico'); btn.innerText = "...";
-            const menus = { "2026-06-01":{pipe:"Pechuguitas c/ crema", pili:"Pechuguitas suaves"}, "2026-06-02":{pipe:"Filet de Merluza", pili:"Omelette"} }; // Muestra reducida para el código
-            const batch = db.batch();
-            for(const [f, m] of Object.entries(menus)) batch.set(db.collection("menus_diarios").doc(f), m);
-            await batch.commit(); showToast("Junio Cargado"); fetchData(); btn.innerText = "Cargar Junio 2026";
-        }
-
-        // --- INIT ---
-        function initApp() {
-            document.getElementById('global-date-selector').value = getToday();
-            onDateChanged(); fetchWeather(); fetchPdfLinks();
-        }
-        safeInitIcons();
     </script>
 </body>
 </html>
