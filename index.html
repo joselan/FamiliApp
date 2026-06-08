@@ -41,30 +41,27 @@
     <main id="app-container" class="w-full mx-auto p-3 min-h-screen flex flex-col gap-3 hidden">
         <!-- FECHA + CLIMA: dos tarjetas en el mismo renglón -->
         <header class="flex items-stretch gap-2">
-            <!-- TARJETA FECHA (con flechas para cambiar de día) -->
-            <div class="flex-1 bg-white rounded-[2rem] card-shadow flex items-center px-1 py-2 min-w-0">
-                <button onclick="changeDay(-1)" class="text-gray-400 p-1.5 shrink-0" aria-label="Día anterior"><i data-lucide="chevron-left" class="w-6 h-6"></i></button>
-                <div class="flex-1 text-center min-w-0 leading-tight">
-                    <p id="today-weekday" class="font-black text-base truncate">—</p>
-                    <p id="today-daymonth" class="text-xs font-bold text-gray-400 truncate">—</p>
-                </div>
-                <button onclick="changeDay(1)" class="text-gray-400 p-1.5 shrink-0" aria-label="Día siguiente"><i data-lucide="chevron-right" class="w-6 h-6"></i></button>
+            <!-- TARJETA FECHA (una sola línea, con flechas para cambiar de día) -->
+            <div class="flex-[5] bg-white rounded-[2rem] card-shadow flex items-center px-1 py-3 min-w-0">
+                <button onclick="changeDay(-1)" class="text-gray-400 p-1 shrink-0" aria-label="Día anterior"><i data-lucide="chevron-left" class="w-6 h-6"></i></button>
+                <p id="today-date" class="flex-1 text-center min-w-0 font-black text-lg leading-tight whitespace-nowrap overflow-hidden text-ellipsis">—</p>
+                <button onclick="changeDay(1)" class="text-gray-400 p-1 shrink-0" aria-label="Día siguiente"><i data-lucide="chevron-right" class="w-6 h-6"></i></button>
             </div>
 
             <!-- TARJETA CLIMA (clickable) -->
-            <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" rel="noopener" class="flex-1 bg-white px-3 py-2 rounded-[2rem] card-shadow flex items-center justify-between gap-1 cursor-pointer hover:bg-gray-50 transition-colors min-w-0">
-                <div class="flex items-center gap-1.5 min-w-0">
+            <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" rel="noopener" class="flex-[4] bg-white px-3 py-2 rounded-[2rem] card-shadow flex items-center justify-between gap-1 cursor-pointer hover:bg-gray-50 transition-colors min-w-0">
+                <div class="flex items-center gap-1 min-w-0">
                     <span id="weather-icon" class="text-amber-400 shrink-0"><i data-lucide="loader" class="w-8 h-8"></i></span>
-                    <span id="weather-now" class="font-black text-2xl leading-none truncate">--°</span>
+                    <span id="weather-now" class="font-black text-4xl leading-none truncate">--°</span>
                 </div>
                 <div class="flex flex-col items-end leading-none font-black shrink-0">
-                    <span class="text-base text-red-500" id="temp-max">--°</span>
-                    <span class="text-base text-sky-400" id="temp-min">--°</span>
+                    <span class="text-xl text-red-500" id="temp-max">--°</span>
+                    <span class="text-xl text-sky-400" id="temp-min">--°</span>
                 </div>
             </a>
 
             <!-- CONFIG -->
-            <button onclick="toggleAdminPanel()" class="bg-blue-600 text-white p-2.5 rounded-2xl shadow-lg shrink-0 self-center" aria-label="Configuración"><i data-lucide="settings" class="w-5 h-5"></i></button>
+            <button onclick="toggleAdminPanel()" class="bg-blue-600 text-white p-3 rounded-2xl shadow-lg shrink-0 self-center" aria-label="Configuración"><i data-lucide="settings" class="w-5 h-5"></i></button>
         </header>
 
         <!-- AVATARES -->
@@ -73,22 +70,22 @@
                 <img id="img-pipe" src="" alt="Pipe" class="w-full aspect-[3/4] object-cover object-top block img-placeholder">
                 <div class="px-3 py-3 flex-1 border-t border-gray-100">
                     <div id="menu-pipe" class="leading-snug"></div>
-                    <ul id="specials-pipe" class="text-sm mt-2 space-y-1 font-bold text-gray-700"></ul>
+                    <ul id="specials-pipe" class="text-base mt-2 space-y-1 font-bold text-gray-700"></ul>
                 </div>
             </div>
             <div onclick="openKidDetail('pili')" class="bg-white rounded-[2rem] overflow-hidden card-shadow flex flex-col cursor-pointer active:scale-[0.98] transition-transform">
                 <img id="img-pili" src="" alt="Pili" class="w-full aspect-[3/4] object-cover object-top block img-placeholder">
                 <div class="px-3 py-3 flex-1 border-t border-gray-100">
                     <div id="menu-pili" class="leading-snug"></div>
-                    <ul id="specials-pili" class="text-sm mt-2 space-y-1 font-bold text-gray-700"></ul>
+                    <ul id="specials-pili" class="text-base mt-2 space-y-1 font-bold text-gray-700"></ul>
                 </div>
             </div>
         </section>
 
         <!-- EVENTOS -->
         <section class="bg-white rounded-[2rem] card-shadow p-4">
-            <h3 class="font-black text-xs uppercase text-gray-400 mb-2">Próximos eventos</h3>
-            <ul id="events-list" class="space-y-2 text-sm"><li class="text-gray-400 text-xs">Cargando...</li></ul>
+            <h3 class="font-black text-sm uppercase text-gray-400 mb-2">Próximos eventos</h3>
+            <ul id="events-list" class="space-y-2 text-base"><li class="text-gray-400 text-sm">Cargando...</li></ul>
         </section>
     </main>
 
@@ -262,11 +259,11 @@
         // Pinta todo lo que depende del día seleccionado
         function renderDay() {
             const ds = fmtDate(selDate);
-            // Etiqueta de fecha (día de semana arriba, día y mes abajo)
+            // Etiqueta de fecha en una sola línea: "Lunes 8 jun"
             let wd = selDate.toLocaleDateString('es-AR', { weekday: 'long' });
             wd = wd.charAt(0).toUpperCase() + wd.slice(1);
-            document.getElementById('today-weekday').innerText = wd;
-            document.getElementById('today-daymonth').innerText = selDate.toLocaleDateString('es-AR', { day: 'numeric', month: 'long' });
+            const mo = selDate.toLocaleDateString('es-AR', { month: 'short' }).replace('.', '');
+            document.getElementById('today-date').innerText = `${wd} ${selDate.getDate()} ${mo}`;
             applyWeather(ds);
             loadMenuFor(ds);
             renderSpecials(ds);
@@ -372,10 +369,10 @@
         function renderMenuText(elId, text) {
             const el = document.getElementById(elId);
             text = (text || '').trim();
-            if (!text) { el.innerHTML = '<p class="text-base font-semibold text-gray-300">Sin menú</p>'; return; }
+            if (!text) { el.innerHTML = '<p class="text-lg font-semibold text-gray-300">Sin menú</p>'; return; }
             const parts = text.split(/\s*·\s*Opci[oó]n:\s*/i);
-            let html = `<p class="text-lg font-bold text-gray-900 leading-snug">${escapeHtml(parts[0])}</p>`;
-            if (parts[1]) html += `<p class="text-sm font-semibold text-gray-500 mt-1.5 leading-snug">Opción: ${escapeHtml(parts[1])}</p>`;
+            let html = `<p class="text-xl font-bold text-gray-900 leading-snug">${escapeHtml(parts[0])}</p>`;
+            if (parts[1]) html += `<p class="text-base font-semibold text-gray-500 mt-1.5 leading-snug">Opción: ${escapeHtml(parts[1])}</p>`;
             el.innerHTML = html;
         }
         let menuReqId = 0;
