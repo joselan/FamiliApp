@@ -186,7 +186,7 @@
                     <div><label class="block text-xs font-black uppercase text-gray-400 mb-1">Hora</label><input id="ev-hora" type="time" class="w-full bg-gray-100 rounded-2xl px-3 py-3 outline-none focus:ring-2 focus:ring-blue-500"></div>
                 </div>
                 <label class="block text-xs font-black uppercase text-gray-400 mb-1">Lugar</label>
-                <input id="ev-lugar" type="text" placeholder="Dónde es..." class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-2 outline-none focus:ring-2 focus:ring-blue-500">
+                <input id="ev-lugar" type="text" placeholder="Dónde es..." oninput="this.style.boxShadow=''" class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-2 outline-none focus:ring-2 focus:ring-blue-500">
                 <button type="button" onclick="verifyAddress()" class="w-full flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 font-bold py-2.5 rounded-2xl mb-2 border border-emerald-200"><i data-lucide="map-pin" class="w-5 h-5"></i> Verificar dirección en el mapa</button>
                 <div id="addr-options" class="hidden mb-3 space-y-2"></div>
                 <label class="block text-xs font-black uppercase text-gray-400 mb-1">Para</label>
@@ -842,36 +842,22 @@
             if (el) el.style.boxShadow = color ? `0 0 0 2px ${color} inset` : '';
         }
 
-        // Muestra el flyer con los datos detectados resaltados por color
+        // Muestra el flyer y pinta el borde de cada campo con el color de su dato
         function renderFlyerPreview(parsed) {
             const wrap = document.getElementById('flyer-preview');
             ['titulo', 'fecha', 'hora', 'lugar'].forEach(k => tintField(k, null));
             if (!flyerURL) { wrap.classList.add('hidden'); return; }
-            const boxes = [], legend = [];
+            const legend = [];
             for (const k of ['titulo', 'fecha', 'hora', 'lugar']) {
                 if (!parsed[k]) continue;
-                const color = FIELD_COLORS[k];
-                tintField(k, color);
-                legend.push(`<span class="inline-flex items-center gap-1"><span style="width:.9em;height:.9em;background:${color};border-radius:3px;display:inline-block"></span>${FIELD_LABEL[k]}</span>`);
-                const bb = matchBox(flyerWords, (parsed.spans && parsed.spans[k]) || parsed[k]);
-                if (bb) boxes.push({ bb, color });
+                tintField(k, FIELD_COLORS[k]);
+                legend.push(`<span class="inline-flex items-center gap-1"><span style="width:.9em;height:.9em;background:${FIELD_COLORS[k]};border-radius:3px;display:inline-block"></span>${FIELD_LABEL[k]}</span>`);
             }
             wrap.innerHTML = `
-                <div class="relative w-full rounded-2xl overflow-hidden border border-gray-200">
-                    <img id="flyer-img" class="w-full block" src="${flyerURL}" alt="flyer">
-                    <div id="flyer-boxes" class="absolute inset-0 pointer-events-none"></div>
-                </div>
-                <div class="mt-2 flex flex-wrap gap-3 text-sm font-bold text-gray-600">${legend.join('')}</div>`;
+                <img class="w-full block rounded-2xl border border-gray-200" src="${flyerURL}" alt="flyer">
+                <p class="text-xs text-gray-400 mt-1 mb-1">Compará con el flyer. Cada campo de abajo tiene el color de su dato; revisá y corregí lo que haga falta.</p>
+                <div class="flex flex-wrap gap-3 text-sm font-bold text-gray-600">${legend.join('')}</div>`;
             wrap.classList.remove('hidden');
-            const img = document.getElementById('flyer-img');
-            const draw = () => {
-                const W = img.naturalWidth || 1, H = img.naturalHeight || 1;
-                document.getElementById('flyer-boxes').innerHTML = boxes.map(o => {
-                    const l = o.bb.x0 / W * 100, t = o.bb.y0 / H * 100, w = (o.bb.x1 - o.bb.x0) / W * 100, h = (o.bb.y1 - o.bb.y0) / H * 100;
-                    return `<div style="position:absolute;left:${l}%;top:${t}%;width:${w}%;height:${h}%;border:3px solid ${o.color};border-radius:6px;background:${o.color}22"></div>`;
-                }).join('');
-            };
-            if (img.complete && img.naturalWidth) draw(); else img.onload = draw;
         }
 
         const MESES = { enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6, julio: 7, agosto: 8, septiembre: 9, setiembre: 9, octubre: 10, noviembre: 11, diciembre: 12 };
@@ -926,6 +912,9 @@
             else if (salon && street) { lugar = salon[0].trim() + ', ' + street[1].trim(); out.spans.lugar = street[1].trim(); }
             else if (street) { lugar = street[1].trim(); out.spans.lugar = street[1].trim(); }
             else if (salon) { lugar = salon[0].trim(); out.spans.lugar = salon[0].trim(); }
+            // Limpieza: saca símbolos iniciales y una letra suelta inicial (ej. la "V"
+            // que el OCR ve en el ícono de ubicación 📍): "V La Cabaña" -> "La Cabaña".
+            lugar = lugar.replace(/^[^0-9A-Za-zÁÉÍÓÚÑ]+/, '').replace(/^[A-Z]\s+(?=[A-ZÁÉÍÓÚÑ])/, '').trim();
             if (lugar) out.lugar = lugar;
             return out;
         }
@@ -956,20 +945,21 @@
             box.innerHTML = '<p class="text-sm text-gray-500">Buscando en el mapa…</p>';
             try {
                 const q = streetQuery(lugar);
-                const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=ar&limit=6&q=${encodeURIComponent(q)}`;
+                const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=ar&limit=10&q=${encodeURIComponent(q)}`;
                 const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
                 _addrResults = await res.json();
+                const mapsBtn = `<a href="${mapsLink(lugar)}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-blue-600 font-bold text-sm mt-1">📍 Ver en Google Maps</a>`;
                 if (!_addrResults.length) {
-                    box.innerHTML = `<p class="text-sm text-gray-600 mb-2">No la encontré automáticamente. Revisala a mano o abrila en Google Maps:</p>
-                        <a href="${mapsLink(lugar)}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-blue-600 font-bold text-sm">📍 Abrir en Google Maps</a>`;
+                    box.innerHTML = `<p class="text-sm text-gray-600 mb-2">No la encontré automáticamente. Escribí la dirección a mano en el campo de arriba, o abrila en Google Maps:</p>${mapsBtn}`;
                     return;
                 }
                 const head = _addrResults.length > 1
-                    ? '<p class="text-sm font-bold text-gray-600 mb-2">Hay varias coincidencias. Elegí la localidad correcta:</p>'
-                    : '<p class="text-sm font-bold text-gray-600 mb-2">Confirmá la dirección:</p>';
+                    ? '<p class="text-sm font-bold text-gray-600 mb-2">Posibles coincidencias. Tocá la correcta:</p>'
+                    : '<p class="text-sm font-bold text-gray-600 mb-2">Coincidencia encontrada (tocá para usarla):</p>';
                 box.innerHTML = head + _addrResults.map((r, i) =>
                     `<button type="button" onclick="pickAddress(${i})" class="w-full text-left bg-gray-100 hover:bg-emerald-50 rounded-2xl px-4 py-3 text-sm font-semibold">${escapeHtml(shortAddr(r))}</button>`
-                ).join('') + `<a href="${mapsLink(lugar)}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-blue-600 font-bold text-sm mt-1">📍 Ver en Google Maps</a>`;
+                ).join('') +
+                `<p class="text-xs text-gray-400 mt-1">¿Ninguna es la correcta? Editá el campo "Lugar" de arriba a mano.</p>${mapsBtn}`;
             } catch (e) {
                 box.innerHTML = `<p class="text-sm text-gray-600 mb-2">No se pudo verificar online. Abrila en Google Maps:</p>
                     <a href="${mapsLink(lugar)}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-blue-600 font-bold text-sm">📍 Abrir en Google Maps</a>`;
