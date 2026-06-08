@@ -53,21 +53,21 @@
                 <span id="weather-now" class="font-black text-4xl leading-none">--°</span>
             </div>
             <div class="flex items-end gap-4 font-black">
-                <span class="text-3xl text-red-500" id="temp-max">--°</span>
                 <span class="text-3xl text-sky-400" id="temp-min">--°</span>
+                <span class="text-3xl text-red-500" id="temp-max">--°</span>
             </div>
         </a>
 
         <!-- AVATARES -->
         <section class="grid grid-cols-2 gap-3">
-            <div class="bg-white rounded-[2rem] overflow-hidden card-shadow flex flex-col">
+            <div onclick="openKidDetail('pipe')" class="bg-white rounded-[2rem] overflow-hidden card-shadow flex flex-col cursor-pointer active:scale-[0.98] transition-transform">
                 <img id="img-pipe" src="" alt="Pipe" class="w-full h-auto block img-placeholder">
                 <div class="px-3 py-3 flex-1 border-t border-gray-100">
                     <div id="menu-pipe" class="leading-snug"></div>
                     <ul id="specials-pipe" class="text-xs mt-2 space-y-1 font-bold text-gray-700"></ul>
                 </div>
             </div>
-            <div class="bg-white rounded-[2rem] overflow-hidden card-shadow flex flex-col">
+            <div onclick="openKidDetail('pili')" class="bg-white rounded-[2rem] overflow-hidden card-shadow flex flex-col cursor-pointer active:scale-[0.98] transition-transform">
                 <img id="img-pili" src="" alt="Pili" class="w-full h-auto block img-placeholder">
                 <div class="px-3 py-3 flex-1 border-t border-gray-100">
                     <div id="menu-pili" class="leading-snug"></div>
@@ -173,6 +173,14 @@
                 <p id="ev-status" class="text-center text-sm font-bold mt-3 h-5"></p>
                 <div id="ev-admin-list" class="mt-5 space-y-2"></div>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL DETALLE (al tocar una tarjeta) -->
+    <div id="detail-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-5" onclick="closeDetail(event)">
+        <div class="bg-white rounded-[2rem] card-shadow max-w-sm w-full max-h-[90vh] overflow-y-auto relative">
+            <button onclick="closeDetail()" class="absolute top-3 right-3 z-10 bg-white/80 backdrop-blur text-gray-500 p-1.5 rounded-full shadow" aria-label="Cerrar"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <div id="detail-content"></div>
         </div>
     </div>
 
@@ -354,12 +362,14 @@
             el.innerHTML = html;
         }
         let menuReqId = 0;
+        let currentMenu = { pipe: '', pili: '' };
         async function loadMenuFor(ds) {
             const reqId = ++menuReqId; // evita que una respuesta vieja pise una nueva al navegar rápido
             try {
                 const doc = await db.collection("menus_diarios").doc(ds).get();
                 if (reqId !== menuReqId) return;
                 const d = doc.exists ? doc.data() : {};
+                currentMenu = { pipe: d.pipe || '', pili: d.pili || '' };
                 renderMenuText('menu-pipe', d.pipe);
                 renderMenuText('menu-pili', d.pili);
             } catch (e) {
@@ -370,17 +380,18 @@
         }
 
         // ---- Eventos ----
+        let currentEvents = [];
         async function loadEvents() {
             const list = document.getElementById('events-list');
             try {
                 const snap = await db.collection('eventos').get();
                 const hoy = todayStr();
-                const evs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                currentEvents = snap.docs.map(d => ({ id: d.id, ...d.data() }))
                     .filter(e => e.fecha >= hoy)
                     .sort((a, b) => (a.fecha + (a.hora || '')).localeCompare(b.fecha + (b.hora || '')));
-                if (!evs.length) { list.innerHTML = '<li class="text-gray-400 text-xs">No hay eventos próximos</li>'; return; }
-                list.innerHTML = evs.slice(0, 6).map(e => `
-                    <li class="flex items-center gap-3">
+                if (!currentEvents.length) { list.innerHTML = '<li class="text-gray-400 text-xs">No hay eventos próximos</li>'; return; }
+                list.innerHTML = currentEvents.slice(0, 6).map(e => `
+                    <li onclick="openEventDetail('${e.id}')" class="flex items-center gap-3 cursor-pointer active:opacity-60">
                         <div class="text-center leading-none w-10 shrink-0">
                             <div class="text-lg font-black">${new Date(e.fecha + 'T00:00').getDate()}</div>
                             <div class="text-[0.6rem] uppercase text-gray-400 font-bold">${new Date(e.fecha + 'T00:00').toLocaleDateString('es-AR', { month: 'short' })}</div>
@@ -390,7 +401,9 @@
                             <p class="text-xs text-gray-400 truncate">${e.hora ? e.hora + ' · ' : ''}${escapeHtml(e.lugar || '')}</p>
                         </div>
                         ${kidBadge(e.nino)}
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 shrink-0"></i>
                     </li>`).join('');
+                lucide.createIcons();
             } catch (e) {
                 list.innerHTML = '<li class="text-gray-400 text-xs">No se pudieron cargar</li>';
             }
@@ -604,6 +617,64 @@
                 setStatus(st, '¡Evento agregado!', 'green');
                 loadEvents(); loadEventosAdmin();
             } catch (e) { setStatus(st, 'Error al guardar', 'red'); }
+        }
+
+        // ---- Modal de detalle (al tocar una tarjeta) ----
+        function showDetail(html) {
+            document.getElementById('detail-content').innerHTML = html;
+            document.getElementById('detail-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+        function closeDetail(ev) {
+            // Si el click vino del fondo (no de la tarjeta interna), o de la X, cierra.
+            if (ev && ev.currentTarget !== ev.target) return; // tocó adentro de la tarjeta
+            document.getElementById('detail-modal').classList.add('hidden');
+        }
+        function openKidDetail(kid) {
+            const nombre = kid === 'pipe' ? 'Pipe' : 'Pili';
+            const nivel = kid === 'pipe' ? 'Primaria' : 'Jardín';
+            const tint = kid === 'pipe' ? 'amber' : 'pink';
+            let fecha = selDate.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+            fecha = fecha.charAt(0).toUpperCase() + fecha.slice(1);
+            const dia = DAYS[selDate.getDay()];
+            const specials = (schedule[kid] && schedule[kid][dia]) || [];
+            const text = (currentMenu[kid] || '').trim();
+            const parts = text.split(/\s*·\s*Opci[oó]n:\s*/i);
+            let menuHtml = '<p class="text-gray-300 font-semibold">Sin menú cargado</p>';
+            if (parts[0]) {
+                menuHtml = `<p class="text-lg font-bold text-gray-800 leading-snug">${escapeHtml(parts[0])}</p>`;
+                if (parts[1]) menuHtml += `<p class="text-sm font-semibold text-gray-400 mt-1">Opción: ${escapeHtml(parts[1])}</p>`;
+            }
+            const specialsHtml = specials.length
+                ? `<div class="mt-4"><p class="text-[0.65rem] font-black uppercase tracking-wide text-gray-400 mb-2">Para llevar</p><ul class="space-y-1.5 font-bold text-gray-700">${specials.map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ul></div>`
+                : '';
+            const imgSrc = document.getElementById('img-' + kid).src;
+            showDetail(`
+                <img src="${imgSrc}" alt="${nombre}" class="w-full h-auto block rounded-t-[2rem]"
+                     onerror="this.style.display='none'">
+                <div class="p-5">
+                    <h2 class="text-2xl font-black">${nombre} <span class="text-gray-300 text-base font-bold">· ${nivel}</span></h2>
+                    <p class="text-sm font-semibold text-gray-400 mb-4 capitalize">${fecha}</p>
+                    <div class="bg-${tint}-50 rounded-2xl p-4">${menuHtml}</div>
+                    ${specialsHtml}
+                </div>`);
+        }
+        function openEventDetail(id) {
+            const e = currentEvents.find(x => x.id === id);
+            if (!e) return;
+            let fecha = new Date(e.fecha + 'T00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            fecha = fecha.charAt(0).toUpperCase() + fecha.slice(1);
+            const row = (icon, txt) => txt ? `<div class="flex items-center gap-3 py-2 border-t border-gray-100"><i data-lucide="${icon}" class="w-5 h-5 text-gray-400 shrink-0"></i><span class="font-semibold text-gray-700">${escapeHtml(txt)}</span></div>` : '';
+            const quien = e.nino === 'ambos' ? 'Pipe y Pili' : (e.nino === 'pipe' ? 'Pipe' : 'Pili');
+            showDetail(`
+                <div class="p-6">
+                    <p class="text-[0.65rem] font-black uppercase tracking-widest text-blue-500 mb-1">Evento</p>
+                    <h2 class="text-2xl font-black leading-tight mb-4">${escapeHtml(e.titulo)}</h2>
+                    ${row('calendar', fecha)}
+                    ${row('clock', e.hora || '')}
+                    ${row('map-pin', e.lugar || '')}
+                    ${row('users', quien)}
+                </div>`);
         }
 
         // ---- Google Calendar ----
