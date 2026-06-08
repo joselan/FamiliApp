@@ -1,6 +1,6 @@
 // Service Worker de FamiliApp
 // Cambiar la versión al actualizar archivos para forzar refresco de caché.
-const CACHE = 'familiapp-v9';
+const CACHE = 'familiapp-v10';
 
 // App shell + avatares: se cachean para que la app abra al instante y offline.
 const ASSETS = [
