@@ -39,26 +39,33 @@
 
     <!-- APP -->
     <main id="app-container" class="w-full mx-auto p-3 min-h-screen flex flex-col gap-3 hidden">
-        <header class="flex items-center gap-2 px-1">
-            <button onclick="changeDay(-1)" class="text-gray-400 p-2 shrink-0" aria-label="Día anterior"><i data-lucide="chevron-left" class="w-7 h-7"></i></button>
-            <div class="flex-1 text-center min-w-0">
-                <p id="today-date" class="font-black text-xl leading-tight truncate">—</p>
+        <!-- FECHA + CLIMA: dos tarjetas en el mismo renglón -->
+        <header class="flex items-stretch gap-2">
+            <!-- TARJETA FECHA (con flechas para cambiar de día) -->
+            <div class="flex-1 bg-white rounded-[2rem] card-shadow flex items-center px-1 py-2 min-w-0">
+                <button onclick="changeDay(-1)" class="text-gray-400 p-1.5 shrink-0" aria-label="Día anterior"><i data-lucide="chevron-left" class="w-6 h-6"></i></button>
+                <div class="flex-1 text-center min-w-0 leading-tight">
+                    <p id="today-weekday" class="font-black text-base truncate">—</p>
+                    <p id="today-daymonth" class="text-xs font-bold text-gray-400 truncate">—</p>
+                </div>
+                <button onclick="changeDay(1)" class="text-gray-400 p-1.5 shrink-0" aria-label="Día siguiente"><i data-lucide="chevron-right" class="w-6 h-6"></i></button>
             </div>
-            <button onclick="changeDay(1)" class="text-gray-400 p-2 shrink-0" aria-label="Día siguiente"><i data-lucide="chevron-right" class="w-7 h-7"></i></button>
-            <button onclick="toggleAdminPanel()" class="bg-blue-600 text-white p-2.5 rounded-2xl shadow-lg shrink-0" aria-label="Configuración"><i data-lucide="settings" class="w-5 h-5"></i></button>
-        </header>
 
-        <!-- CLIMA CLICKABLE -->
-        <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" rel="noopener" class="bg-white px-5 py-4 rounded-[2rem] card-shadow flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors">
-            <div class="flex items-center gap-3">
-                <span id="weather-icon" class="text-amber-400"><i data-lucide="loader" class="w-10 h-10"></i></span>
-                <span id="weather-now" class="font-black text-4xl leading-none">--°</span>
-            </div>
-            <div class="flex items-end gap-4 font-black">
-                <span class="text-3xl text-sky-400" id="temp-min">--°</span>
-                <span class="text-3xl text-red-500" id="temp-max">--°</span>
-            </div>
-        </a>
+            <!-- TARJETA CLIMA (clickable) -->
+            <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" rel="noopener" class="flex-1 bg-white px-3 py-2 rounded-[2rem] card-shadow flex items-center justify-between gap-1 cursor-pointer hover:bg-gray-50 transition-colors min-w-0">
+                <div class="flex items-center gap-1.5 min-w-0">
+                    <span id="weather-icon" class="text-amber-400 shrink-0"><i data-lucide="loader" class="w-8 h-8"></i></span>
+                    <span id="weather-now" class="font-black text-2xl leading-none truncate">--°</span>
+                </div>
+                <div class="flex flex-col items-end leading-none font-black shrink-0">
+                    <span class="text-base text-red-500" id="temp-max">--°</span>
+                    <span class="text-base text-sky-400" id="temp-min">--°</span>
+                </div>
+            </a>
+
+            <!-- CONFIG -->
+            <button onclick="toggleAdminPanel()" class="bg-blue-600 text-white p-2.5 rounded-2xl shadow-lg shrink-0 self-center" aria-label="Configuración"><i data-lucide="settings" class="w-5 h-5"></i></button>
+        </header>
 
         <!-- AVATARES -->
         <section class="grid grid-cols-2 gap-3">
@@ -255,9 +262,11 @@
         // Pinta todo lo que depende del día seleccionado
         function renderDay() {
             const ds = fmtDate(selDate);
-            // Etiqueta de fecha
-            let s = selDate.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
-            document.getElementById('today-date').innerText = s.charAt(0).toUpperCase() + s.slice(1);
+            // Etiqueta de fecha (día de semana arriba, día y mes abajo)
+            let wd = selDate.toLocaleDateString('es-AR', { weekday: 'long' });
+            wd = wd.charAt(0).toUpperCase() + wd.slice(1);
+            document.getElementById('today-weekday').innerText = wd;
+            document.getElementById('today-daymonth').innerText = selDate.toLocaleDateString('es-AR', { day: 'numeric', month: 'long' });
             applyWeather(ds);
             loadMenuFor(ds);
             renderSpecials(ds);
