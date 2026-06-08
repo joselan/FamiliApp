@@ -59,9 +59,11 @@
             <!-- TARJETA CLIMA (clickable): ícono + actual, mínima (azul), máxima (rojo) -->
             <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" rel="noopener" class="flex-1 bg-white px-2 py-3 rounded-[2rem] card-shadow flex items-center justify-center gap-1.5 cursor-pointer hover:bg-gray-50 transition-colors min-w-0">
                 <span id="weather-icon" class="text-amber-400 shrink-0"><i data-lucide="loader" class="w-7 h-7"></i></span>
-                <span id="weather-now" class="font-black text-2xl leading-none">--°</span>
-                <span id="temp-min" class="font-black text-lg text-sky-400 leading-none">--°</span>
-                <span id="temp-max" class="font-black text-lg text-red-500 leading-none">--°</span>
+                <span id="weather-temps" class="flex-1 min-w-0 flex items-baseline justify-center gap-1.5 whitespace-nowrap overflow-hidden leading-none">
+                    <span id="weather-now" class="font-black">--°</span>
+                    <span id="temp-min" class="font-black text-sky-400" style="font-size:.72em">--°</span>
+                    <span id="temp-max" class="font-black text-red-500" style="font-size:.72em">--°</span>
+                </span>
             </a>
 
             <!-- CONFIG -->
@@ -271,6 +273,7 @@
             applyWeather(ds);
             loadMenuFor(ds);
             renderSpecials(ds);
+            fitHeader();
         }
 
         // Reemplaza un ícono de Lucide en vivo
@@ -850,6 +853,31 @@
             el.className = 'text-center text-sm font-bold mt-3 h-5 ' + c;
             el.innerText = msg;
         }
+        // Agranda el texto de un elemento hasta el máximo que entra en su ancho
+        // (búsqueda binaria del font-size). El elemento debe tener ancho fijo
+        // (flex-1 + min-w-0 + overflow-hidden) y nowrap.
+        function fitText(el, maxPx) {
+            if (!el || !el.clientWidth) return;
+            let lo = 9, hi = maxPx, best = 9;
+            el.style.whiteSpace = 'nowrap';
+            while (lo <= hi) {
+                const mid = (lo + hi) >> 1;
+                el.style.fontSize = mid + 'px';
+                if (el.scrollWidth <= el.clientWidth) { best = mid; lo = mid + 1; }
+                else hi = mid - 1;
+            }
+            el.style.fontSize = best + 'px';
+        }
+        // Ajusta fecha y clima para que llenen sus tarjetas
+        function fitHeader() {
+            requestAnimationFrame(() => {
+                fitText(document.getElementById('today-date'), 40);
+                fitText(document.getElementById('weather-temps'), 38);
+            });
+        }
+        window.addEventListener('resize', fitHeader);
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitHeader);
+
         function escapeHtml(s) { const d = document.createElement('div'); d.innerText = s == null ? '' : s; return d.innerHTML; }
         function escapeAttr(s) { return escapeHtml(s).replace(/"/g, '&quot;'); }
 
