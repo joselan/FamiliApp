@@ -855,6 +855,14 @@
         function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
         if ('serviceWorker' in navigator) {
+            // Cuando se active una versión nueva del service worker, recargamos
+            // una sola vez para que se vea al instante (sin recargar a mano).
+            let reloading = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (reloading) return;
+                reloading = true;
+                window.location.reload();
+            });
             window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
         }
     </script>
