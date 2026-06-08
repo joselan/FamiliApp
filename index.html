@@ -61,24 +61,16 @@
         <!-- AVATARES -->
         <section class="grid grid-cols-2 gap-3">
             <div class="bg-white rounded-[2rem] overflow-hidden card-shadow flex flex-col">
-                <div class="bg-gradient-to-b from-gray-50 to-white pt-2">
-                    <img id="img-pipe" src="" alt="Pipe" class="w-full h-72 object-contain img-placeholder">
-                </div>
-                <div class="px-4 pb-4 flex-1">
-                    <div class="bg-amber-50 rounded-2xl px-3 py-2.5">
-                        <div id="menu-pipe" class="text-base font-bold text-gray-800 leading-snug"></div>
-                    </div>
+                <img id="img-pipe" src="" alt="Pipe" class="w-full h-auto block img-placeholder">
+                <div class="px-3 py-3 flex-1 border-t border-gray-100">
+                    <div id="menu-pipe" class="leading-snug"></div>
                     <ul id="specials-pipe" class="text-xs mt-2 space-y-1 font-bold text-gray-700"></ul>
                 </div>
             </div>
             <div class="bg-white rounded-[2rem] overflow-hidden card-shadow flex flex-col">
-                <div class="bg-gradient-to-b from-gray-50 to-white pt-2">
-                    <img id="img-pili" src="" alt="Pili" class="w-full h-72 object-contain img-placeholder">
-                </div>
-                <div class="px-4 pb-4 flex-1">
-                    <div class="bg-pink-50 rounded-2xl px-3 py-2.5">
-                        <div id="menu-pili" class="text-base font-bold text-gray-800 leading-snug"></div>
-                    </div>
+                <img id="img-pili" src="" alt="Pili" class="w-full h-auto block img-placeholder">
+                <div class="px-3 py-3 flex-1 border-t border-gray-100">
+                    <div id="menu-pili" class="leading-snug"></div>
                     <ul id="specials-pili" class="text-xs mt-2 space-y-1 font-bold text-gray-700"></ul>
                 </div>
             </div>
@@ -351,6 +343,16 @@
         }
 
         // ---- Menú del día seleccionado ----
+        // Muestra el plato principal grande y la "Opción" como subtítulo suave.
+        function renderMenuText(elId, text) {
+            const el = document.getElementById(elId);
+            text = (text || '').trim();
+            if (!text) { el.innerHTML = '<p class="text-sm font-semibold text-gray-300">Sin menú</p>'; return; }
+            const parts = text.split(/\s*·\s*Opci[oó]n:\s*/i);
+            let html = `<p class="text-[0.95rem] font-bold text-gray-800">${escapeHtml(parts[0])}</p>`;
+            if (parts[1]) html += `<p class="text-xs font-semibold text-gray-400 mt-1">Opción: ${escapeHtml(parts[1])}</p>`;
+            el.innerHTML = html;
+        }
         let menuReqId = 0;
         async function loadMenuFor(ds) {
             const reqId = ++menuReqId; // evita que una respuesta vieja pise una nueva al navegar rápido
@@ -358,8 +360,8 @@
                 const doc = await db.collection("menus_diarios").doc(ds).get();
                 if (reqId !== menuReqId) return;
                 const d = doc.exists ? doc.data() : {};
-                document.getElementById('menu-pipe').innerText = (d.pipe || '').trim() || 'Sin menú';
-                document.getElementById('menu-pili').innerText = (d.pili || '').trim() || 'Sin menú';
+                renderMenuText('menu-pipe', d.pipe);
+                renderMenuText('menu-pili', d.pili);
             } catch (e) {
                 if (reqId !== menuReqId) return;
                 document.getElementById('menu-pipe').innerText = '—';
