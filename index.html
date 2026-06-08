@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
     <title>FamiliApp</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
@@ -25,8 +28,9 @@
         <div class="bg-white p-8 rounded-[2.5rem] card-shadow border border-gray-100 text-center max-w-sm w-full">
             <h1 class="text-3xl font-black mb-8">FamiliApp</h1>
             <button onclick="loginWithGoogle()" class="w-full bg-black text-white font-bold py-4 px-4 rounded-2xl flex items-center justify-center gap-3">
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6"> Ingresar con Google
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6" alt="Google"> Ingresar con Google
             </button>
+            <p id="login-error" class="text-red-500 text-sm font-bold mt-4 hidden"></p>
         </div>
     </div>
 
@@ -34,11 +38,11 @@
     <main id="app-container" class="max-w-md mx-auto p-4 min-h-screen flex flex-col gap-4 hidden">
         <header class="flex justify-between items-center px-1">
             <span class="text-[0.65rem] font-black text-gray-400 tracking-widest uppercase">FamiliApp</span>
-            <button onclick="toggleAdminPanel()" class="bg-blue-600 text-white p-3 rounded-2xl shadow-lg"><i data-lucide="settings" class="w-5 h-5"></i></button>
+            <button onclick="toggleAdminPanel()" class="bg-blue-600 text-white p-3 rounded-2xl shadow-lg" aria-label="Editar menú"><i data-lucide="settings" class="w-5 h-5"></i></button>
         </header>
 
         <!-- CLIMA CLICKABLE -->
-        <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" class="bg-white px-4 py-3 rounded-[2rem] card-shadow flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors">
+        <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" rel="noopener" class="bg-white px-4 py-3 rounded-[2rem] card-shadow flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors">
             <p id="weather-desc" class="font-black">Cargando...</p>
             <div class="flex gap-3 font-black"><span class="text-red-500" id="temp-max">--°</span><span class="text-blue-500" id="temp-min">--°</span></div>
         </a>
@@ -46,63 +50,178 @@
         <!-- AVATARES (Con opacidad 0 hasta cargar) -->
         <section class="grid grid-cols-2 gap-3 flex-1">
             <div class="bg-white rounded-[2rem] overflow-hidden card-shadow">
-                <img id="img-pipe" src="" class="w-full h-64 object-cover object-top img-placeholder">
-                <div class="p-4"><h3 class="font-black text-xs uppercase">Pipe</h3><div id="menu-pipe" class="text-xs mt-1"></div></div>
+                <img id="img-pipe" src="" alt="Pipe" class="w-full h-64 object-cover object-top img-placeholder">
+                <div class="p-4"><h3 class="font-black text-xs uppercase">Pipe</h3><div id="menu-pipe" class="text-xs mt-1 text-gray-500"></div></div>
             </div>
             <div class="bg-white rounded-[2rem] overflow-hidden card-shadow">
-                <img id="img-pili" src="" class="w-full h-64 object-cover object-top img-placeholder">
-                <div class="p-4"><h3 class="font-black text-xs uppercase">Pili</h3><div id="menu-pili" class="text-xs mt-1"></div></div>
+                <img id="img-pili" src="" alt="Pili" class="w-full h-64 object-cover object-top img-placeholder">
+                <div class="p-4"><h3 class="font-black text-xs uppercase">Pili</h3><div id="menu-pili" class="text-xs mt-1 text-gray-500"></div></div>
             </div>
         </section>
     </main>
 
+    <!-- PANEL ADMIN -->
+    <div id="admin-panel" class="hidden fixed inset-0 z-50 flex items-end justify-center bg-black/40">
+        <div class="bg-white w-full max-w-md rounded-t-[2.5rem] p-6 pb-8 card-shadow">
+            <div class="flex justify-between items-center mb-5">
+                <h2 class="text-xl font-black">Menú del día</h2>
+                <button onclick="toggleAdminPanel()" class="text-gray-400 p-1" aria-label="Cerrar"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+
+            <label class="block text-xs font-black uppercase text-gray-400 mb-1">Fecha</label>
+            <input id="admin-date" type="date" onchange="loadMenuForDate(this.value)" class="w-full bg-gray-100 rounded-2xl px-4 py-3 font-bold mb-4 outline-none focus:ring-2 focus:ring-blue-500">
+
+            <label class="block text-xs font-black uppercase text-gray-400 mb-1">Pipe</label>
+            <input id="admin-pipe" type="text" placeholder="Qué come Pipe..." class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-4 outline-none focus:ring-2 focus:ring-blue-500">
+
+            <label class="block text-xs font-black uppercase text-gray-400 mb-1">Pili</label>
+            <input id="admin-pili" type="text" placeholder="Qué come Pili..." class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-5 outline-none focus:ring-2 focus:ring-blue-500">
+
+            <button onclick="saveMenu()" id="admin-save" class="w-full bg-black text-white font-bold py-4 rounded-2xl">Guardar</button>
+            <p id="admin-status" class="text-center text-sm font-bold mt-3 h-5"></p>
+        </div>
+    </div>
+
     <script>
+        const ALLOWED = ['florenciabressan@gmail.com', 'joselanglois@gmail.com'];
+
         const firebaseConfig = { apiKey: "AIzaSyDGI5P_DT4dD60MjT2vq_qyEh2rH0J8bY0", authDomain: "familiapp-aa48d.firebaseapp.com", projectId: "familiapp-aa48d", storageBucket: "familiapp-aa48d.firebasestorage.app", messagingSenderId: "898854281124", appId: "1:898854281124:web:9bffe249bb3249deffeb31" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
 
+        let appStarted = false;
+
         auth.onAuthStateChanged(user => {
-            if(user && ['florenciabressan@gmail.com', 'joselanglois@gmail.com'].includes(user.email)) {
+            if (user && ALLOWED.includes(user.email)) {
                 document.getElementById('login-container').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
-                initApp();
+                if (!appStarted) { appStarted = true; initApp(); }
+            } else if (user) {
+                // Cuenta de Google que no está autorizada.
+                const err = document.getElementById('login-error');
+                err.innerText = 'Esta cuenta no tiene acceso.';
+                err.classList.remove('hidden');
+                auth.signOut();
             }
         });
 
-        async function initApp() {
-            await fetchWeather();
-            const date = new Date().toISOString().split('T')[0];
-            const doc = await db.collection("menus_diarios").doc(date).get();
-            if(doc.exists) {
-                document.getElementById('menu-pipe').innerText = doc.data().pipe;
-                document.getElementById('menu-pili').innerText = doc.data().pili;
-            }
+        function initApp() {
+            loadAvatars();   // independiente del clima: nunca se queda sin avatares
+            fetchWeather();  // si falla, los avatares igual se ven (modo "normal")
+            loadTodayMenu();
             lucide.createIcons();
         }
 
-        async function fetchWeather() {
-            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=-34.6370&longitude=-58.5231&current_weather=true&daily=temperature_2m_max,temperature_2m_min&timezone=America/Argentina/Buenos_Aires`);
-            const data = await res.json();
-            const temp = Math.round(data.current_weather.temperature);
-            document.getElementById('weather-desc').innerText = temp + '°C';
-            document.getElementById('temp-max').innerText = Math.round(data.daily.temperature_2m_max[0]) + '°';
-            document.getElementById('temp-min').innerText = Math.round(data.daily.temperature_2m_min[0]) + '°';
-            
-            let s = temp < 12 ? 'mucho_frio' : (temp < 18 ? 'frio' : 'normal');
-            
-            // Asignar src y hacer visible solo cuando cargue
+        // ---- Avatares ----
+        function setAvatars(state) {
             const pipe = document.getElementById('img-pipe');
             const pili = document.getElementById('img-pili');
-            
             pipe.onload = () => pipe.classList.add('img-ready');
             pili.onload = () => pili.classList.add('img-ready');
-            
-            pipe.src = `pipe_${s}.png`;
-            pili.src = `pili_${s}.png`;
+            pipe.src = `pipe_${state}.webp`;
+            pili.src = `pili_${state}.webp`;
+        }
+        function loadAvatars() { setAvatars('normal'); } // estado por defecto
+
+        // ---- Clima ----
+        async function fetchWeather() {
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=-34.6370&longitude=-58.5231&current_weather=true&daily=temperature_2m_max,temperature_2m_min&timezone=America/Argentina/Buenos_Aires`);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                const temp = Math.round(data.current_weather.temperature);
+                document.getElementById('weather-desc').innerText = describeWeather(data.current_weather.weathercode) + ' ' + temp + '°';
+                document.getElementById('temp-max').innerText = Math.round(data.daily.temperature_2m_max[0]) + '°';
+                document.getElementById('temp-min').innerText = Math.round(data.daily.temperature_2m_min[0]) + '°';
+
+                const state = temp < 12 ? 'mucho_frio' : (temp < 18 ? 'frio' : 'normal');
+                setAvatars(state);
+            } catch (e) {
+                document.getElementById('weather-desc').innerText = 'Clima no disponible';
+            }
+        }
+
+        function describeWeather(code) {
+            if (code === 0) return '☀️';
+            if ([1, 2, 3].includes(code)) return '⛅';
+            if ([45, 48].includes(code)) return '🌫️';
+            if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return '🌧️';
+            if ([71, 73, 75, 77, 85, 86].includes(code)) return '❄️';
+            if ([95, 96, 99].includes(code)) return '⛈️';
+            return '';
+        }
+
+        // ---- Menú ----
+        function todayStr() { return new Date().toISOString().split('T')[0]; }
+
+        async function loadTodayMenu() {
+            try {
+                const doc = await db.collection("menus_diarios").doc(todayStr()).get();
+                const pipe = doc.exists ? (doc.data().pipe || '') : '';
+                const pili = doc.exists ? (doc.data().pili || '') : '';
+                document.getElementById('menu-pipe').innerText = pipe || 'Sin menú aún';
+                document.getElementById('menu-pili').innerText = pili || 'Sin menú aún';
+            } catch (e) {
+                document.getElementById('menu-pipe').innerText = '—';
+                document.getElementById('menu-pili').innerText = '—';
+            }
+        }
+
+        // ---- Panel Admin ----
+        function toggleAdminPanel() {
+            const panel = document.getElementById('admin-panel');
+            const opening = panel.classList.contains('hidden');
+            panel.classList.toggle('hidden');
+            if (opening) {
+                const d = document.getElementById('admin-date');
+                if (!d.value) d.value = todayStr();
+                loadMenuForDate(d.value);
+                lucide.createIcons();
+            }
+        }
+
+        async function loadMenuForDate(date) {
+            document.getElementById('admin-status').innerText = '';
+            try {
+                const doc = await db.collection("menus_diarios").doc(date).get();
+                document.getElementById('admin-pipe').value = doc.exists ? (doc.data().pipe || '') : '';
+                document.getElementById('admin-pili').value = doc.exists ? (doc.data().pili || '') : '';
+            } catch (e) {
+                document.getElementById('admin-status').innerText = 'No se pudo cargar';
+            }
+        }
+
+        async function saveMenu() {
+            const date = document.getElementById('admin-date').value || todayStr();
+            const btn = document.getElementById('admin-save');
+            const status = document.getElementById('admin-status');
+            btn.disabled = true;
+            status.className = 'text-center text-sm font-bold mt-3 h-5 text-gray-400';
+            status.innerText = 'Guardando...';
+            try {
+                await db.collection("menus_diarios").doc(date).set({
+                    pipe: document.getElementById('admin-pipe').value.trim(),
+                    pili: document.getElementById('admin-pili').value.trim()
+                }, { merge: true });
+                status.className = 'text-center text-sm font-bold mt-3 h-5 text-green-600';
+                status.innerText = '¡Guardado!';
+                if (date === todayStr()) loadTodayMenu();
+                setTimeout(() => toggleAdminPanel(), 700);
+            } catch (e) {
+                status.className = 'text-center text-sm font-bold mt-3 h-5 text-red-500';
+                status.innerText = 'Error al guardar';
+            } finally {
+                btn.disabled = false;
+            }
         }
 
         function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+
+        // ---- PWA ----
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+        }
     </script>
 </body>
 </html>
