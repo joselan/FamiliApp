@@ -49,23 +49,19 @@
     <main id="app-container" class="w-full mx-auto p-3 min-h-screen flex flex-col gap-3 hidden">
         <!-- FECHA + CLIMA: dos tarjetas en el mismo renglón -->
         <header class="flex items-stretch gap-2">
-            <!-- TARJETA FECHA (una sola línea, con flechas para cambiar de día) -->
-            <div class="flex-[5] bg-white rounded-[2rem] card-shadow flex items-center px-1 py-3 min-w-0">
-                <button onclick="changeDay(-1)" class="text-gray-400 p-1 shrink-0" aria-label="Día anterior"><i data-lucide="chevron-left" class="w-6 h-6"></i></button>
-                <p id="today-date" class="flex-1 text-center min-w-0 font-black text-lg leading-tight whitespace-nowrap overflow-hidden text-ellipsis">—</p>
-                <button onclick="changeDay(1)" class="text-gray-400 p-1 shrink-0" aria-label="Día siguiente"><i data-lucide="chevron-right" class="w-6 h-6"></i></button>
+            <!-- TARJETA FECHA (una sola línea grande, con flechas para cambiar de día) -->
+            <div class="flex-1 bg-white rounded-[2rem] card-shadow flex items-center px-0.5 py-3 min-w-0">
+                <button onclick="changeDay(-1)" class="text-gray-400 p-0.5 shrink-0" aria-label="Día anterior"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
+                <p id="today-date" class="flex-1 text-center min-w-0 font-black text-xl tracking-tight leading-none whitespace-nowrap overflow-hidden text-ellipsis">—</p>
+                <button onclick="changeDay(1)" class="text-gray-400 p-0.5 shrink-0" aria-label="Día siguiente"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
             </div>
 
-            <!-- TARJETA CLIMA (clickable) -->
-            <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" rel="noopener" class="flex-[4] bg-white px-2 py-2 rounded-[2rem] card-shadow flex flex-col items-center justify-center gap-0.5 cursor-pointer hover:bg-gray-50 transition-colors min-w-0">
-                <div class="flex items-center gap-1 min-w-0">
-                    <span id="weather-icon" class="text-amber-400 shrink-0"><i data-lucide="loader" class="w-8 h-8"></i></span>
-                    <span id="weather-now" class="font-black text-4xl leading-none">--°</span>
-                </div>
-                <div class="flex items-center gap-3 leading-none font-black">
-                    <span class="text-xl text-red-500" id="temp-max">--°</span>
-                    <span class="text-xl text-sky-400" id="temp-min">--°</span>
-                </div>
+            <!-- TARJETA CLIMA (clickable): ícono + actual, mínima (azul), máxima (rojo) -->
+            <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" rel="noopener" class="flex-1 bg-white px-2 py-3 rounded-[2rem] card-shadow flex items-center justify-center gap-1.5 cursor-pointer hover:bg-gray-50 transition-colors min-w-0">
+                <span id="weather-icon" class="text-amber-400 shrink-0"><i data-lucide="loader" class="w-7 h-7"></i></span>
+                <span id="weather-now" class="font-black text-2xl leading-none">--°</span>
+                <span id="temp-min" class="font-black text-lg text-sky-400 leading-none">--°</span>
+                <span id="temp-max" class="font-black text-lg text-red-500 leading-none">--°</span>
             </a>
 
             <!-- CONFIG -->
@@ -324,7 +320,7 @@
                 now.innerText = '--°';
                 document.getElementById('temp-max').innerText = '--°';
                 document.getElementById('temp-min').innerText = '--°';
-                setLucide('weather-icon', 'cloud-off', 'w-8 h-8');
+                setLucide('weather-icon', 'cloud-off', 'w-7 h-7');
                 document.getElementById('weather-icon').className = 'text-gray-300';
                 // Sin datos de clima: solo caemos al uniforme 'normal' si ya intentamos
                 // traer el pronóstico. Así evitamos mostrar la ropa de calor y después
@@ -336,7 +332,7 @@
             const info = describeWeather(w.code);
             document.getElementById('temp-max').innerText = Math.round(w.max) + '°';
             document.getElementById('temp-min').innerText = Math.round(w.min) + '°';
-            setLucide('weather-icon', info.icon, 'w-8 h-8');
+            setLucide('weather-icon', info.icon, 'w-7 h-7');
             document.getElementById('weather-icon').className = info.color;
             // La ropa se decide con la temperatura del día (actual si es hoy, media si no).
             const rep = (isToday && currentTemp != null) ? currentTemp : Math.round(w.mean);
