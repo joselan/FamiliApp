@@ -59,7 +59,7 @@
     </div>
 
     <!-- APP -->
-    <main id="app-container" class="w-full mx-auto p-3 pb-36 min-h-screen flex flex-col gap-3 hidden">
+    <main id="app-container" class="w-full mx-auto p-3 pb-48 min-h-screen flex flex-col gap-3 hidden">
         <!-- FECHA + CONFIG + CLIMA: en el mismo renglón -->
         <header class="flex items-stretch gap-2">
             <!-- TARJETA FECHA (una sola línea grande, con flechas para cambiar de día) -->
@@ -123,16 +123,20 @@
 
     <!-- ASISTENTE (IA) -->
     <div id="ai-bar" class="hidden fixed bottom-0 inset-x-0 z-40 p-3">
-        <div id="ai-response" class="hidden max-w-3xl mx-auto mb-2 bg-white rounded-2xl card-shadow border border-gray-100 px-4 py-3 text-base text-gray-700"></div>
-        <div id="ai-menu" class="hidden max-w-3xl mx-auto mb-2 bg-white rounded-2xl card-shadow border border-gray-100 p-2 space-y-1 font-bold text-gray-700">
-            <button onclick="aiAddEvent()" class="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-50 flex items-center gap-2"><i data-lucide="calendar-plus" class="w-5 h-5 text-blue-600"></i> Agregar evento a mano</button>
-            <button onclick="aiPickFile()" class="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-50 flex items-center gap-2"><i data-lucide="paperclip" class="w-5 h-5 text-emerald-600"></i> Subir flyer / archivo</button>
+        <div id="ai-response" class="hidden max-w-3xl mx-auto mb-2 bg-white rounded-2xl card-shadow border border-gray-100 px-4 py-3 text-lg text-gray-700 max-h-60 overflow-y-auto leading-snug"></div>
+        <div id="ai-menu" class="hidden max-w-3xl mx-auto mb-2 bg-white rounded-2xl card-shadow border border-gray-100 p-2 space-y-1 font-bold text-gray-700 text-lg">
+            <button onclick="aiAddEvent()" class="w-full text-left px-4 py-3 rounded-xl hover:bg-gray-50 flex items-center gap-3"><i data-lucide="calendar-plus" class="w-6 h-6 text-blue-600"></i> Agregar evento a mano</button>
+            <button onclick="aiPickFile()" class="w-full text-left px-4 py-3 rounded-xl hover:bg-gray-50 flex items-center gap-3"><i data-lucide="paperclip" class="w-6 h-6 text-emerald-600"></i> Subir flyer / archivo</button>
         </div>
-        <div class="max-w-3xl mx-auto bg-white rounded-[2rem] card-shadow border border-gray-200 flex items-center gap-1.5 px-2 py-2">
-            <button onclick="aiPlus()" aria-label="Más" class="shrink-0 bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center"><i data-lucide="plus" class="w-6 h-6"></i></button>
-            <input id="ai-input" type="text" placeholder="Escribí o pedí algo…" onkeydown="if(event.key==='Enter')aiSend()" class="flex-1 min-w-0 bg-transparent outline-none text-lg px-1">
-            <button onclick="aiMic()" id="ai-mic" aria-label="Hablar" class="shrink-0 text-gray-500 w-10 h-10 rounded-full flex items-center justify-center"><i data-lucide="mic" class="w-6 h-6"></i></button>
-            <button onclick="aiSend()" aria-label="Enviar" class="shrink-0 bg-black text-white w-10 h-10 rounded-full flex items-center justify-center"><i data-lucide="arrow-up" class="w-6 h-6"></i></button>
+        <div class="max-w-3xl mx-auto bg-white rounded-[2rem] card-shadow border border-gray-200 p-3">
+            <textarea id="ai-input" rows="2" placeholder="Preguntá o pedí algo…" oninput="aiAutoGrow(this)" onkeydown="aiKey(event)" class="w-full bg-transparent outline-none text-xl resize-none px-1 pt-1 leading-snug placeholder:text-gray-400"></textarea>
+            <div class="flex items-center justify-between mt-1">
+                <button onclick="aiPlus()" class="bg-gray-100 text-gray-700 font-bold rounded-full pl-3 pr-4 h-12 flex items-center gap-1"><i data-lucide="plus" class="w-6 h-6"></i> Agregar</button>
+                <div class="flex items-center gap-2">
+                    <button onclick="aiMic()" id="ai-mic" aria-label="Hablar" class="bg-gray-100 text-gray-600 w-12 h-12 rounded-full flex items-center justify-center"><i data-lucide="mic" class="w-6 h-6"></i></button>
+                    <button onclick="aiSend()" aria-label="Enviar" class="bg-black text-white w-12 h-12 rounded-full flex items-center justify-center"><i data-lucide="arrow-up" class="w-6 h-6"></i></button>
+                </div>
+            </div>
         </div>
     </div>
     <input id="ai-file" type="file" accept="image/*" class="hidden" onchange="aiUpload(this.files[0])">
@@ -1202,9 +1206,27 @@
         function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
         // ---- Asistente (IA) ----
+        // Endpoint del "intermediario" seguro (Cloudflare Worker). Mientras esté
+        // vacío, el asistente solo crea eventos desde texto/voz (sin IA conversacional).
+        const AI_ENDPOINT = '';
         function aiRespond(msg) {
             const r = document.getElementById('ai-response');
             r.innerHTML = msg; r.classList.remove('hidden');
+        }
+        function aiAutoGrow(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 160) + 'px'; }
+        function aiKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); aiSend(); } }
+        // Pregunta conversacional a la IA (cuando hay intermediario configurado)
+        async function aiAsk(text) {
+            aiRespond('<span class="text-gray-400">Pensando…</span>');
+            try {
+                const res = await fetch(AI_ENDPOINT, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: text })
+                });
+                const data = await res.json();
+                const ans = (data.text || data.answer || data.reply || 'No pude responder.');
+                aiRespond(escapeHtml(ans).replace(/\n/g, '<br>'));
+            } catch (e) { aiRespond('No me pude conectar con la IA. Probá de nuevo.'); }
         }
         function aiPlus() {
             const m = document.getElementById('ai-menu');
@@ -1258,10 +1280,13 @@
                 if (p.lugar) document.getElementById('ev-lugar').value = p.lugar;
                 lucide.createIcons();
                 aiRespond('📅 Te preparé el evento con lo que entendí. Revisalo y tocá <b>"Agregar evento"</b>.');
+            } else if (AI_ENDPOINT) {
+                aiAsk(text);
             } else {
                 aiRespond('Puedo crear eventos si me los decís con fecha, por ejemplo:<br><b>"Cumple de Juan el 9 de julio a las 16 en Camacua 2655"</b>.<br>También podés tocar <b>+</b> para subir un flyer. (La IA para charlar de todo se activa al conectar el servicio.)');
             }
             input.value = '';
+            aiAutoGrow(input);
         }
 
         // Deslizar en la pantalla principal: hacia la derecha = ayer, hacia la izquierda = mañana
