@@ -63,14 +63,14 @@
         <!-- AVATARES -->
         <section class="grid grid-cols-2 gap-3">
             <div onclick="openKidDetail('pipe')" class="bg-white rounded-[2rem] overflow-hidden card-shadow flex flex-col cursor-pointer active:scale-[0.98] transition-transform">
-                <img id="img-pipe" src="" alt="Pipe" class="w-full h-auto block img-placeholder">
+                <img id="img-pipe" src="" alt="Pipe" class="w-full aspect-[3/4] object-cover object-top block img-placeholder">
                 <div class="px-3 py-3 flex-1 border-t border-gray-100">
                     <div id="menu-pipe" class="leading-snug"></div>
                     <ul id="specials-pipe" class="text-sm mt-2 space-y-1 font-bold text-gray-700"></ul>
                 </div>
             </div>
             <div onclick="openKidDetail('pili')" class="bg-white rounded-[2rem] overflow-hidden card-shadow flex flex-col cursor-pointer active:scale-[0.98] transition-transform">
-                <img id="img-pili" src="" alt="Pili" class="w-full h-auto block img-placeholder">
+                <img id="img-pili" src="" alt="Pili" class="w-full aspect-[3/4] object-cover object-top block img-placeholder">
                 <div class="px-3 py-3 flex-1 border-t border-gray-100">
                     <div id="menu-pili" class="leading-snug"></div>
                     <ul id="specials-pili" class="text-sm mt-2 space-y-1 font-bold text-gray-700"></ul>
@@ -225,6 +225,7 @@
         let selDate = startOfDay(new Date());
         let weatherByDate = {};   // 'YYYY-MM-DD' -> {max, min, mean, code}
         let currentTemp = null;   // temperatura actual (solo aplica a hoy)
+        let weatherReady = false; // recién mostramos ropa cuando ya intentamos traer el clima
         const MIN_OFFSET = -7, MAX_OFFSET = 15;
 
         async function initApp() {
@@ -293,6 +294,8 @@
                 });
             } catch (e) {
                 weatherByDate = {}; currentTemp = null;
+            } finally {
+                weatherReady = true;
             }
         }
 
@@ -309,7 +312,10 @@
                 document.getElementById('temp-min').innerText = '--°';
                 setLucide('weather-icon', 'cloud-off', 'w-10 h-10');
                 document.getElementById('weather-icon').className = 'text-gray-300';
-                setAvatars('normal');
+                // Sin datos de clima: solo caemos al uniforme 'normal' si ya intentamos
+                // traer el pronóstico. Así evitamos mostrar la ropa de calor y después
+                // cambiarla al de frío (el parpadeo) en la carga inicial.
+                if (weatherReady) setAvatars('normal');
                 return;
             }
             if (isToday) now.innerText = (currentTemp != null ? currentTemp : Math.round(w.mean)) + '°';

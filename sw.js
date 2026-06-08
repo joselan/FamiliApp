@@ -1,8 +1,11 @@
 // Service Worker de FamiliApp
-// Cambiar la versión al actualizar archivos para forzar refresco de caché.
-const CACHE = 'familiapp-v11';
+// Estrategia: "red primero" para TODO lo del mismo origen, con la caché solo
+// como respaldo offline. Así, estando con internet, siempre se ve la última
+// versión (HTML e imágenes) sin quedar pegado en versiones viejas.
+const CACHE = 'familiapp-v12';
 
-// App shell + avatares: se cachean para que la app abra al instante y offline.
+// Lo mínimo para que abra offline. Se cachea al instalar y, además, cada
+// pedido exitoso refresca la caché (ver fetch).
 const ASSETS = [
   './',
   './index.html',
@@ -18,7 +21,7 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).catch(() => {}));
   self.skipWaiting();
 });
 
@@ -32,25 +35,19 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
+  if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
 
   // Solo manejamos pedidos del mismo origen (no Firebase, clima ni CDNs).
   if (url.origin !== self.location.origin) return;
 
-  // Imágenes y assets: primero caché (rápido), luego red de respaldo.
-  if (ASSETS.some((a) => url.pathname.endsWith(a.replace('./', '')))) {
-    e.respondWith(
-      caches.match(e.request).then((hit) => hit || fetch(e.request))
-    );
-    return;
-  }
-
-  // HTML: primero red (para ver cambios), con caché como respaldo offline.
+  // Red primero: traemos lo último y de paso refrescamos la caché.
+  // Si no hay internet, respondemos con lo último que tengamos guardado.
   e.respondWith(
     fetch(e.request)
       .then((res) => {
         const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(e.request, copy));
+        caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
         return res;
       })
       .catch(() => caches.match(e.request))
