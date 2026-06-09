@@ -363,9 +363,12 @@
         }
 
         // ---- Avatares ----
-        // Cuántas variantes de ropa de finde/feriado rotamos (pipe_finde1..N / pili_finde1..N).
-        // Si falta alguna imagen, cae a la versión genérica y, en última instancia, al uniforme.
-        const FINDE_VARIANTS = 6;
+        // Estilo de avatar: 'ilustrado' (dibujos il_*.webp) o 'foto' (fotos reales).
+        // Para volver atrás, cambiá esto a 'foto' (las fotos originales quedan intactas).
+        const AVATAR_STYLE = 'ilustrado';
+        const AVATAR_PREFIX = AVATAR_STYLE === 'ilustrado' ? 'il_' : '';
+        // Cuántas variantes de ropa de finde/feriado rotamos (1..N). Hay 3 dibujadas por chico.
+        const FINDE_VARIANTS = 3;
         // Feriados nacionales (días sin colegio -> ropa de finde). Formato 'YYYY-MM-DD'.
         // OJO: revisá/ajustá los movibles y los "puentes" cada año.
         const FERIADOS = [
@@ -396,7 +399,7 @@
                 if (kid === 'pipe' && ctx.football) add(`pipe_futbol_${t}`, 'pipe_futbol'); // botines (solo Pipe)
             }
             add(`${kid}_${t}`, `${kid}_normal`);
-            return list.map(n => n + '.webp');
+            return list.map(n => AVATAR_PREFIX + n + '.webp');
         }
         // Pone la primera imagen candidata que exista (si una da 404, prueba la siguiente).
         function setAvatar(elId, candidates) {
