@@ -252,6 +252,12 @@
         </div>
     </div>
 
+    <!-- VISOR DE FOTO (imagen del nene a pantalla completa, sin marco blanco) -->
+    <div id="photo-modal" class="hidden fixed inset-0 z-50 bg-black flex items-center justify-center" onclick="closePhoto()">
+        <button onclick="closePhoto()" class="absolute top-4 right-4 z-10 bg-white/20 backdrop-blur text-white p-2.5 rounded-full" aria-label="Cerrar"><i data-lucide="x" class="w-7 h-7"></i></button>
+        <img id="photo-img" src="" alt="" class="max-h-[100dvh] max-w-[100vw] w-auto h-auto object-contain block">
+    </div>
+
     <script>
         const ALLOWED = ['florenciabressan@gmail.com', 'joselanglois@gmail.com'];
         const DAYS = ['dom', 'lun', 'mar', 'mie', 'jue', 'vie', 'sab'];
@@ -825,11 +831,14 @@
             document.getElementById('detail-modal').classList.add('hidden');
         }
         function openKidDetail(kid) {
-            const nombre = kid === 'pipe' ? 'Pipe' : 'Pili';
-            const imgSrc = document.getElementById('img-' + kid).src;
-            // Solo la imagen completa del chico (sin menú ni recordatorios), encajada en la pantalla.
-            showDetail(`<img src="${imgSrc}" alt="${nombre}" class="block mx-auto w-auto max-h-[88dvh] rounded-[2rem]" onerror="this.style.display='none'">`);
+            // Abre la foto del chico a pantalla completa (sin tarjeta ni márgenes blancos).
+            const img = document.getElementById('photo-img');
+            img.src = document.getElementById('img-' + kid).src;
+            img.alt = kid === 'pipe' ? 'Pipe' : 'Pili';
+            document.getElementById('photo-modal').classList.remove('hidden');
+            lucide.createIcons();
         }
+        function closePhoto() { document.getElementById('photo-modal').classList.add('hidden'); }
         function openEventDetail(id) {
             const e = currentEvents.find(x => x.id === id);
             if (!e) return;
@@ -1435,7 +1444,8 @@
             let x0 = null, y0 = null;
             const modalsOpen = () =>
                 !document.getElementById('admin-panel').classList.contains('hidden') ||
-                !document.getElementById('detail-modal').classList.contains('hidden');
+                !document.getElementById('detail-modal').classList.contains('hidden') ||
+                !document.getElementById('photo-modal').classList.contains('hidden');
             el.addEventListener('touchstart', e => {
                 if (e.touches.length !== 1) { x0 = null; return; }
                 x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;
