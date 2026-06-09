@@ -94,7 +94,7 @@
                     <div id="menu-pipe" class="leading-snug"></div>
                 </div>
                 <div class="bg-white rounded-[2rem] card-shadow px-3 py-3">
-                    <ul id="specials-pipe" class="space-y-1 font-bold text-gray-700"></ul>
+                    <ul id="specials-pipe" class="space-y-1 font-bold text-gray-700 text-xl leading-snug"></ul>
                 </div>
             </div>
             <!-- PILI -->
@@ -106,15 +106,15 @@
                     <div id="menu-pili" class="leading-snug"></div>
                 </div>
                 <div class="bg-white rounded-[2rem] card-shadow px-3 py-3">
-                    <ul id="specials-pili" class="space-y-1 font-bold text-gray-700"></ul>
+                    <ul id="specials-pili" class="space-y-1 font-bold text-gray-700 text-xl leading-snug"></ul>
                 </div>
             </div>
         </section>
 
-        <!-- EVENTOS -->
-        <section class="bg-white rounded-[2rem] card-shadow p-4 big">
-            <h3 class="font-black text-sm uppercase text-gray-400 mb-2">Próximos eventos</h3>
-            <ul id="events-list" class="space-y-2 text-base"><li class="text-gray-400 text-sm">Cargando...</li></ul>
+        <!-- EVENTOS: cada evento en su propia tarjeta -->
+        <section class="big">
+            <h3 class="font-black text-sm uppercase text-gray-400 mb-2 px-1">Próximos eventos</h3>
+            <ul id="events-list" class="space-y-3"><li class="text-gray-400 text-sm px-1">Cargando...</li></ul>
         </section>
     </main>
 
@@ -236,9 +236,9 @@
     </div>
 
     <!-- MODAL DETALLE (al tocar una tarjeta) -->
-    <div id="detail-modal" class="hidden fixed inset-0 z-50 flex items-start justify-center bg-black/50 px-4 pt-5 pb-4 overflow-y-auto" onclick="closeDetail(event)">
-        <div class="bg-white rounded-[2rem] card-shadow max-w-sm w-full max-h-[90dvh] overflow-y-auto relative">
-            <button onclick="closeDetail()" class="absolute top-3 right-3 z-10 bg-white/80 backdrop-blur text-gray-500 p-1.5 rounded-full shadow" aria-label="Cerrar"><i data-lucide="x" class="w-5 h-5"></i></button>
+    <div id="detail-modal" class="hidden fixed inset-0 z-50 flex items-start justify-center bg-black/50 px-3 pt-4 pb-4 overflow-y-auto" onclick="closeDetail(event)">
+        <div class="bg-white rounded-[2rem] card-shadow w-[94vw] max-w-2xl max-h-[92dvh] overflow-y-auto relative">
+            <button onclick="closeDetail()" class="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur text-gray-500 p-2.5 rounded-full shadow" aria-label="Cerrar"><i data-lucide="x" class="w-7 h-7"></i></button>
             <div id="detail-content" class="big"></div>
         </div>
     </div>
@@ -482,7 +482,7 @@
                     .sort((a, b) => (a.fecha + (a.hora || '')).localeCompare(b.fecha + (b.hora || '')));
                 if (!currentEvents.length) { list.innerHTML = '<li class="text-gray-400 text-xs">No hay eventos próximos</li>'; return; }
                 list.innerHTML = currentEvents.slice(0, 6).map(e => `
-                    <li onclick="openEventDetail('${e.id}')" class="flex items-center gap-3 cursor-pointer active:opacity-60">
+                    <li onclick="openEventDetail('${e.id}')" class="bg-white rounded-[2rem] card-shadow p-4 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform">
                         <div class="text-center leading-none w-14 shrink-0">
                             <div class="text-lg font-black">${new Date(e.fecha + 'T00:00').getDate()}</div>
                             <div class="text-xs uppercase text-gray-400 font-bold">${new Date(e.fecha + 'T00:00').toLocaleDateString('es-AR', { month: 'short' })}</div>
@@ -778,31 +778,31 @@
             if (!e) return;
             let fecha = new Date(e.fecha + 'T00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
             fecha = fecha.charAt(0).toUpperCase() + fecha.slice(1);
-            const row = (icon, txt) => txt ? `<div class="flex items-center gap-3 py-2 border-t border-gray-100"><i data-lucide="${icon}" class="w-5 h-5 text-gray-400 shrink-0"></i><span class="font-semibold text-gray-700">${escapeHtml(txt)}</span></div>` : '';
+            const row = (icon, txt) => txt ? `<div class="flex items-center gap-3 py-3 border-t border-gray-100"><i data-lucide="${icon}" class="w-7 h-7 text-gray-400 shrink-0"></i><span class="font-semibold text-gray-700 text-lg">${escapeHtml(txt)}</span></div>` : '';
             const quienHtml = e.nino === 'ambos'
                 ? '<span class="text-blue-600 font-black">Pipe</span> <span class="text-gray-400">y</span> <span class="text-pink-600 font-black">Pili</span>'
                 : (e.nino === 'pipe' ? '<span class="text-blue-600 font-black">Pipe</span>' : '<span class="text-pink-600 font-black">Pili</span>');
-            const quienRow = `<div class="flex items-center gap-3 py-2 border-t border-gray-100"><i data-lucide="users" class="w-5 h-5 text-gray-400 shrink-0"></i><span class="font-semibold">${quienHtml}</span></div>`;
+            const quienRow = `<div class="flex items-center gap-3 py-3 border-t border-gray-100"><i data-lucide="users" class="w-7 h-7 text-gray-400 shrink-0"></i><span class="font-semibold text-lg">${quienHtml}</span></div>`;
             const flyer = e.flyer ? `
-                    <div class="mt-4 border-t border-gray-100 pt-3">
-                        <p class="text-[0.65rem] font-black uppercase tracking-widest text-gray-400 mb-2">Archivo original</p>
+                    <div class="mt-5 border-t border-gray-100 pt-4">
+                        <p class="text-[0.8rem] font-black uppercase tracking-widest text-gray-400 mb-2">Archivo original</p>
                         <a href="${e.flyer}" target="_blank" rel="noopener" class="block">
                             <img src="${e.flyer}" alt="Flyer del evento" class="w-full rounded-2xl border border-gray-200">
                         </a>
-                        <p class="text-[0.65rem] text-gray-400 mt-1">Tocá la imagen para verla en grande.</p>
+                        <p class="text-[0.8rem] text-gray-400 mt-1">Tocá la imagen para verla en grande.</p>
                     </div>` : '';
             showDetail(`
-                <div class="p-6">
-                    <p class="text-[0.65rem] font-black uppercase tracking-widest text-blue-500 mb-1">Evento</p>
-                    <h2 class="text-2xl font-black leading-tight mb-4">${escapeHtml(e.titulo)}</h2>
+                <div class="p-7">
+                    <p class="text-[0.8rem] font-black uppercase tracking-widest text-blue-500 mb-1">Evento</p>
+                    <h2 class="text-3xl font-black leading-tight mb-5">${escapeHtml(e.titulo)}</h2>
                     ${row('calendar', fecha)}
                     ${row('clock', e.hora || '')}
                     ${row('map-pin', e.lugar || '')}
                     ${quienRow}
                     ${flyer}
-                    <div class="flex gap-2 mt-5">
-                        <button onclick="editEvento('${e.id}')" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="pencil" class="w-5 h-5"></i> Editar</button>
-                        <button onclick="askDeleteEvento('${e.id}')" class="flex-1 bg-red-50 text-red-600 font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="trash-2" class="w-5 h-5"></i> Eliminar</button>
+                    <div class="flex gap-3 mt-6">
+                        <button onclick="editEvento('${e.id}')" class="flex-1 bg-blue-600 text-white font-bold text-lg py-4 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="pencil" class="w-6 h-6"></i> Editar</button>
+                        <button onclick="askDeleteEvento('${e.id}')" class="flex-1 bg-red-50 text-red-600 font-bold text-lg py-4 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="trash-2" class="w-6 h-6"></i> Eliminar</button>
                     </div>
                 </div>`);
         }
