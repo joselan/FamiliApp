@@ -363,12 +363,69 @@
         }
 
         // ---- Avatares ----
-        function setAvatars(state) {
-            const pipe = document.getElementById('img-pipe'), pili = document.getElementById('img-pili');
-            pipe.onload = () => pipe.classList.add('img-ready');
-            pili.onload = () => pili.classList.add('img-ready');
-            pipe.src = `pipe_${state}.webp`;
-            pili.src = `pili_${state}.webp`;
+        // Cuántas variantes de ropa de finde/feriado rotamos (pipe_finde1..N / pili_finde1..N).
+        // Si falta alguna imagen, cae a la versión genérica y, en última instancia, al uniforme.
+        const FINDE_VARIANTS = 6;
+        // Feriados nacionales (días sin colegio -> ropa de finde). Formato 'YYYY-MM-DD'.
+        // OJO: revisá/ajustá los movibles y los "puentes" cada año.
+        const FERIADOS = [
+            '2026-01-01', '2026-02-16', '2026-02-17', '2026-03-24', '2026-04-02', '2026-04-03',
+            '2026-05-01', '2026-05-25', '2026-06-15', '2026-06-20', '2026-07-09', '2026-08-17',
+            '2026-10-12', '2026-11-23', '2026-12-08', '2026-12-25'
+        ];
+        function isRainy(code) { return [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99].includes(code); }
+        function scheduleHasFootball(kid, dia) {
+            const items = (schedule[kid] && schedule[kid][dia]) || [];
+            return items.some(s => /f[uú]tbol|botines|⚽/i.test(s || ''));
+        }
+        function dayNumber(date) { return Math.floor(date.getTime() / 86400000); }
+
+        // Lista de imágenes candidatas, de la más específica a la más general.
+        // Se prueban en orden; la última (uniforme) siempre existe, así nunca queda sin foto.
+        function avatarCandidates(kid, ctx) {
+            const t = ctx.temp, list = [];
+            const add = (...ns) => ns.forEach(n => { if (!list.includes(n)) list.push(n); });
+            if (ctx.weekend) {
+                // Fin de semana / feriado: ropa de casa (Boca/Argentina para Pipe, unicornios/Minnie para Pili).
+                if (kid === 'pili' && ctx.rainy) add(`pili_finde${ctx.variant}_lluvia_${t}`, `pili_finde_lluvia_${t}`, 'pili_finde_lluvia');
+                add(`${kid}_finde${ctx.variant}_${t}`, `${kid}_finde${ctx.variant}`, `${kid}_finde_${t}`, `${kid}_finde`);
+                if (kid === 'pili' && ctx.rainy) add(`pili_lluvia_${t}`, 'pili_lluvia');
+            } else {
+                // Día de colegio.
+                if (kid === 'pili' && ctx.rainy) add(`pili_lluvia_${t}`, 'pili_lluvia');   // paraguas + botas (solo Pili)
+                if (kid === 'pipe' && ctx.football) add(`pipe_futbol_${t}`, 'pipe_futbol'); // botines (solo Pipe)
+            }
+            add(`${kid}_${t}`, `${kid}_normal`);
+            return list.map(n => n + '.webp');
+        }
+        // Pone la primera imagen candidata que exista (si una da 404, prueba la siguiente).
+        function setAvatar(elId, candidates) {
+            const el = document.getElementById(elId);
+            if (!el) return;
+            let i = 0;
+            const tryNext = () => {
+                if (i >= candidates.length) return;
+                const src = candidates[i++];
+                el.onerror = tryNext;
+                el.onload = () => el.classList.add('img-ready');
+                el.src = src;
+            };
+            tryNext();
+        }
+        // Decide y aplica la ropa de los dos chicos para el día ds, respetando el clima.
+        function updateAvatars(ds) {
+            const w = weatherByDate[ds];
+            if (!w && !weatherReady) return; // evita el parpadeo en la carga inicial
+            const isToday = ds === todayStr();
+            const rep = w ? ((isToday && currentTemp != null) ? currentTemp : Math.round(w.mean)) : null;
+            const temp = rep == null ? 'normal' : (rep < 12 ? 'mucho_frio' : (rep < 18 ? 'frio' : 'normal'));
+            const rainy = w ? isRainy(w.code) : false;
+            const date = new Date(ds + 'T00:00');
+            const weekend = [0, 6].includes(date.getDay()) || FERIADOS.includes(ds);
+            const dia = DAYS[date.getDay()];
+            const variant = (dayNumber(date) % FINDE_VARIANTS) + 1; // 1..N, rota día a día
+            setAvatar('img-pipe', avatarCandidates('pipe', { temp, rainy, weekend, football: scheduleHasFootball('pipe', dia), variant }));
+            setAvatar('img-pili', avatarCandidates('pili', { temp, rainy, weekend, variant }));
         }
 
         // ---- Clima ----
@@ -402,10 +459,9 @@
                 document.getElementById('temp-max').innerText = '--°';
                 document.getElementById('temp-min').innerText = '--°';
                 document.getElementById('weather-icon').textContent = '☁️';
-                // Sin datos de clima: solo caemos al uniforme 'normal' si ya intentamos
-                // traer el pronóstico. Así evitamos mostrar la ropa de calor y después
-                // cambiarla al de frío (el parpadeo) en la carga inicial.
-                if (weatherReady) setAvatars('normal');
+                // Sin datos de clima: igual elegimos la ropa (finde/fútbol) con temp 'normal',
+                // pero recién cuando ya intentamos traer el clima, para evitar parpadeo.
+                updateAvatars(ds);
                 return;
             }
             if (isToday) now.innerText = (currentTemp != null ? currentTemp : Math.round(w.mean)) + '°';
@@ -413,9 +469,8 @@
             document.getElementById('temp-max').innerText = Math.round(w.max) + '°';
             document.getElementById('temp-min').innerText = Math.round(w.min) + '°';
             document.getElementById('weather-icon').textContent = info.emoji;
-            // La ropa se decide con la temperatura del día (actual si es hoy, media si no).
-            const rep = (isToday && currentTemp != null) ? currentTemp : Math.round(w.mean);
-            setAvatars(rep < 12 ? 'mucho_frio' : (rep < 18 ? 'frio' : 'normal'));
+            // La ropa se decide según clima + día (finde/feriado, lluvia, fútbol).
+            updateAvatars(ds);
         }
         // Devuelve emoji a color (estilo Google) y texto según el código WMO
         function describeWeather(c) {
