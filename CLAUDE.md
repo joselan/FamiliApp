@@ -31,3 +31,20 @@ en `index.html`, con Firebase (Auth + Firestore) y un service worker (`sw.js`).
 - Idioma: español rioplatense.
 - Pendiente: `AI_ENDPOINT` (en `index.html`) está vacío → falta la URL del Worker de
   Cloudflare para encender la IA conversacional (ver `INSTRUCTIVO.md`).
+
+## Pendiente — Fotos de avatares (RECORDARLE al dueño cuando diga que está en la compu)
+
+La lógica de avatares ya elige la ropa por clima/día (`AVATAR_STYLE = 'foto'`,
+`updateAvatars`/`avatarCandidates` en `index.html`). Faltan **las fotos** (el dueño las
+arma). Formato: vertical 3:4, cuerpo entero, fondo claro, mismo encuadre que las actuales.
+Puede mandar PNG/JPG y se convierten a `.webp`. Sufijos de clima: `_normal`, `_frio`,
+`_mucho_frio`. Mientras falten, cae a la foto base (no se rompe nada).
+
+- **Finde/feriados (rotan, `FINDE_VARIANTS = 3`):**
+  - Pipe (Boca/Argentina): `pipe_finde1_{clima}` (Boca), `pipe_finde2_{clima}` (Argentina), `pipe_finde3_{clima}`.
+  - Pili (unicornio/Minnie/rosa): `pili_finde1_{clima}`, `pili_finde2_{clima}`, `pili_finde3_{clima}`.
+- **Lluvia (solo Pili):** `pili_lluvia_{clima}` (piloto + paraguas + botas).
+- **Fútbol (solo Pipe):** `pipe_futbol_{clima}` (ropa de fútbol + botines).
+
+(Probar findes deslizando a un sábado/domingo; fútbol = días con "fútbol/botines" en el
+horario de Pipe; lluvia = automático según el pronóstico.)

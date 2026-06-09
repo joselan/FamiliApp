@@ -826,32 +826,9 @@
         }
         function openKidDetail(kid) {
             const nombre = kid === 'pipe' ? 'Pipe' : 'Pili';
-            const nivel = kid === 'pipe' ? 'Primaria' : 'Jardín';
-            const tint = kid === 'pipe' ? 'amber' : 'pink';
-            let fecha = selDate.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
-            fecha = fecha.charAt(0).toUpperCase() + fecha.slice(1);
-            const dia = DAYS[selDate.getDay()];
-            const specials = (schedule[kid] && schedule[kid][dia]) || [];
-            const text = (currentMenu[kid] || '').trim();
-            const parts = text.split(/\s*·\s*Opci[oó]n:\s*/i);
-            let menuHtml = '<p class="text-gray-300 font-semibold">Sin menú cargado</p>';
-            if (parts[0]) {
-                menuHtml = `<p class="text-lg font-bold text-gray-800 leading-snug">${escapeHtml(parts[0])}</p>`;
-                if (parts[1]) menuHtml += `<p class="text-sm font-semibold text-gray-400 mt-1">Opción: ${escapeHtml(parts[1])}</p>`;
-            }
-            const specialsHtml = specials.length
-                ? `<div class="mt-4"><p class="text-[0.65rem] font-black uppercase tracking-wide text-gray-400 mb-2">Para llevar</p><ul class="space-y-1.5 font-bold text-gray-700">${specials.map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ul></div>`
-                : '';
             const imgSrc = document.getElementById('img-' + kid).src;
-            showDetail(`
-                <img src="${imgSrc}" alt="${nombre}" class="w-full h-auto block rounded-t-[2rem]"
-                     onerror="this.style.display='none'">
-                <div class="p-5">
-                    <h2 class="text-2xl font-black">${nombre} <span class="text-gray-300 text-base font-bold">· ${nivel}</span></h2>
-                    <p class="text-sm font-semibold text-gray-400 mb-4 capitalize">${fecha}</p>
-                    <div class="bg-${tint}-50 rounded-2xl p-4">${menuHtml}</div>
-                    ${specialsHtml}
-                </div>`);
+            // Solo la imagen completa del chico (sin menú ni recordatorios), encajada en la pantalla.
+            showDetail(`<img src="${imgSrc}" alt="${nombre}" class="block mx-auto w-auto max-h-[88dvh] rounded-[2rem]" onerror="this.style.display='none'">`);
         }
         function openEventDetail(id) {
             const e = currentEvents.find(x => x.id === id);
