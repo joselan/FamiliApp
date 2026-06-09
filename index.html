@@ -83,31 +83,31 @@
             </a>
         </header>
 
-        <!-- AVATARES + COMIDA -->
-        <section class="grid grid-cols-2 gap-3 big">
-            <div onclick="openKidDetail('pipe')" class="bg-white rounded-[2rem] overflow-hidden card-shadow flex flex-col cursor-pointer active:scale-[0.98] transition-transform">
-                <img id="img-pipe" src="" alt="Pipe" class="w-full aspect-[3/4] object-cover object-top block img-placeholder">
-                <div class="px-3 py-3 flex-1 border-t border-gray-100">
+        <!-- PERFILES: una columna por chico, con tarjetas separadas (uniforme, comida, actividades) -->
+        <section class="grid grid-cols-2 gap-3 big items-start">
+            <!-- PIPE -->
+            <div class="flex flex-col gap-3">
+                <div onclick="openKidDetail('pipe')" class="bg-white rounded-[2rem] overflow-hidden card-shadow cursor-pointer active:scale-[0.98] transition-transform">
+                    <img id="img-pipe" src="" alt="Pipe" class="w-full aspect-[3/4] object-cover object-top block img-placeholder">
+                </div>
+                <div class="bg-white rounded-[2rem] card-shadow px-3 py-3">
                     <div id="menu-pipe" class="leading-snug"></div>
                 </div>
-            </div>
-            <div onclick="openKidDetail('pili')" class="bg-white rounded-[2rem] overflow-hidden card-shadow flex flex-col cursor-pointer active:scale-[0.98] transition-transform">
-                <img id="img-pili" src="" alt="Pili" class="w-full aspect-[3/4] object-cover object-top block img-placeholder">
-                <div class="px-3 py-3 flex-1 border-t border-gray-100">
-                    <div id="menu-pili" class="leading-snug"></div>
+                <div class="bg-white rounded-[2rem] card-shadow px-3 py-3">
+                    <ul id="specials-pipe" class="space-y-1 font-bold text-gray-700"></ul>
                 </div>
             </div>
-        </section>
-
-        <!-- ACTIVIDADES EXTRACURRICULARES / PARA LLEVAR (una tarjeta por chico, sin título) -->
-        <section class="grid grid-cols-2 gap-3 big">
-            <div class="bg-white rounded-[2rem] card-shadow p-4">
-                <p class="font-black text-blue-600 mb-2">Pipe</p>
-                <ul id="specials-pipe" class="space-y-1 font-bold text-gray-700"></ul>
-            </div>
-            <div class="bg-white rounded-[2rem] card-shadow p-4">
-                <p class="font-black text-pink-600 mb-2">Pili</p>
-                <ul id="specials-pili" class="space-y-1 font-bold text-gray-700"></ul>
+            <!-- PILI -->
+            <div class="flex flex-col gap-3">
+                <div onclick="openKidDetail('pili')" class="bg-white rounded-[2rem] overflow-hidden card-shadow cursor-pointer active:scale-[0.98] transition-transform">
+                    <img id="img-pili" src="" alt="Pili" class="w-full aspect-[3/4] object-cover object-top block img-placeholder">
+                </div>
+                <div class="bg-white rounded-[2rem] card-shadow px-3 py-3">
+                    <div id="menu-pili" class="leading-snug"></div>
+                </div>
+                <div class="bg-white rounded-[2rem] card-shadow px-3 py-3">
+                    <ul id="specials-pili" class="space-y-1 font-bold text-gray-700"></ul>
+                </div>
             </div>
         </section>
 
@@ -228,7 +228,7 @@
                 <label class="flex items-center gap-2 mb-5 text-sm font-bold cursor-pointer">
                     <input id="ev-gcal" type="checkbox" checked class="w-5 h-5 rounded accent-blue-600"> Agregar también a Google Calendar
                 </label>
-                <button onclick="saveEvento()" class="w-full bg-black text-white font-bold py-4 rounded-2xl">Agregar evento</button>
+                <button onclick="saveEvento()" id="ev-save-btn" class="w-full bg-black text-white font-bold py-4 rounded-2xl">Agregar evento</button>
                 <p id="ev-status" class="text-center text-sm font-bold mt-3 h-5"></p>
                 <div id="ev-admin-list" class="mt-5 space-y-2"></div>
             </div>
@@ -236,8 +236,8 @@
     </div>
 
     <!-- MODAL DETALLE (al tocar una tarjeta) -->
-    <div id="detail-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-5" onclick="closeDetail(event)">
-        <div class="bg-white rounded-[2rem] card-shadow max-w-sm w-full max-h-[90vh] overflow-y-auto relative">
+    <div id="detail-modal" class="hidden fixed inset-0 z-50 flex items-start justify-center bg-black/50 px-4 pt-5 pb-4 overflow-y-auto" onclick="closeDetail(event)">
+        <div class="bg-white rounded-[2rem] card-shadow max-w-sm w-full max-h-[90dvh] overflow-y-auto relative">
             <button onclick="closeDetail()" class="absolute top-3 right-3 z-10 bg-white/80 backdrop-blur text-gray-500 p-1.5 rounded-full shadow" aria-label="Cerrar"><i data-lucide="x" class="w-5 h-5"></i></button>
             <div id="detail-content" class="big"></div>
         </div>
@@ -470,6 +470,8 @@
 
         // ---- Eventos ----
         let currentEvents = [];
+        let editingEventId = null;   // si está seteado, "Guardar" edita ese evento en vez de crear uno nuevo
+        let editingFlyer = null;     // flyer del evento que se está editando (para conservarlo si no se sube otro)
         async function loadEvents() {
             const list = document.getElementById('events-list');
             try {
@@ -516,6 +518,7 @@
                 const d = document.getElementById('admin-date');
                 if (!d.value) d.value = todayStr();
                 loadMenuForDate(d.value);
+                resetEventoForm();
                 document.getElementById('ev-fecha').value = todayStr();
                 buildHorarioForm();
                 loadComedor();
@@ -689,6 +692,12 @@
         }
 
         // Eventos (alta/baja a mano)
+        // Deja el formulario de eventos en modo "crear" (sin edición ni flyer pendiente).
+        function resetEventoForm() {
+            editingEventId = null; editingFlyer = null; flyerDataUrl = null;
+            const btn = document.getElementById('ev-save-btn'); if (btn) btn.innerText = 'Agregar evento';
+            const prev = document.getElementById('flyer-preview'); if (prev) prev.classList.add('hidden');
+        }
         async function saveEvento() {
             const titulo = document.getElementById('ev-titulo').value.trim();
             const fecha = document.getElementById('ev-fecha').value;
@@ -698,17 +707,28 @@
             const st = document.getElementById('ev-status');
             if (!titulo || !fecha) { setStatus(st, 'Poné al menos título y fecha', 'red'); return; }
             setStatus(st, 'Guardando...', 'gray');
+            // Flyer: si se subió uno nuevo lo usamos; si editamos y no se subió otro, conservamos el anterior.
+            const flyer = flyerDataUrl || (editingEventId ? editingFlyer : null);
+            const editing = !!editingEventId;
             try {
-                await db.collection('eventos').add({ titulo, fecha, hora, lugar, nino, createdAt: Date.now() });
-                // Opcional: replicar en Google Calendar
-                if (document.getElementById('ev-gcal').checked) {
-                    setStatus(st, 'Guardando en Google Calendar...', 'gray');
-                    try { await addToGoogleCalendar({ titulo, fecha, hora, lugar, nino }); }
-                    catch (gc) { setStatus(st, 'Guardado en la app (Calendar falló)', 'red'); loadEvents(); loadEventosAdmin(); return; }
+                const data = { titulo, fecha, hora, lugar, nino };
+                if (flyer) data.flyer = flyer;
+                if (editing) {
+                    await db.collection('eventos').doc(editingEventId).update(data);
+                } else {
+                    data.createdAt = Date.now();
+                    await db.collection('eventos').add(data);
+                    // Opcional: replicar en Google Calendar (solo al crear, para no duplicar)
+                    if (document.getElementById('ev-gcal').checked) {
+                        setStatus(st, 'Guardando en Google Calendar...', 'gray');
+                        try { await addToGoogleCalendar({ titulo, fecha, hora, lugar, nino }); }
+                        catch (gc) { setStatus(st, 'Guardado en la app (Calendar falló)', 'red'); resetEventoForm(); loadEvents(); loadEventosAdmin(); return; }
+                    }
                 }
+                resetEventoForm();
                 document.getElementById('ev-titulo').value = '';
                 document.getElementById('ev-lugar').value = '';
-                setStatus(st, '¡Evento agregado!', 'green');
+                setStatus(st, editing ? '¡Cambios guardados!' : '¡Evento agregado!', 'green');
                 loadEvents(); loadEventosAdmin();
             } catch (e) { setStatus(st, 'Error al guardar', 'red'); }
         }
@@ -759,7 +779,18 @@
             let fecha = new Date(e.fecha + 'T00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
             fecha = fecha.charAt(0).toUpperCase() + fecha.slice(1);
             const row = (icon, txt) => txt ? `<div class="flex items-center gap-3 py-2 border-t border-gray-100"><i data-lucide="${icon}" class="w-5 h-5 text-gray-400 shrink-0"></i><span class="font-semibold text-gray-700">${escapeHtml(txt)}</span></div>` : '';
-            const quien = e.nino === 'ambos' ? 'Pipe y Pili' : (e.nino === 'pipe' ? 'Pipe' : 'Pili');
+            const quienHtml = e.nino === 'ambos'
+                ? '<span class="text-blue-600 font-black">Pipe</span> <span class="text-gray-400">y</span> <span class="text-pink-600 font-black">Pili</span>'
+                : (e.nino === 'pipe' ? '<span class="text-blue-600 font-black">Pipe</span>' : '<span class="text-pink-600 font-black">Pili</span>');
+            const quienRow = `<div class="flex items-center gap-3 py-2 border-t border-gray-100"><i data-lucide="users" class="w-5 h-5 text-gray-400 shrink-0"></i><span class="font-semibold">${quienHtml}</span></div>`;
+            const flyer = e.flyer ? `
+                    <div class="mt-4 border-t border-gray-100 pt-3">
+                        <p class="text-[0.65rem] font-black uppercase tracking-widest text-gray-400 mb-2">Archivo original</p>
+                        <a href="${e.flyer}" target="_blank" rel="noopener" class="block">
+                            <img src="${e.flyer}" alt="Flyer del evento" class="w-full rounded-2xl border border-gray-200">
+                        </a>
+                        <p class="text-[0.65rem] text-gray-400 mt-1">Tocá la imagen para verla en grande.</p>
+                    </div>` : '';
             showDetail(`
                 <div class="p-6">
                     <p class="text-[0.65rem] font-black uppercase tracking-widest text-blue-500 mb-1">Evento</p>
@@ -767,8 +798,38 @@
                     ${row('calendar', fecha)}
                     ${row('clock', e.hora || '')}
                     ${row('map-pin', e.lugar || '')}
-                    ${row('users', quien)}
+                    ${quienRow}
+                    ${flyer}
+                    <div class="flex gap-2 mt-5">
+                        <button onclick="editEvento('${e.id}')" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="pencil" class="w-5 h-5"></i> Editar</button>
+                        <button onclick="askDeleteEvento('${e.id}')" class="flex-1 bg-red-50 text-red-600 font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="trash-2" class="w-5 h-5"></i> Eliminar</button>
+                    </div>
                 </div>`);
+        }
+        // Editar evento: abre el panel en la pestaña Eventos con los datos cargados.
+        function editEvento(id) {
+            const e = currentEvents.find(x => x.id === id);
+            if (!e) return;
+            closeDetail();
+            if (document.getElementById('admin-panel').classList.contains('hidden')) toggleAdminPanel();
+            showTab('eventos');
+            document.getElementById('ev-titulo').value = e.titulo || '';
+            document.getElementById('ev-fecha').value = e.fecha || '';
+            document.getElementById('ev-hora').value = e.hora || '';
+            document.getElementById('ev-lugar').value = e.lugar || '';
+            document.getElementById('ev-nino').value = e.nino || 'ambos';
+            editingEventId = id;
+            editingFlyer = e.flyer || null;
+            flyerDataUrl = null;
+            const btn = document.getElementById('ev-save-btn'); if (btn) btn.innerText = 'Guardar cambios';
+            document.getElementById('flyer-preview').classList.add('hidden');
+            setStatus(document.getElementById('ev-status'), 'Editando evento — cambiá lo que quieras y guardá', 'gray');
+            lucide.createIcons();
+        }
+        function askDeleteEvento(id) {
+            if (!confirm('¿Eliminar este evento? No se puede deshacer.')) return;
+            deleteEvento(id);
+            closeDetail();
         }
 
         // ---- Google Calendar ----
@@ -832,7 +893,24 @@
         }
         // Datos del último flyer leído (para la vista previa con resaltado)
         let flyerWords = [], flyerURL = null, flyerImgEl = null, flyerNatW = 0, flyerNatH = 0;
+        let flyerDataUrl = null;     // flyer comprimido (dataURL) para guardar junto al evento
         function loadImageEl(src) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
+        // Comprime una imagen a un JPEG dataURL chico para guardarlo en Firestore (límite ~1MB por doc).
+        // Baja la calidad hasta entrar en el presupuesto; si no entra, devuelve null (no se guarda el flyer).
+        function flyerToDataUrl(img) {
+            try {
+                let w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+                const maxDim = 1000, scale = Math.min(1, maxDim / Math.max(w, h));
+                w = Math.round(w * scale); h = Math.round(h * scale);
+                const c = document.createElement('canvas'); c.width = w; c.height = h;
+                c.getContext('2d').drawImage(img, 0, 0, w, h);
+                for (const q of [0.6, 0.45, 0.35, 0.25]) {
+                    const u = c.toDataURL('image/jpeg', q);
+                    if (u.length < 900000) return u;
+                }
+            } catch (e) { /* ignorar */ }
+            return null;
+        }
         async function processFlyer(file) {
             if (!file) return;
             const st = document.getElementById('flyer-status');
@@ -845,6 +923,7 @@
                 // Dibujamos a un canvas a tamaño real: así los recuadros del OCR coinciden con la imagen
                 flyerImgEl = await loadImageEl(flyerURL);
                 flyerNatW = flyerImgEl.naturalWidth || 1; flyerNatH = flyerImgEl.naturalHeight || 1;
+                flyerDataUrl = flyerToDataUrl(flyerImgEl);   // versión comprimida para guardar con el evento
                 const cv = document.createElement('canvas');
                 cv.width = flyerNatW; cv.height = flyerNatH;
                 cv.getContext('2d').drawImage(flyerImgEl, 0, 0);
@@ -1237,6 +1316,7 @@
         function aiAddEvent() {
             document.getElementById('ai-menu').classList.add('hidden');
             if (document.getElementById('admin-panel').classList.contains('hidden')) toggleAdminPanel();
+            resetEventoForm();
             showTab('eventos'); lucide.createIcons();
         }
         function aiPickFile() {
@@ -1246,6 +1326,7 @@
         function aiUpload(file) {
             if (!file) return;
             if (document.getElementById('admin-panel').classList.contains('hidden')) toggleAdminPanel();
+            resetEventoForm();
             showTab('eventos'); lucide.createIcons();
             processFlyer(file);
             aiRespond('📎 Subí el archivo y lo estoy leyendo en <b>Eventos</b>. Revisá los datos.');
