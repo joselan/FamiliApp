@@ -72,17 +72,18 @@
                 <button onclick="changeDay(1)" class="text-gray-400 p-1 shrink-0 active:scale-90 transition-transform" aria-label="Día siguiente"><i data-lucide="chevron-right" class="w-12 h-12"></i></button>
             </div>
 
-            <!-- CLIMA + OPCIONES -->
-            <div class="flex items-stretch gap-2">
-                <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" rel="noopener" class="flex-1 bg-white px-3 py-3 rounded-[2rem] card-shadow flex items-center justify-center min-w-0">
-                    <span id="weather-temps" class="flex-1 min-w-0 flex items-center justify-center gap-2 whitespace-nowrap overflow-hidden leading-none font-black">
-                        <span id="weather-now">--°</span>
-                        <span id="weather-icon" class="shrink-0"></span>
-                        <span id="temp-min" class="text-sky-400">--°</span>
-                        <span id="temp-max" class="text-red-500">--°</span>
-                    </span>
-                </a>
-                <button onclick="toggleAdminPanel()" class="bg-blue-600 text-white px-4 rounded-[2rem] card-shadow shrink-0 flex items-center gap-2 font-black" aria-label="Opciones"><i data-lucide="settings" class="w-6 h-6"></i><span>Opciones</span></button>
+            <!-- CLIMA (grande, con lugar) + OPCIONES -->
+            <div class="bg-white rounded-[2rem] card-shadow px-4 pt-2 pb-2.5">
+                <div class="flex items-center justify-between mb-1">
+                    <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" rel="noopener" class="flex items-center gap-1 text-gray-400 font-bold leading-none" style="font-size:0.95rem"><i data-lucide="map-pin" class="w-4 h-4"></i> Liniers</a>
+                    <button onclick="toggleAdminPanel()" class="bg-blue-600 text-white pl-3 pr-4 py-2 rounded-full card-shadow shrink-0 flex items-center gap-1.5 font-black leading-none" style="font-size:0.95rem" aria-label="Opciones"><i data-lucide="settings" class="w-5 h-5"></i> Opciones</button>
+                </div>
+                <span id="weather-temps" class="w-full flex items-center justify-center gap-3 whitespace-nowrap overflow-hidden leading-none font-black">
+                    <span id="weather-now">--°</span>
+                    <span id="weather-icon" class="shrink-0"></span>
+                    <span id="temp-min" class="text-sky-400">--°</span>
+                    <span id="temp-max" class="text-red-500">--°</span>
+                </span>
             </div>
         </header>
 
@@ -99,6 +100,8 @@
                 <div class="bg-white rounded-[2rem] card-shadow px-3 py-3">
                     <ul id="specials-pipe" class="space-y-1 font-bold text-gray-700 text-xl leading-snug"></ul>
                 </div>
+                <!-- Eventos de Pipe: caen acá, justo debajo de lo suyo (no alineados con Pili) -->
+                <ul id="events-pipe" class="space-y-3"></ul>
             </div>
             <!-- PILI -->
             <div class="flex flex-col gap-3">
@@ -111,13 +114,7 @@
                 <div class="bg-white rounded-[2rem] card-shadow px-3 py-3">
                     <ul id="specials-pili" class="space-y-1 font-bold text-gray-700 text-xl leading-snug"></ul>
                 </div>
-            </div>
-        </section>
-
-        <!-- EVENTOS: una columna por chico (sin títulos). Los de "los dos" aparecen en ambas. -->
-        <section class="big">
-            <div class="grid grid-cols-2 gap-3 items-start">
-                <ul id="events-pipe" class="space-y-3"></ul>
+                <!-- Eventos de Pili: caen acá, justo debajo de lo suyo -->
                 <ul id="events-pili" class="space-y-3"></ul>
             </div>
         </section>
@@ -615,18 +612,21 @@
                 const n = (e.nino === 'pipe' || e.nino === 'pili') ? e.nino : 'ambos';
                 return n === kid || n === 'ambos';
             }).slice(0, 8);
-            if (!evs.length) { el.innerHTML = '<li class="text-gray-300 font-semibold px-1">Sin eventos</li>'; return; }
+            if (!evs.length) { el.innerHTML = ''; return; }
             el.innerHTML = evs.map(e => {
                 const d = new Date(e.fecha + 'T00:00');
+                const mes = d.toLocaleDateString('es-AR', { month: 'short' }).replace('.', '').toUpperCase();
                 const sub = `${e.hora ? escapeHtml(e.hora) + ' · ' : ''}${escapeHtml(e.lugar || '')}`;
                 return `
-                    <li onclick="openEventDetail('${e.id}')" class="bg-white rounded-[2rem] card-shadow p-4 cursor-pointer active:scale-[0.98] transition-transform">
-                        <div class="flex items-baseline gap-2 leading-none">
-                            <span class="text-2xl font-black">${d.getDate()}</span>
-                            <span class="text-xs uppercase text-gray-400 font-bold">${d.toLocaleDateString('es-AR', { month: 'short' })}</span>
+                    <li onclick="openEventDetail('${e.id}')" class="bg-white rounded-[2rem] card-shadow p-3 cursor-pointer active:scale-[0.98] transition-transform flex items-center gap-3">
+                        <div class="shrink-0 w-12 rounded-xl overflow-hidden text-center leading-none border border-gray-200 bg-white">
+                            <div class="bg-rose-500 text-white text-[10px] font-black uppercase tracking-wide py-[3px]">${mes}</div>
+                            <div class="text-[22px] font-black text-gray-800 py-1">${d.getDate()}</div>
                         </div>
-                        <p class="font-bold text-base leading-snug mt-2">${escapeHtml(e.titulo)}</p>
-                        ${sub ? `<p class="text-xs text-gray-400 truncate mt-1">${sub}</p>` : ''}
+                        <div class="min-w-0 flex-1">
+                            <p class="font-bold text-base leading-snug">${escapeHtml(e.titulo)}</p>
+                            ${sub ? `<p class="text-xs text-gray-400 truncate mt-1">${sub}</p>` : ''}
+                        </div>
                     </li>`;
             }).join('');
         }
@@ -1588,7 +1588,7 @@
         function fitHeader() {
             requestAnimationFrame(() => {
                 fitText(document.getElementById('today-date'), 60);
-                fitText(document.getElementById('weather-temps'), 34);
+                fitText(document.getElementById('weather-temps'), 56);
             });
         }
         window.addEventListener('resize', fitHeader);
