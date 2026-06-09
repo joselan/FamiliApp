@@ -60,27 +60,30 @@
 
     <!-- APP -->
     <main id="app-container" class="w-full mx-auto p-3 pb-48 min-h-screen flex flex-col gap-3 hidden">
-        <!-- FECHA + CONFIG + CLIMA: en el mismo renglón -->
-        <header class="flex items-stretch gap-2">
-            <!-- TARJETA FECHA (una sola línea grande, con flechas para cambiar de día) -->
-            <div class="flex-1 bg-white rounded-[2rem] card-shadow flex items-center px-0.5 py-3 min-w-0">
-                <button onclick="changeDay(-1)" class="text-gray-500 p-0.5 shrink-0" aria-label="Día anterior"><i data-lucide="chevron-left" class="w-8 h-8"></i></button>
-                <p id="today-date" class="flex-1 text-center min-w-0 font-black text-xl tracking-tight leading-none whitespace-nowrap overflow-hidden text-ellipsis">—</p>
-                <button onclick="changeDay(1)" class="text-gray-500 p-0.5 shrink-0" aria-label="Día siguiente"><i data-lucide="chevron-right" class="w-8 h-8"></i></button>
+        <!-- FECHA (franja completa) -->
+        <header class="flex flex-col gap-2">
+            <!-- Fecha grande de punta a punta; flechas grandes en las puntas; tocar el centro abre el calendario -->
+            <div class="bg-white rounded-[2rem] card-shadow flex items-center px-1 py-2.5">
+                <button onclick="changeDay(-1)" class="text-gray-400 p-1 shrink-0 active:scale-90 transition-transform" aria-label="Día anterior"><i data-lucide="chevron-left" class="w-12 h-12"></i></button>
+                <div class="relative flex-1 min-w-0">
+                    <p id="today-date" class="text-center min-w-0 font-black tracking-tight leading-none whitespace-nowrap overflow-hidden">—</p>
+                    <input id="date-picker" type="date" onchange="jumpToDate(this.value)" aria-label="Elegir fecha en el calendario" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                </div>
+                <button onclick="changeDay(1)" class="text-gray-400 p-1 shrink-0 active:scale-90 transition-transform" aria-label="Día siguiente"><i data-lucide="chevron-right" class="w-12 h-12"></i></button>
             </div>
 
-            <!-- CONFIG (en el medio) -->
-            <button onclick="toggleAdminPanel()" class="bg-blue-600 text-white p-3 rounded-2xl shadow-lg shrink-0 self-center" aria-label="Menú"><i data-lucide="menu" class="w-6 h-6"></i></button>
-
-            <!-- TARJETA CLIMA (clickable): actual, ícono, mínima (azul), máxima (rojo) -->
-            <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" rel="noopener" class="flex-1 bg-white px-2 py-3 rounded-[2rem] card-shadow flex items-center justify-center min-w-0">
-                <span id="weather-temps" class="flex-1 min-w-0 flex items-center justify-center gap-1.5 whitespace-nowrap overflow-hidden leading-none font-black">
-                    <span id="weather-now">--°</span>
-                    <span id="weather-icon" class="text-amber-400"><i data-lucide="loader"></i></span>
-                    <span id="temp-min" class="text-sky-400">--°</span>
-                    <span id="temp-max" class="text-red-500">--°</span>
-                </span>
-            </a>
+            <!-- CLIMA + OPCIONES -->
+            <div class="flex items-stretch gap-2">
+                <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" rel="noopener" class="flex-1 bg-white px-3 py-3 rounded-[2rem] card-shadow flex items-center justify-center min-w-0">
+                    <span id="weather-temps" class="flex-1 min-w-0 flex items-center justify-center gap-2 whitespace-nowrap overflow-hidden leading-none font-black">
+                        <span id="weather-now">--°</span>
+                        <span id="weather-icon" class="shrink-0"></span>
+                        <span id="temp-min" class="text-sky-400">--°</span>
+                        <span id="temp-max" class="text-red-500">--°</span>
+                    </span>
+                </a>
+                <button onclick="toggleAdminPanel()" class="bg-blue-600 text-white px-4 rounded-[2rem] card-shadow shrink-0 flex items-center gap-2 font-black" aria-label="Opciones"><i data-lucide="settings" class="w-6 h-6"></i><span>Opciones</span></button>
+            </div>
         </header>
 
         <!-- PERFILES: una columna por chico, con tarjetas separadas (uniforme, comida, actividades) -->
@@ -111,18 +114,11 @@
             </div>
         </section>
 
-        <!-- EVENTOS: una columna por chico. Los de "los dos" aparecen como tarjeta en ambas. -->
+        <!-- EVENTOS: una columna por chico (sin títulos). Los de "los dos" aparecen en ambas. -->
         <section class="big">
-            <h3 class="font-black text-sm uppercase text-gray-400 mb-2 px-1">Próximos eventos</h3>
             <div class="grid grid-cols-2 gap-3 items-start">
-                <div>
-                    <p class="font-black text-blue-600 mb-2 px-1">Pipe</p>
-                    <ul id="events-pipe" class="space-y-3"><li class="text-gray-400 text-sm px-1">Cargando...</li></ul>
-                </div>
-                <div>
-                    <p class="font-black text-pink-600 mb-2 px-1">Pili</p>
-                    <ul id="events-pili" class="space-y-3"><li class="text-gray-400 text-sm px-1">Cargando...</li></ul>
-                </div>
+                <ul id="events-pipe" class="space-y-3"></ul>
+                <ul id="events-pili" class="space-y-3"></ul>
             </div>
         </section>
     </main>
@@ -151,7 +147,7 @@
     <div id="admin-panel" class="hidden fixed inset-0 z-50 flex items-start justify-center bg-black/50 px-4 pt-5 pb-4">
         <div class="bg-white w-[90vw] max-w-3xl rounded-[2.5rem] p-6 card-shadow max-h-[90dvh] overflow-y-auto panel-text">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-black">Configuración</h2>
+                <h2 class="text-xl font-black">Opciones</h2>
                 <button onclick="toggleAdminPanel()" class="text-gray-400 p-1" aria-label="Cerrar"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
 
@@ -338,10 +334,17 @@
         function dayOffset(d) { return Math.round((startOfDay(d) - startOfDay(new Date())) / 86400000); }
 
         function changeDay(delta) {
-            const n = new Date(selDate); n.setDate(n.getDate() + delta);
-            const off = dayOffset(n);
-            if (off < MIN_OFFSET || off > MAX_OFFSET) return;
+            let off = dayOffset(selDate) + delta;
+            off = Math.max(MIN_OFFSET, Math.min(MAX_OFFSET, off)); // las flechas se mueven dentro del rango con clima
+            const n = startOfDay(new Date()); n.setDate(n.getDate() + off);
             selDate = startOfDay(n);
+            renderDay();
+            lucide.createIcons();
+        }
+        // Saltar a cualquier fecha desde el calendario (sin límite de rango).
+        function jumpToDate(val) {
+            if (!val) return;
+            selDate = startOfDay(new Date(val + 'T00:00'));
             renderDay();
             lucide.createIcons();
         }
@@ -354,6 +357,7 @@
             wd = wd.charAt(0).toUpperCase() + wd.slice(1);
             const mo = selDate.toLocaleDateString('es-AR', { month: 'short' }).replace('.', '');
             document.getElementById('today-date').innerText = `${wd} ${selDate.getDate()} ${mo}`;
+            const dp = document.getElementById('date-picker'); if (dp) dp.value = ds; // el calendario abre en este día
             applyWeather(ds);
             loadMenuFor(ds);
             renderSpecials(ds);
@@ -467,7 +471,7 @@
                 now.innerText = '--°';
                 document.getElementById('temp-max').innerText = '--°';
                 document.getElementById('temp-min').innerText = '--°';
-                document.getElementById('weather-icon').textContent = '☁️';
+                document.getElementById('weather-icon').innerHTML = weatherIconSVG(3);
                 // Sin datos de clima: igual elegimos la ropa (finde/fútbol) con temp 'normal',
                 // pero recién cuando ya intentamos traer el clima, para evitar parpadeo.
                 updateAvatars(ds);
@@ -477,7 +481,8 @@
             const info = describeWeather(w.code);
             document.getElementById('temp-max').innerText = Math.round(w.max) + '°';
             document.getElementById('temp-min').innerText = Math.round(w.min) + '°';
-            document.getElementById('weather-icon').textContent = info.emoji;
+            const wi = document.getElementById('weather-icon');
+            wi.innerHTML = weatherIconSVG(w.code); wi.title = info.txt;
             // La ropa se decide según clima + día (finde/feriado, lluvia, fútbol).
             updateAvatars(ds);
         }
@@ -493,6 +498,29 @@
             if ([71, 73, 75, 77, 85, 86].includes(c)) return { emoji: '❄️', txt: 'Nieve' };
             if ([95, 96, 99].includes(c)) return { emoji: '⛈️', txt: 'Tormenta' };
             return { emoji: '☁️', txt: 'Variable' };
+        }
+        // Ícono de clima flat y a color (SVG), estilo set adjunto, según el código WMO.
+        function weatherIconSVG(code) {
+            const C = '#a9d6f5', SUN = '#fdb515', RAY = '#fbb13c', DROP = '#4f9fe0', SNOW = '#e3f2fc', BOLT = '#f7b32b', FOG = '#9fb6c6';
+            const cloud = (dy = 0) => `<g transform="translate(0 ${dy})"><circle cx="12" cy="15" r="5.6" fill="${C}"/><circle cx="19" cy="13" r="6.6" fill="${C}"/><circle cx="23" cy="16" r="4.6" fill="${C}"/><rect x="8" y="15" width="16.6" height="6.8" rx="3.4" fill="${C}"/></g>`;
+            const sun = (cx, cy, r) => {
+                let rays = '';
+                for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4, c1 = Math.cos(a), s1 = Math.sin(a); rays += `<line x1="${(cx + c1 * (r + 2.4)).toFixed(1)}" y1="${(cy + s1 * (r + 2.4)).toFixed(1)}" x2="${(cx + c1 * (r + 5.8)).toFixed(1)}" y2="${(cy + s1 * (r + 5.8)).toFixed(1)}"/>`; }
+                return `<g stroke="${RAY}" stroke-width="2.2" stroke-linecap="round">${rays}</g><circle cx="${cx}" cy="${cy}" r="${r}" fill="${SUN}"/>`;
+            };
+            const dropsAt = (color) => [11, 16, 21].map(x => `<line x1="${x}" y1="24" x2="${x - 2}" y2="29" stroke="${color}" stroke-width="2.6" stroke-linecap="round"/>`).join('');
+            const flakes = () => [11, 16, 21].map(x => `<circle cx="${x}" cy="26.5" r="1.9" fill="${SNOW}" stroke="#bfe0f5" stroke-width="0.8"/>`).join('');
+            let inner;
+            if (code === 0) inner = sun(16, 16, 6.5);
+            else if (code === 1 || code === 2) inner = sun(10.5, 11, 4.4) + cloud(2);
+            else if (code === 3) inner = cloud(0);
+            else if ([45, 48].includes(code)) inner = cloud(-1) + `<g stroke="${FOG}" stroke-width="2.2" stroke-linecap="round"><line x1="9" y1="25" x2="23" y2="25"/><line x1="11" y1="29" x2="21" y2="29"/></g>`;
+            else if ([51, 53, 55, 56, 57].includes(code)) inner = cloud(-1) + dropsAt(DROP);
+            else if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) inner = cloud(-1) + dropsAt(DROP);
+            else if ([71, 73, 75, 77, 85, 86].includes(code)) inner = cloud(-1) + flakes();
+            else if ([95, 96, 99].includes(code)) inner = cloud(-1) + `<path d="M17 23l-4.2 5.2H16l-1 4 5.2-6.2H17l1.8-3z" fill="${BOLT}"/>`;
+            else inner = cloud(0);
+            return `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
         }
 
         // ---- Materias especiales / horario ----
@@ -1339,8 +1367,8 @@
         // Ajusta fecha y clima para que llenen sus tarjetas
         function fitHeader() {
             requestAnimationFrame(() => {
-                fitText(document.getElementById('today-date'), 40);
-                fitText(document.getElementById('weather-temps'), 38);
+                fitText(document.getElementById('today-date'), 60);
+                fitText(document.getElementById('weather-temps'), 34);
             });
         }
         window.addEventListener('resize', fitHeader);
