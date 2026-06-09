@@ -17,7 +17,7 @@
         html, body { height: 100%; margin: 0; }
         body { font-family: 'Inter', sans-serif; background-color: #f4f4f5; }
         #app-container { min-height: 100dvh; }
-        .card-shadow { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02); }
+        .card-shadow { box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06), 0 12px 24px -8px rgba(0, 0, 0, 0.16); }
         .hidden { display: none !important; }
         .img-placeholder { opacity: 0; transition: opacity 0.3s ease-in; }
         .img-ready { opacity: 1; }
@@ -99,18 +99,15 @@
             </div>
         </section>
 
-        <!-- ACTIVIDADES EXTRACURRICULARES / PARA LLEVAR -->
-        <section class="bg-white rounded-[2rem] card-shadow p-4 big">
-            <h3 class="font-black text-sm uppercase text-gray-400 mb-3">Actividades</h3>
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <p class="font-black text-blue-600 mb-1">Pipe</p>
-                    <ul id="specials-pipe" class="space-y-1 font-bold text-gray-700"></ul>
-                </div>
-                <div>
-                    <p class="font-black text-pink-600 mb-1">Pili</p>
-                    <ul id="specials-pili" class="space-y-1 font-bold text-gray-700"></ul>
-                </div>
+        <!-- ACTIVIDADES EXTRACURRICULARES / PARA LLEVAR (una tarjeta por chico, sin título) -->
+        <section class="grid grid-cols-2 gap-3 big">
+            <div class="bg-white rounded-[2rem] card-shadow p-4">
+                <p class="font-black text-blue-600 mb-2">Pipe</p>
+                <ul id="specials-pipe" class="space-y-1 font-bold text-gray-700"></ul>
+            </div>
+            <div class="bg-white rounded-[2rem] card-shadow p-4">
+                <p class="font-black text-pink-600 mb-2">Pili</p>
+                <ul id="specials-pili" class="space-y-1 font-bold text-gray-700"></ul>
             </div>
         </section>
 
@@ -501,9 +498,13 @@
             }
         }
         function kidBadge(n) {
-            const map = { pipe: ['Pipe', 'bg-blue-100 text-blue-700'], pili: ['Pili', 'bg-pink-100 text-pink-700'], ambos: ['Los dos', 'bg-gray-100 text-gray-600'] };
-            const [t, c] = map[n] || map.ambos;
-            return `<span class="text-xs font-black px-2 py-1 rounded-full ${c} shrink-0">${t}</span>`;
+            const chip = (t, c) => `<span class="text-xs font-black px-2 py-1 rounded-full ${c} shrink-0">${t}</span>`;
+            const pipe = chip('Pipe', 'bg-blue-100 text-blue-700');
+            const pili = chip('Pili', 'bg-pink-100 text-pink-700');
+            if (n === 'pipe') return pipe;
+            if (n === 'pili') return pili;
+            // Los dos: mostramos los dos nombres, cada uno en su color.
+            return `<span class="flex flex-col items-end gap-1 shrink-0">${pipe}${pili}</span>`;
         }
 
         // ---- Panel Config ----
