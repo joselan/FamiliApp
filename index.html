@@ -111,10 +111,19 @@
             </div>
         </section>
 
-        <!-- EVENTOS: cada evento en su propia tarjeta -->
+        <!-- EVENTOS: una columna por chico. Los de "los dos" aparecen como tarjeta en ambas. -->
         <section class="big">
             <h3 class="font-black text-sm uppercase text-gray-400 mb-2 px-1">Próximos eventos</h3>
-            <ul id="events-list" class="space-y-3"><li class="text-gray-400 text-sm px-1">Cargando...</li></ul>
+            <div class="grid grid-cols-2 gap-3 items-start">
+                <div>
+                    <p class="font-black text-blue-600 mb-2 px-1">Pipe</p>
+                    <ul id="events-pipe" class="space-y-3"><li class="text-gray-400 text-sm px-1">Cargando...</li></ul>
+                </div>
+                <div>
+                    <p class="font-black text-pink-600 mb-2 px-1">Pili</p>
+                    <ul id="events-pili" class="space-y-3"><li class="text-gray-400 text-sm px-1">Cargando...</li></ul>
+                </div>
+            </div>
         </section>
     </main>
 
@@ -473,31 +482,44 @@
         let editingEventId = null;   // si está seteado, "Guardar" edita ese evento en vez de crear uno nuevo
         let editingFlyer = null;     // flyer del evento que se está editando (para conservarlo si no se sube otro)
         async function loadEvents() {
-            const list = document.getElementById('events-list');
+            const pipeEl = document.getElementById('events-pipe');
+            const piliEl = document.getElementById('events-pili');
             try {
                 const snap = await db.collection('eventos').get();
                 const hoy = todayStr();
                 currentEvents = snap.docs.map(d => ({ id: d.id, ...d.data() }))
                     .filter(e => e.fecha >= hoy)
                     .sort((a, b) => (a.fecha + (a.hora || '')).localeCompare(b.fecha + (b.hora || '')));
-                if (!currentEvents.length) { list.innerHTML = '<li class="text-gray-400 text-xs">No hay eventos próximos</li>'; return; }
-                list.innerHTML = currentEvents.slice(0, 6).map(e => `
-                    <li onclick="openEventDetail('${e.id}')" class="bg-white rounded-[2rem] card-shadow p-4 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform">
-                        <div class="text-center leading-none w-14 shrink-0">
-                            <div class="text-lg font-black">${new Date(e.fecha + 'T00:00').getDate()}</div>
-                            <div class="text-xs uppercase text-gray-400 font-bold">${new Date(e.fecha + 'T00:00').toLocaleDateString('es-AR', { month: 'short' })}</div>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="font-bold truncate">${escapeHtml(e.titulo)}</p>
-                            <p class="text-xs text-gray-400 truncate">${e.hora ? e.hora + ' · ' : ''}${escapeHtml(e.lugar || '')}</p>
-                        </div>
-                        ${kidBadge(e.nino)}
-                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300 shrink-0"></i>
-                    </li>`).join('');
+                renderEventColumn(pipeEl, 'pipe');
+                renderEventColumn(piliEl, 'pili');
                 lucide.createIcons();
             } catch (e) {
-                list.innerHTML = '<li class="text-gray-400 text-xs">No se pudieron cargar</li>';
+                const err = '<li class="text-gray-400 text-xs px-1">No se pudieron cargar</li>';
+                if (pipeEl) pipeEl.innerHTML = err;
+                if (piliEl) piliEl.innerHTML = err;
             }
+        }
+        // Dibuja la columna de eventos de un chico. Los de "los dos" (o sin destinatario) aparecen en ambas.
+        function renderEventColumn(el, kid) {
+            if (!el) return;
+            const evs = currentEvents.filter(e => {
+                const n = (e.nino === 'pipe' || e.nino === 'pili') ? e.nino : 'ambos';
+                return n === kid || n === 'ambos';
+            }).slice(0, 8);
+            if (!evs.length) { el.innerHTML = '<li class="text-gray-300 font-semibold px-1">Sin eventos</li>'; return; }
+            el.innerHTML = evs.map(e => {
+                const d = new Date(e.fecha + 'T00:00');
+                const sub = `${e.hora ? escapeHtml(e.hora) + ' · ' : ''}${escapeHtml(e.lugar || '')}`;
+                return `
+                    <li onclick="openEventDetail('${e.id}')" class="bg-white rounded-[2rem] card-shadow p-4 cursor-pointer active:scale-[0.98] transition-transform">
+                        <div class="flex items-baseline gap-2 leading-none">
+                            <span class="text-2xl font-black">${d.getDate()}</span>
+                            <span class="text-xs uppercase text-gray-400 font-bold">${d.toLocaleDateString('es-AR', { month: 'short' })}</span>
+                        </div>
+                        <p class="font-bold text-base leading-snug mt-2">${escapeHtml(e.titulo)}</p>
+                        ${sub ? `<p class="text-xs text-gray-400 truncate mt-1">${sub}</p>` : ''}
+                    </li>`;
+            }).join('');
         }
         function kidBadge(n) {
             const chip = (t, c) => `<span class="text-xs font-black px-2 py-1 rounded-full ${c} shrink-0">${t}</span>`;
