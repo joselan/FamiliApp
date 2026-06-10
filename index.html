@@ -1736,7 +1736,7 @@
         // ---- Asistente (IA) ----
         // Endpoint del "intermediario" seguro (Cloudflare Worker). Mientras esté
         // vacío, el asistente solo crea eventos desde texto/voz (sin IA conversacional).
-        const AI_ENDPOINT = '';
+        const AI_ENDPOINT = 'https://familiapp-ia.joselanglois.workers.dev';
         function aiRespond(msg) {
             const r = document.getElementById('ai-response');
             r.innerHTML = msg; r.classList.remove('hidden');
