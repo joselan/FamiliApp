@@ -76,11 +76,14 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
     if (request.method !== 'POST') return new Response('Solo POST', { status: 405, headers: cors });
     try {
-      const { prompt } = await request.json();
-      if (!prompt) {
+      const { prompt, image, mime } = await request.json();
+      if (!prompt && !image) {
         return new Response(JSON.stringify({ text: 'Decime algo 🙂' }), { headers: { ...cors, 'Content-Type': 'application/json' } });
       }
-      const sys = 'Sos el asistente de FamiliApp, una app familiar para organizar la comida, las actividades y los eventos de dos chicos (Pipe y Pili) en Argentina. Respondé en español rioplatense, en forma breve, clara y amable.';
+      const sys = 'Sos el asistente de FamiliApp, una app familiar para organizar la comida, las actividades y los eventos de la familia (Pipe, Pili, José y Flor) en Argentina. Respondé en español rioplatense, en forma breve, clara y amable.';
+      const parts = [];
+      if (prompt) parts.push({ text: prompt });
+      if (image) parts.push({ inline_data: { mime_type: mime || 'image/jpeg', data: image } });
       const r = await fetch(
         'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + env.GEMINI_KEY,
         {
@@ -88,7 +91,7 @@ export default {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             system_instruction: { parts: [{ text: sys }] },
-            contents: [{ parts: [{ text: prompt }] }],
+            contents: [{ parts }],
           }),
         }
       );
