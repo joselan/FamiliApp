@@ -40,7 +40,7 @@ y un service worker (`sw.js`).
 
 - Al cambiar `index.html`, `sw.js` o assets, **subir la versión** del caché en `sw.js`
   (`const CACHE = 'familiapp-vNN'`). Así el service worker se actualiza y recarga solo
-  (hay un listener de `controllerchange` que recarga una vez).
+  (hay un listener de `controllerchange` que recarga una vez). Versión actual: ver `sw.js`.
 
 ## Datos clave
 
@@ -50,8 +50,12 @@ y un service worker (`sw.js`).
   - `config/horario` (horario del cole) y `config/comedor` (links del comedor).
   - `config/vault` + docs con auto-id y `vkind:'entry'` → **caja fuerte cifrada**
     (ver abajo). Conviven en `config` para no tener que tocar las reglas de Firestore.
-- Pendiente: `AI_ENDPOINT` (en `index.html`) está vacío → falta la URL del Worker de
-  Cloudflare para encender la IA conversacional / visión (ver `INSTRUCTIVO.md`).
+- **Google Maps**: `GMAPS_KEY` (en `index.html`) ya configurada y restringida al dominio
+  → autocompletado y validación de direcciones funcionando.
+- **IA conversacional ENCENDIDA**: `AI_ENDPOINT` apunta al Worker de Cloudflare
+  `https://familiapp-ia.joselanglois.workers.dev` (Gemini; la clave queda secreta en
+  Cloudflare, no en la app). Pendiente opcional: **visión** por IA para leer flyers
+  (hoy el OCR es local con Tesseract.js). Setup en `INSTRUCTIVO.md`.
 
 ## Funcionalidades clave (estado actual)
 
@@ -67,6 +71,10 @@ y un service worker (`sw.js`).
   - Tarjeta con **calendario grande** y **countdown de colores** la última semana
     (amarillo casi blanco a 7 días → verde llamativo el día del evento, `calColors()`).
   - Popup con toda la info + botones **Google Maps** y **Waze** si hay dirección.
+- **Asistente IA**: **botón flotante "✨ IA"** (abajo a la derecha) que abre un panel
+  con chat, micrófono (dictado por voz) y "+" (agregar evento a mano / subir flyer).
+  Se cierra con la ✕ o tocando afuera. Crea eventos desde texto/voz; con `AI_ENDPOINT`
+  conectado, además conversa (Gemini). Letra grande.
 - **Caja fuerte (documentos y datos)**: cifrado de extremo a extremo en el navegador
   (Web Crypto: PBKDF2 + AES-GCM) con **contraseña maestra**. En Firestore solo queda
   texto ilegible. Guarda **notas** y **archivos** (fotos/PDF, ~700 KB máx). Sin la
@@ -74,17 +82,20 @@ y un service worker (`sw.js`).
 - **OCR de flyer** (Tesseract.js en el navegador, `parseFlyer`): autocompleta fecha,
   hora (con AM/PM), lugar (prioriza calle real, evita confundir horarios con
   direcciones). El **título** no se autocompleta (poco confiable en flyers) → a mano.
-- **Ícono / PWA**: pendiente de reemplazar por el ícono oficial de FamiliApp (cuando el
-  dueño lo mande, recortar/redondear, generar tamaños 192/512 + `apple-touch-icon` y
-  conectarlo al `manifest`).
+- **Ícono / PWA**: ícono oficial de FamiliApp = **tres casitas** (azul/verde/rojo) con
+  fútbol, árbol, libro del cole y estrella. Generados `icon-192.png`, `icon-512.png`,
+  `icon-maskable-512.png`, `apple-touch-icon.png` y `favicon-32.png` desde la imagen del
+  dueño y enganchados al `manifest` y al `<head>`. (Para verlo en el celu hay que
+  reinstalar la PWA.)
 
 ## Pendiente — Fotos de avatares (RECORDARLE al dueño cuando diga que está en la compu)
 
 La lógica de avatares ya elige la ropa por clima/día (`AVATAR_STYLE = 'foto'`,
-`updateAvatars`/`avatarCandidates` en `index.html`). Faltan **las fotos** (el dueño las
-arma). Formato: vertical 3:4, cuerpo entero, fondo claro, mismo encuadre que las actuales.
-Puede mandar PNG/JPG y se convierten a `.webp`. Sufijos de clima: `_normal`, `_frio`,
-`_mucho_frio`. Mientras falten, cae a la foto base (no se rompe nada).
+`updateAvatars`/`avatarCandidates` en `index.html`). Ya están las fotos **base**
+(`pipe`/`pili` × `_normal`/`_frio`/`_mucho_frio`). Faltan las **versiones especiales**
+(el dueño las arma). Formato: vertical 3:4, cuerpo entero, fondo claro, mismo encuadre.
+Puede mandar PNG/JPG y se convierten a `.webp`. Mientras falten, cae a la foto base
+(no se rompe nada).
 
 - **Finde/feriados (rotan, `FINDE_VARIANTS = 3`):**
   - Pipe (Boca/Argentina): `pipe_finde1_{clima}` (Boca), `pipe_finde2_{clima}` (Argentina), `pipe_finde3_{clima}`.
