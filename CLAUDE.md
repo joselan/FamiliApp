@@ -54,8 +54,11 @@ y un service worker (`sw.js`).
   → autocompletado y validación de direcciones funcionando.
 - **IA conversacional ENCENDIDA**: `AI_ENDPOINT` apunta al Worker de Cloudflare
   `https://familiapp-ia.joselanglois.workers.dev` (Gemini; la clave queda secreta en
-  Cloudflare, no en la app). Pendiente opcional: **visión** por IA para leer flyers
-  (hoy el OCR es local con Tesseract.js). Setup en `INSTRUCTIVO.md`.
+  Cloudflare, no en la app). El asistente de texto funciona.
+  - **PENDIENTE (cuando el dueño esté en la compu)**: actualizar el código del Worker en
+    Cloudflare a la versión que **acepta imágenes** (visión). El código nuevo está en
+    `INSTRUCTIVO.md`. Hasta hacerlo, el **botón de cámara de la lista de compras** (y la
+    visión por IA en general) no reconoce productos; la lista escrita a mano sí anda.
 
 ## Funcionalidades clave (estado actual)
 
@@ -75,6 +78,13 @@ y un service worker (`sw.js`).
   con chat, micrófono (dictado por voz) y "+" (agregar evento a mano / subir flyer).
   Se cierra con la ✕ o tocando afuera. Crea eventos desde texto/voz; con `AI_ENDPOINT`
   conectado, además conversa (Gemini). Letra grande.
+- **Lista de compras (compartida)**: en `config/compras` (un doc con `items[]`),
+  sincronizada en vivo (`onSnapshot`) entre los dos celulares. Se abre desde Opciones.
+  Botón de **cámara**: saca/sube foto de un producto → la IA lo reconoce y pregunta antes
+  de agregarlo (requiere el Worker con visión, ver pendiente arriba).
+- **Recordatorios**: los eventos que se sincronizan a Google Calendar llevan avisos
+  automáticos (con hora: 1 día y 2 hs antes; todo el día: el día anterior) → el celu
+  notifica vía Google Calendar (no hay push propio de la PWA).
 - **Caja fuerte (documentos y datos)**: cifrado de extremo a extremo en el navegador
   (Web Crypto: PBKDF2 + AES-GCM) con **contraseña maestra**. En Firestore solo queda
   texto ilegible. Guarda **notas** y **archivos** (fotos/PDF, ~700 KB máx). Sin la
