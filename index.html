@@ -605,6 +605,46 @@
                 if (piliEl) piliEl.innerHTML = err;
             }
         }
+        // Días que faltan para una fecha 'YYYY-MM-DD' (0 = hoy, 1 = mañana...)
+        function daysUntil(fecha) {
+            const a = new Date(todayStr() + 'T00:00'), b = new Date(fecha + 'T00:00');
+            return Math.round((b - a) / 86400000);
+        }
+        // Texto sutil del countdown para la tarjeta
+        function countdownLabel(diff) {
+            if (diff < 0) return 'ya pasó';
+            if (diff === 0) return '¡hoy!';
+            if (diff === 1) return 'mañana';
+            if (diff <= 13) return 'en ' + diff + ' días';
+            if (diff <= 27) return 'en ' + Math.round(diff / 7) + ' semanas';
+            const m = Math.round(diff / 30);
+            return 'en ' + (m > 1 ? m + ' meses' : 'un mes');
+        }
+        // Texto del countdown para el popup (más explícito)
+        function countdownLong(diff) {
+            if (diff < 0) return 'Ya pasó';
+            if (diff === 0) return 'Es hoy';
+            if (diff === 1) return 'Es mañana';
+            if (diff <= 27) return 'Faltan ' + diff + ' días';
+            const m = Math.round(diff / 30);
+            return m > 1 ? 'Faltan ' + m + ' meses' : 'Falta un mes';
+        }
+        // Colores del bloque calendario según cuántos días faltan.
+        // Más de 7 días o ya pasó: neutro. Dentro de la semana: degradé bien
+        // diferenciado de amarillo casi blanco (faltan 7) a verde llamativo (hoy).
+        function calColors(diff) {
+            if (diff < 0) return { bg: '#f4f4f5', header: '#a1a1aa', headTx: '#ffffff', tx: '#52525b' };
+            if (diff > 7) return { bg: '#ffffff', header: '#cbd5e1', headTx: '#475569', tx: '#1f2937' };
+            const t = (7 - diff) / 7;                     // 0 (faltan 7) -> 1 (hoy)
+            const hue = Math.round(48 + 94 * t);          // 48 amarillo -> 142 verde
+            const bgS = Math.round(72 + 6 * t);
+            const bgL = Math.round(93 - 47 * t);          // 93% casi blanco -> 46% verde fuerte
+            const hdL = Math.max(28, bgL - 14);
+            const hdS = Math.min(92, bgS + 14);
+            const tx = bgL < 60 ? '#ffffff' : '#1f2937';
+            const headTx = hdL < 62 ? '#ffffff' : '#3f3f46';
+            return { bg: `hsl(${hue} ${bgS}% ${bgL}%)`, header: `hsl(${hue} ${hdS}% ${hdL}%)`, headTx, tx };
+        }
         // Dibuja la columna de eventos de un chico. Los de "los dos" (o sin destinatario) aparecen en ambas.
         function renderEventColumn(el, kid) {
             if (!el) return;
@@ -615,17 +655,24 @@
             if (!evs.length) { el.innerHTML = ''; return; }
             el.innerHTML = evs.map(e => {
                 const d = new Date(e.fecha + 'T00:00');
+                const diff = daysUntil(e.fecha);
+                const c = calColors(diff);
                 const mes = d.toLocaleDateString('es-AR', { month: 'short' }).replace('.', '').toUpperCase();
+                const dia = d.toLocaleDateString('es-AR', { weekday: 'short' }).replace('.', '');
                 const sub = `${e.hora ? escapeHtml(e.hora) + ' · ' : ''}${escapeHtml(e.lugar || '')}`;
                 return `
-                    <li onclick="openEventDetail('${e.id}')" class="bg-white rounded-[2rem] card-shadow p-3 cursor-pointer active:scale-[0.98] transition-transform flex items-center gap-3">
-                        <div class="shrink-0 w-12 rounded-xl overflow-hidden text-center leading-none border border-gray-200 bg-white">
-                            <div class="bg-rose-500 text-white text-[10px] font-black uppercase tracking-wide py-[3px]">${mes}</div>
-                            <div class="text-[22px] font-black text-gray-800 py-1">${d.getDate()}</div>
-                        </div>
-                        <div class="min-w-0 flex-1">
-                            <p class="font-bold text-base leading-snug">${escapeHtml(e.titulo)}</p>
-                            ${sub ? `<p class="text-xs text-gray-400 truncate mt-1">${sub}</p>` : ''}
+                    <li onclick="openEventDetail('${e.id}')" class="cursor-pointer active:scale-[0.98] transition-transform">
+                        <p class="text-[12px] text-gray-400 font-bold mb-1 ml-2 leading-none">${countdownLabel(diff)}</p>
+                        <div class="bg-white rounded-[1.5rem] card-shadow overflow-hidden">
+                            <div class="text-center" style="background:${c.bg}">
+                                <div class="text-[12px] font-black uppercase tracking-[0.18em] py-1.5" style="background:${c.header};color:${c.headTx}">${mes}</div>
+                                <div class="text-[52px] font-black leading-none pt-2" style="color:${c.tx}">${d.getDate()}</div>
+                                <div class="text-[12px] font-bold uppercase tracking-wide pt-0.5 pb-2" style="color:${c.tx};opacity:.8">${dia}</div>
+                            </div>
+                            <div class="px-3 py-2.5">
+                                <p class="font-bold text-[18px] leading-snug">${escapeHtml(e.titulo)}</p>
+                                ${sub ? `<p class="text-[12px] text-gray-400 mt-1 line-clamp-2 leading-snug">${sub}</p>` : ''}
+                            </div>
                         </div>
                     </li>`;
             }).join('');
@@ -1105,14 +1152,24 @@
                         </a>
                         <p class="text-[0.8rem] text-gray-400 mt-1">Tocá la imagen para verla en grande.</p>
                     </div>` : '';
+            const diff = daysUntil(e.fecha);
+            const cc = calColors(diff);
+            const cdChip = `<div class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-5 font-black" style="background:${cc.bg};color:${cc.tx}"><i data-lucide="hourglass" class="w-5 h-5"></i> ${countdownLong(diff)}</div>`;
+            const navBtns = e.lugar ? `
+                    <div class="grid grid-cols-2 gap-3 mt-6">
+                        <a href="${mapsDir(e.lugar)}" target="_blank" rel="noopener" class="bg-blue-600 text-white font-bold text-lg py-4 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="map-pin" class="w-6 h-6"></i> Google Maps</a>
+                        <a href="${wazeDir(e.lugar)}" target="_blank" rel="noopener" class="bg-cyan-500 text-white font-bold text-lg py-4 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="navigation" class="w-6 h-6"></i> Waze</a>
+                    </div>` : '';
             showDetail(`
                 <div class="p-7">
                     <p class="text-[0.8rem] font-black uppercase tracking-widest text-blue-500 mb-1">Evento</p>
-                    <h2 class="text-3xl font-black leading-tight mb-5">${escapeHtml(e.titulo)}</h2>
+                    <h2 class="text-3xl font-black leading-tight mb-3">${escapeHtml(e.titulo)}</h2>
+                    ${cdChip}
                     ${row('calendar', fecha)}
                     ${row('clock', e.hora || '')}
                     ${row('map-pin', e.lugar || '')}
                     ${quienRow}
+                    ${navBtns}
                     ${flyer}
                     <div class="flex gap-3 mt-6">
                         <button onclick="editEvento('${e.id}')" class="flex-1 bg-blue-600 text-white font-bold text-lg py-4 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="pencil" class="w-6 h-6"></i> Editar</button>
@@ -1460,6 +1517,9 @@
 
         // ---- Verificar dirección (Google si hay key, si no OpenStreetMap gratis) ----
         function mapsLink(q) { return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`; }
+        // Navegación directa (cómo ir) en Google Maps y en Waze
+        function mapsDir(q) { return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(q)}`; }
+        function wazeDir(q) { return `https://waze.com/ul?q=${encodeURIComponent(q)}&navigate=yes`; }
         function streetQuery(s) {
             const m = (s || '').match(/([A-Za-zÁÉÍÓÚÑáéíóúñ.'´]+(?:\s+[A-Za-zÁÉÍÓÚÑáéíóúñ.'´]+){0,2}\s+\d{1,5})\b/);
             return m ? m[1] : s;
