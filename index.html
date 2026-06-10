@@ -166,7 +166,7 @@
             <!-- ACCESOS: lista de compras y caja fuerte -->
             <button onclick="openShop()" class="w-full mb-3 bg-emerald-600 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="shopping-cart" class="w-5 h-5"></i> Lista de compras</button>
             <!-- CAJA FUERTE: documentos y datos importantes (cifrados) -->
-            <button onclick="openVault()" class="w-full mb-4 bg-gray-900 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="lock" class="w-5 h-5"></i> Documentos y datos (caja fuerte)</button>
+            <button onclick="openVault()" class="w-full mb-4 bg-gray-900 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="lock" class="w-5 h-5"></i> Documentos y datos encriptados</button>
 
             <!-- TABS -->
             <div class="grid grid-cols-4 gap-1 bg-gray-100 p-1 rounded-2xl mb-5 text-xs font-bold">
@@ -240,8 +240,10 @@
                     <div><label class="block text-xs font-black uppercase text-gray-400 mb-1">Hora</label><input id="ev-hora" type="time" class="w-full bg-gray-100 rounded-2xl px-3 py-3 outline-none focus:ring-2 focus:ring-blue-500"></div>
                 </div>
                 <label class="block text-xs font-black uppercase text-gray-400 mb-1">Lugar</label>
-                <input id="ev-lugar" type="text" placeholder="Dónde es..." oninput="this.style.boxShadow=''" class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-2 outline-none focus:ring-2 focus:ring-blue-500">
-                <button type="button" onclick="verifyAddress()" class="w-full flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 font-bold py-2.5 rounded-2xl mb-2 border border-emerald-200"><i data-lucide="map-pin" class="w-5 h-5"></i> Verificar dirección en el mapa</button>
+                <div class="relative mb-2">
+                    <input id="ev-lugar" type="text" placeholder="Dónde es..." autocomplete="off" oninput="lugarInput(this)" class="w-full bg-gray-100 rounded-2xl px-4 py-3 pr-14 outline-none focus:ring-2 focus:ring-blue-500">
+                    <a id="ev-lugar-maps" href="#" onclick="return openLugarMaps(event)" class="hidden absolute right-2 top-1/2 -translate-y-1/2 bg-white text-blue-600 rounded-xl p-2 shadow border border-gray-200 active:scale-95" aria-label="Ver en Google Maps" title="Ver en Google Maps"><i data-lucide="map-pin" class="w-5 h-5"></i></a>
+                </div>
                 <div id="addr-options" class="hidden mb-3 space-y-2"></div>
                 <label class="block text-xs font-black uppercase text-gray-400 mb-1">Para</label>
                 <select id="ev-nino" class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-4 outline-none focus:ring-2 focus:ring-blue-500 font-bold">
@@ -261,7 +263,6 @@
                 </label>
                 <button onclick="saveEvento()" id="ev-save-btn" class="w-full bg-black text-white font-bold py-4 rounded-2xl">Agregar evento</button>
                 <p id="ev-status" class="text-center text-sm font-bold mt-3 h-5"></p>
-                <div id="ev-admin-list" class="mt-5 space-y-2"></div>
             </div>
         </div>
     </div>
@@ -284,7 +285,7 @@
     <div id="vault-modal" class="hidden fixed inset-0 z-[60] bg-zinc-50 overflow-y-auto">
         <div class="max-w-xl mx-auto p-4 min-h-full flex flex-col">
             <div class="flex items-center justify-between mb-4 pt-2">
-                <h2 class="text-2xl font-black flex items-center gap-2"><i data-lucide="lock" class="w-6 h-6"></i> Caja fuerte</h2>
+                <h2 class="text-2xl font-black flex items-center gap-2"><i data-lucide="lock" class="w-6 h-6"></i> Documentos encriptados</h2>
                 <div class="flex items-center gap-2">
                     <button id="vault-lock-btn" onclick="lockVault()" class="hidden bg-gray-200 text-gray-700 px-3 py-2 rounded-xl font-bold text-sm flex items-center gap-1"><i data-lucide="lock" class="w-4 h-4"></i> Cerrar</button>
                     <button onclick="closeVault()" class="text-gray-400 p-1" aria-label="Salir"><i data-lucide="x" class="w-7 h-7"></i></button>
@@ -795,8 +796,6 @@
                 document.getElementById('ev-fecha').value = todayStr();
                 buildHorarioForm();
                 loadComedor();
-                loadEventosAdmin();
-                initAddressAutocomplete();
                 lucide.createIcons();
             }
         }
@@ -970,6 +969,7 @@
             editingEventId = null; editingFlyer = null; flyerDataUrl = null;
             const btn = document.getElementById('ev-save-btn'); if (btn) btn.innerText = 'Agregar evento';
             const prev = document.getElementById('flyer-preview'); if (prev) prev.classList.add('hidden');
+            clearAddrOptions(); refreshLugarMaps();
         }
         async function saveEvento() {
             const titulo = document.getElementById('ev-titulo').value.trim();
@@ -1001,6 +1001,7 @@
                 resetEventoForm();
                 document.getElementById('ev-titulo').value = '';
                 document.getElementById('ev-lugar').value = '';
+                refreshLugarMaps();
                 setStatus(st, editing ? '¡Cambios guardados!' : '¡Evento agregado!', 'green');
                 loadEvents(); loadEventosAdmin();
             } catch (e) { setStatus(st, 'Error al guardar', 'red'); }
@@ -1077,7 +1078,7 @@
                     <p class="text-sm text-gray-500 mb-4">Con esta contraseña se cifra todo. <b>Si la olvidás, no se puede recuperar</b> lo guardado. Anotala en un lugar seguro.</p>
                     <input id="vp1" type="password" placeholder="Contraseña maestra" class="w-full bg-gray-100 rounded-xl px-4 py-3 mb-3 outline-none">
                     <input id="vp2" type="password" placeholder="Repetir contraseña" class="w-full bg-gray-100 rounded-xl px-4 py-3 mb-4 outline-none">
-                    <button onclick="createVault()" class="w-full bg-gray-900 text-white font-bold py-3 rounded-xl">Crear caja fuerte</button>
+                    <button onclick="createVault()" class="w-full bg-gray-900 text-white font-bold py-3 rounded-xl">Crear espacio encriptado</button>
                     <p id="vmsg" class="text-center text-sm font-bold mt-3 h-5"></p>
                 </div>`);
         }
@@ -1223,7 +1224,7 @@
             } catch (e) { vaultBody('<p class="text-red-500 p-4">No se pudo abrir.</p>'); }
         }
         async function vaultDelete(id) {
-            if (!confirm('¿Borrar esto de la caja fuerte? No se puede deshacer.')) return;
+            if (!confirm('¿Borrar esto de tus documentos encriptados? No se puede deshacer.')) return;
             try { await db.collection('config').doc(id).delete(); } catch (e) { }
             renderVaultList();
         }
@@ -1402,6 +1403,7 @@
             document.getElementById('ev-fecha').value = e.fecha || '';
             document.getElementById('ev-hora').value = e.hora || '';
             document.getElementById('ev-lugar').value = e.lugar || '';
+            refreshLugarMaps();
             document.getElementById('ev-nino').value = e.nino || 'ambos';
             editingEventId = id;
             editingFlyer = e.flyer || null;
@@ -1527,6 +1529,7 @@
                 if (parsed.hora) document.getElementById('ev-hora').value = parsed.hora;
                 if (parsed.titulo) document.getElementById('ev-titulo').value = parsed.titulo;
                 if (parsed.lugar) document.getElementById('ev-lugar').value = parsed.lugar;
+                refreshLugarMaps();
                 renderFlyerPreview(parsed);
                 const found = ['fecha', 'hora', 'titulo', 'lugar'].filter(k => parsed[k]).length;
                 st.className = 'text-center text-xs font-bold mb-2 h-4 ' + (found ? 'text-green-600' : 'text-red-500');
@@ -1725,6 +1728,53 @@
             });
             return _gmapsPromise;
         }
+        // ---- Campo Lugar: autocompletado propio (escribir siempre funciona) ----
+        let _acSvc = null, _acTimer = null;
+        function refreshLugarMaps() {
+            const i = document.getElementById('ev-lugar'), b = document.getElementById('ev-lugar-maps');
+            if (i && b) b.classList.toggle('hidden', !i.value.trim());
+        }
+        function openLugarMaps(e) {
+            e.preventDefault();
+            const v = (document.getElementById('ev-lugar').value || '').trim();
+            if (v) window.open(mapsLink(v), '_blank', 'noopener');
+            return false;
+        }
+        function clearAddrOptions() {
+            const box = document.getElementById('addr-options');
+            if (box) { box.classList.add('hidden'); box.innerHTML = ''; }
+        }
+        // Mientras escribís, sugiere direcciones (precargadas) de Google en una lista propia.
+        function lugarInput(el) {
+            el.style.boxShadow = '';
+            refreshLugarMaps();
+            const box = document.getElementById('addr-options');
+            const q = el.value.trim();
+            if (!box) return;
+            if (q.length < 3 || !GMAPS_KEY) { clearAddrOptions(); return; }
+            clearTimeout(_acTimer);
+            _acTimer = setTimeout(async () => {
+                try {
+                    await loadGoogleMaps();
+                    if (!_acSvc) _acSvc = new google.maps.places.AutocompleteService();
+                    _acSvc.getPlacePredictions({ input: q, componentRestrictions: { country: 'ar' } }, (preds, status) => {
+                        if (status !== 'OK' || !preds || !preds.length) { clearAddrOptions(); return; }
+                        box.innerHTML = preds.slice(0, 5).map(p =>
+                            `<button type="button" onclick="pickPrediction(this)" data-addr="${escapeAttr(p.description)}" class="w-full text-left bg-gray-50 hover:bg-gray-100 rounded-xl px-4 py-2.5 flex items-center gap-2 text-sm"><i data-lucide="map-pin" class="w-4 h-4 text-gray-400 shrink-0"></i><span>${escapeHtml(p.description)}</span></button>`
+                        ).join('');
+                        box.classList.remove('hidden');
+                        lucide.createIcons();
+                    });
+                } catch (e) { clearAddrOptions(); }
+            }, 300);
+        }
+        function pickPrediction(btn) {
+            const a = btn.getAttribute('data-addr') || '';
+            const el = document.getElementById('ev-lugar');
+            el.value = a; el.style.boxShadow = '';
+            clearAddrOptions();
+            refreshLugarMaps();
+        }
         // Autocompletado de Google en el campo Lugar (sugiere direcciones y localidades)
         let _acInit = false;
         async function initAddressAutocomplete() {
@@ -1844,6 +1894,7 @@
         }
         async function loadEventosAdmin() {
             const box = document.getElementById('ev-admin-list');
+            if (!box) return; // la lista de administrar se sacó de la pestaña de cargar eventos
             try {
                 const snap = await db.collection('eventos').get();
                 const hoy = todayStr();
@@ -1986,6 +2037,7 @@
                 document.getElementById('ev-fecha').value = p.fecha;
                 if (p.hora) document.getElementById('ev-hora').value = p.hora;
                 if (p.lugar) document.getElementById('ev-lugar').value = p.lugar;
+                refreshLugarMaps();
                 lucide.createIcons();
                 aiRespond('📅 Te preparé el evento con lo que entendí. Revisalo y tocá <b>"Agregar evento"</b>.');
             } else if (AI_ENDPOINT) {
