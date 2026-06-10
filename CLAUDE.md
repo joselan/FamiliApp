@@ -1,8 +1,27 @@
 # FamiliApp — guía para Claude
 
 PWA familiar (una sola página) para organizar comida, clima, actividades del cole
-y eventos de Pipe y Pili. Sin build ni framework: HTML + Tailwind (CDN) + JS vanilla
-en `index.html`, con Firebase (Auth + Firestore) y un service worker (`sw.js`).
+y eventos de Pipe y Pili (chicos) y José y Flor (adultos). Sin build ni framework:
+HTML + Tailwind (CDN) + JS vanilla en `index.html`, con Firebase (Auth + Firestore)
+y un service worker (`sw.js`).
+
+## Usuario / Cliente
+
+- **Nombre**: José
+- **Email**: joselanglois@gmail.com
+- **Celular**: Google Pixel 9 Pro (Android)
+- **Computadora**: MacBook Pro 16″ (2019)
+  - Procesador: 2,3 GHz Intel Core i9 de 8 núcleos
+  - Gráficos: Intel UHD Graphics 630 (1536 MB)
+  - Memoria: 16 GB 2667 MHz DDR4
+  - macOS: Tahoe 26.1
+- **Navegador**: Google Chrome en ambos dispositivos (celular y MacBook)
+
+## Reglas de trabajo
+
+- **Siempre hacer push directo a `main`**, nunca abrir PRs salvo que lo pida
+  explícitamente (ver el flujo detallado en "Publicación").
+- **Idioma**: español rioplatense (Argentina), en la app y en la comunicación.
 
 ## Publicación (IMPORTANTE)
 
@@ -27,10 +46,37 @@ en `index.html`, con Firebase (Auth + Firestore) y un service worker (`sw.js`).
 
 - Acceso restringido a 2 emails (`ALLOWED` en `index.html`): florenciabressan@gmail.com
   y joselanglois@gmail.com. Mismas restricciones en `firestore.rules`.
-- Colecciones Firestore: `menus_diarios`, `eventos`, `config` (doc `horario`).
-- Idioma: español rioplatense.
+- Colecciones Firestore: `menus_diarios`, `eventos`, `config`.
+  - `config/horario` (horario del cole) y `config/comedor` (links del comedor).
+  - `config/vault` + docs con auto-id y `vkind:'entry'` → **caja fuerte cifrada**
+    (ver abajo). Conviven en `config` para no tener que tocar las reglas de Firestore.
 - Pendiente: `AI_ENDPOINT` (en `index.html`) está vacío → falta la URL del Worker de
-  Cloudflare para encender la IA conversacional (ver `INSTRUCTIVO.md`).
+  Cloudflare para encender la IA conversacional / visión (ver `INSTRUCTIVO.md`).
+
+## Funcionalidades clave (estado actual)
+
+- **Encabezado**: fecha grande (tocar = calendario), franja de clima a todo el ancho
+  con "📍 Liniers" y botón **Opciones** como hamburguesa (☰). Debajo, fila de **adultos**.
+- **Chicos (Pipe y Pili)**: foto/avatar por clima+día, menú y actividades, y sus eventos
+  en la misma columna.
+- **Adultos (José y Flor)**: fila propia full-width debajo del clima, dos columnas.
+  Colores de identidad: **José = verde (`#16a34a`)**, **Flor = rojo (`#dc2626`)**.
+- **Eventos**: el destinatario (`nino`) puede ser de chicos (`pipe`/`pili`/`ambos`) o de
+  adultos (`jose`/`flor`/`adultos`). `eventAudience()` decide en qué columna aparece;
+  un evento de adulto solo se ve en su perfil salvo que sea compartido (`adultos`).
+  - Tarjeta con **calendario grande** y **countdown de colores** la última semana
+    (amarillo casi blanco a 7 días → verde llamativo el día del evento, `calColors()`).
+  - Popup con toda la info + botones **Google Maps** y **Waze** si hay dirección.
+- **Caja fuerte (documentos y datos)**: cifrado de extremo a extremo en el navegador
+  (Web Crypto: PBKDF2 + AES-GCM) con **contraseña maestra**. En Firestore solo queda
+  texto ilegible. Guarda **notas** y **archivos** (fotos/PDF, ~700 KB máx). Sin la
+  contraseña no se puede recuperar nada. Se abre desde Opciones.
+- **OCR de flyer** (Tesseract.js en el navegador, `parseFlyer`): autocompleta fecha,
+  hora (con AM/PM), lugar (prioriza calle real, evita confundir horarios con
+  direcciones). El **título** no se autocompleta (poco confiable en flyers) → a mano.
+- **Ícono / PWA**: pendiente de reemplazar por el ícono oficial de FamiliApp (cuando el
+  dueño lo mande, recortar/redondear, generar tamaños 192/512 + `apple-touch-icon` y
+  conectarlo al `manifest`).
 
 ## Pendiente — Fotos de avatares (RECORDARLE al dueño cuando diga que está en la compu)
 
