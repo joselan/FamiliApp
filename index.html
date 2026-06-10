@@ -24,9 +24,9 @@
         .img-placeholder { opacity: 0; transition: opacity 0.3s ease-in; }
         .img-ready { opacity: 1; }
         .tab-active { background: #000; color: #fff; }
-        /* Ícono del clima al mismo tamaño que los números de temperatura */
+        /* Ícono del clima al doble del tamaño de los números de temperatura */
         #weather-icon { display: inline-flex; align-items: center; }
-        #weather-icon svg { width: 1em !important; height: 1em !important; }
+        #weather-icon svg { width: 2em !important; height: 2em !important; }
         /* Desplegable del autocompletado de Google por encima de la ventana de config */
         .pac-container { z-index: 100000 !important; }
         /* Letra grande en el panel de configuración (similar al menú principal) */
@@ -72,19 +72,18 @@
                     <input id="date-picker" type="date" onchange="jumpToDate(this.value)" aria-label="Elegir fecha en el calendario" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
                 </div>
                 <button onclick="changeDay(1)" class="text-gray-400 p-1 shrink-0 active:scale-90 transition-transform" aria-label="Día siguiente"><i data-lucide="chevron-right" class="w-12 h-12"></i></button>
+                <!-- Opciones (☰): sobrio, en blanco, separado de la tarjeta de clima -->
+                <button onclick="toggleAdminPanel()" class="bg-gray-100 text-gray-500 w-10 h-10 rounded-full shrink-0 ml-1 flex items-center justify-center active:scale-90 transition-transform" aria-label="Opciones"><i data-lucide="menu" class="w-6 h-6"></i></button>
             </div>
 
-            <!-- CLIMA (grande, todo el ancho) + OPCIONES (☰) -->
-            <div class="bg-white rounded-[2rem] card-shadow px-4 pt-2 pb-2.5">
-                <div class="flex items-center justify-between mb-1">
-                    <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" rel="noopener" class="flex items-center gap-1 text-gray-400 font-bold leading-none" style="font-size:0.95rem"><i data-lucide="map-pin" class="w-4 h-4"></i> Liniers</a>
-                    <button onclick="toggleAdminPanel()" class="bg-blue-600 text-white w-10 h-10 rounded-2xl card-shadow shrink-0 flex items-center justify-center ring-1 ring-blue-700/30 active:scale-95 transition-transform" aria-label="Opciones"><i data-lucide="menu" class="w-6 h-6"></i></button>
-                </div>
-                <span id="weather-temps" class="w-full flex items-center justify-center gap-3 whitespace-nowrap overflow-hidden leading-none font-black">
+            <!-- CLIMA (grande, todo el ancho): Liniers + temperatura + emoji en una sola línea -->
+            <div class="bg-white rounded-[2rem] card-shadow px-4 py-3">
+                <span id="weather-temps" class="w-full flex items-center justify-center gap-2.5 whitespace-nowrap overflow-hidden leading-none font-black">
+                    <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" rel="noopener" class="flex items-center gap-1 text-gray-500 shrink-0"><i data-lucide="map-pin" class="w-[0.7em] h-[0.7em] shrink-0"></i> Liniers</a>
                     <span id="weather-now">--°</span>
                     <span id="weather-icon" class="shrink-0"></span>
-                    <span id="temp-min" class="text-sky-400">--°</span>
-                    <span id="temp-max" class="text-red-500">--°</span>
+                    <span id="temp-min" class="text-sky-400 text-[0.7em]">--°</span>
+                    <span id="temp-max" class="text-red-500 text-[0.7em]">--°</span>
                 </span>
             </div>
             <!-- ADULTOS: fila propia debajo del clima — José (verde) y Flor (rojo) con sus eventos -->
@@ -124,28 +123,10 @@
         </section>
     </main>
 
-    <!-- ASISTENTE (IA) -->
-    <!-- Botón flotante: al tocarlo se abre el asistente completo -->
-    <button id="ai-fab" onclick="openAi()" aria-label="Abrir asistente IA" class="hidden fixed bottom-5 right-4 z-40 bg-blue-600 text-white rounded-full pl-4 pr-5 h-14 shadow-xl ring-1 ring-blue-700/30 flex items-center gap-2 font-black text-lg active:scale-95 transition-transform">
-        <i data-lucide="sparkles" class="w-6 h-6"></i> IA
+    <!-- Botón flotante "+" : agregar un evento (abre Opciones → Eventos) -->
+    <button id="add-fab" onclick="openAddEvent()" aria-label="Agregar evento" class="hidden fixed bottom-6 right-5 z-40 bg-blue-600 text-white w-16 h-16 rounded-full shadow-xl ring-4 ring-blue-600/20 flex items-center justify-center active:scale-95 transition-transform">
+        <i data-lucide="plus" class="w-10 h-10"></i>
     </button>
-
-    <!-- Panel del asistente (se abre con el botón ✨ IA; se cierra tocando afuera o la X) -->
-    <div id="ai-panel" class="hidden fixed inset-0 z-40 flex flex-col justify-end" onclick="if(event.target===this)closeAi()">
-        <div class="px-3 pt-3 pb-6" onclick="event.stopPropagation()">
-            <div class="max-w-3xl mx-auto flex justify-end mb-2">
-                <button onclick="closeAi()" aria-label="Cerrar asistente" class="bg-white text-gray-500 w-12 h-12 rounded-full card-shadow border border-gray-200 flex items-center justify-center active:scale-95"><i data-lucide="x" class="w-7 h-7"></i></button>
-            </div>
-            <div id="ai-response" class="hidden max-w-3xl mx-auto mb-3 bg-white rounded-[1.75rem] card-shadow border border-gray-100 px-5 py-4 text-2xl text-gray-700 max-h-72 overflow-y-auto leading-relaxed"></div>
-            <div class="max-w-3xl mx-auto bg-white rounded-[2.25rem] card-shadow border border-gray-200 p-4">
-                <textarea id="ai-input" rows="2" placeholder="Preguntá o pedí algo…" oninput="aiAutoGrow(this)" onkeydown="aiKey(event)" class="w-full bg-transparent outline-none text-3xl resize-none px-2 pt-1 leading-snug placeholder:text-gray-400"></textarea>
-                <div class="flex items-center justify-end gap-3 mt-2">
-                    <button onclick="aiMic()" id="ai-mic" aria-label="Hablar" class="bg-gray-100 text-gray-600 w-16 h-16 rounded-full flex items-center justify-center"><i data-lucide="mic" class="w-8 h-8"></i></button>
-                    <button onclick="aiSend()" aria-label="Enviar" class="bg-black text-white w-16 h-16 rounded-full flex items-center justify-center"><i data-lucide="arrow-up" class="w-8 h-8"></i></button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- PANEL CONFIG -->
     <div id="admin-panel" class="hidden fixed inset-0 z-50 flex items-start justify-center bg-black/50 px-4 pt-5 pb-4">
@@ -296,11 +277,8 @@
             </div>
             <div class="flex gap-2 mb-3">
                 <input id="shop-input" type="text" placeholder="Agregar… (ej. leche)" onkeydown="if(event.key==='Enter')shopAdd()" class="flex-1 min-w-0 bg-white rounded-2xl px-4 py-3 text-lg outline-none card-shadow border border-gray-100">
-                <button onclick="shopPhoto()" aria-label="Foto del producto" class="bg-blue-600 text-white w-14 rounded-2xl flex items-center justify-center shrink-0"><i data-lucide="camera" class="w-7 h-7"></i></button>
                 <button onclick="shopAdd()" aria-label="Agregar" class="bg-emerald-600 text-white w-14 rounded-2xl flex items-center justify-center shrink-0"><i data-lucide="plus" class="w-7 h-7"></i></button>
             </div>
-            <input id="shop-file" type="file" accept="image/*" class="hidden" onchange="shopScan(this.files[0])">
-            <div id="shop-detect" class="hidden mb-3"></div>
             <div id="shop-list" class="space-y-2 flex-1"></div>
             <button id="shop-clear" onclick="shopClearDone()" class="hidden mt-4 mb-2 w-full bg-gray-100 text-gray-600 font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="trash-2" class="w-5 h-5"></i> Borrar lo comprado</button>
         </div>
@@ -332,7 +310,7 @@
             if (user && ALLOWED.includes(user.email)) {
                 document.getElementById('login-container').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
-                document.getElementById('ai-fab').classList.remove('hidden');
+                document.getElementById('add-fab').classList.remove('hidden');
                 if (!appStarted) { appStarted = true; initApp(); }
             } else if (user) {
                 const err = document.getElementById('login-error');
@@ -733,11 +711,11 @@
         // con el mes en blanco, y el número del día grande en negro.
         function calIcon(mes, day, color) {
             const ring = '<span class="w-[2px] h-[7px] rounded-full bg-gray-400 block"></span>';
-            return `<div class="shrink-0 w-12">
+            return `<div class="shrink-0 w-[3.25rem]">
                         <div class="flex justify-center gap-[3px] mb-[-2px] relative z-10">${ring.repeat(6)}</div>
-                        <div class="rounded-[7px] overflow-hidden border border-gray-200 bg-white" style="box-shadow:0 1px 3px rgba(0,0,0,.15)">
-                            <div class="text-[9px] font-black uppercase tracking-wide text-white leading-none py-[3px]" style="background:${color}">${mes}</div>
-                            <div class="text-[22px] font-black text-gray-900 leading-none pt-1 pb-1.5">${day}</div>
+                        <div class="rounded-[8px] overflow-hidden border border-gray-200 bg-white text-center" style="box-shadow:0 1px 3px rgba(0,0,0,.15)">
+                            <div class="text-[10px] font-black uppercase tracking-wide text-white leading-none py-[3px]" style="background:${color}">${mes}</div>
+                            <div class="flex items-center justify-center font-black text-gray-900 leading-none text-[30px] py-1.5">${day}</div>
                         </div>
                     </div>`;
         }
@@ -1260,65 +1238,6 @@
         }
         function shopClearDone() {
             shopItems = shopItems.filter(x => !x.done); renderShop(); shopSave();
-        }
-        // ---- Foto del producto: la IA lo reconoce y pregunta si lo agrega ----
-        function shopPhoto() {
-            if (!AI_ENDPOINT) { alert('La IA no está conectada todavía.'); return; }
-            document.getElementById('shop-file').click();
-        }
-        function shopDetectBox(html) {
-            const b = document.getElementById('shop-detect');
-            if (!b) return;
-            b.innerHTML = html; b.classList.remove('hidden'); lucide.createIcons();
-        }
-        function hideDetect() {
-            const b = document.getElementById('shop-detect');
-            if (b) { b.classList.add('hidden'); b.innerHTML = ''; }
-        }
-        async function shopScan(file) {
-            if (!file) return;
-            document.getElementById('shop-file').value = ''; // permite reusar la misma foto
-            shopDetectBox('<div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-blue-700 font-bold flex items-center gap-3"><i data-lucide="loader" class="w-6 h-6 animate-spin"></i> Mirando la foto…</div>');
-            try {
-                const dataUrl = await compressImageFile(file, 1024, 0.7);   // JPEG dataURL
-                const b64 = dataUrl.split(',')[1];
-                const prompt = "En esta foto hay un producto de supermercado o almacén. Respondé SOLO con el nombre corto del producto para una lista de compras (marca y tipo si se ven, por ejemplo 'Leche La Serenísima 1L' o 'Yerba Playadito 500g'). No agregues ninguna otra palabra. Si no reconocés ningún producto, respondé exactamente: NO.";
-                const res = await fetch(AI_ENDPOINT, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt, image: b64, mime: 'image/jpeg' })
-                });
-                const data = await res.json();
-                let name = (data.text || '').trim().replace(/^["'.\s]+|["'.\s]+$/g, '');
-                if (!name || /^no$/i.test(name) || name.length > 70) {
-                    shopDetectBox(`<div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-                        <p class="text-amber-800 font-bold mb-3">No pude reconocer el producto 🤔<br>Probá con otra foto más clara o escribilo a mano.</p>
-                        <button onclick="hideDetect()" class="w-full bg-gray-100 text-gray-600 font-bold py-2.5 rounded-xl">Cerrar</button>
-                    </div>`);
-                    return;
-                }
-                shopDetectBox(`<div class="bg-blue-50 border border-blue-200 rounded-2xl p-4">
-                    <p class="text-sm font-bold text-blue-700 mb-2 flex items-center gap-2"><i data-lucide="camera" class="w-5 h-5"></i> Detecté este producto, ¿lo agrego?</p>
-                    <input id="shop-detect-name" value="${escapeAttr(name)}" class="w-full bg-white rounded-xl px-3 py-2.5 text-lg mb-3 outline-none border border-blue-200">
-                    <div class="flex gap-2">
-                        <button onclick="shopAddDetected()" class="flex-1 bg-emerald-600 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2"><i data-lucide="check" class="w-5 h-5"></i> Agregar</button>
-                        <button onclick="hideDetect()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-2.5 rounded-xl">Descartar</button>
-                    </div>
-                </div>`);
-            } catch (e) {
-                shopDetectBox(`<div class="bg-red-50 border border-red-200 rounded-2xl p-4">
-                    <p class="text-red-700 font-bold mb-3">No me pude conectar con la IA. Probá de nuevo.</p>
-                    <button onclick="hideDetect()" class="w-full bg-gray-100 text-gray-600 font-bold py-2.5 rounded-xl">Cerrar</button>
-                </div>`);
-            }
-        }
-        function shopAddDetected() {
-            const inp = document.getElementById('shop-detect-name');
-            const t = (inp && inp.value || '').trim();
-            if (!t) return;
-            shopItems.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), t, done: false });
-            hideDetect();
-            renderShop();
-            shopSave();
         }
         function renderShop() {
             const box = document.getElementById('shop-list'); if (!box) return;
@@ -1941,80 +1860,13 @@
 
         function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
-        // ---- Asistente (IA) ----
-        // Endpoint del "intermediario" seguro (Cloudflare Worker). Mientras esté
-        // vacío, el asistente solo crea eventos desde texto/voz (sin IA conversacional).
-        const AI_ENDPOINT = 'https://familiapp-ia.joselanglois.workers.dev';
-        function aiRespond(msg) {
-            const r = document.getElementById('ai-response');
-            r.innerHTML = msg; r.classList.remove('hidden');
-        }
-        function aiAutoGrow(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 240) + 'px'; }
-        function aiKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); aiSend(); } }
-        // Pregunta conversacional a la IA (cuando hay intermediario configurado)
-        async function aiAsk(text) {
-            aiRespond('<span class="text-gray-400">Pensando…</span>');
-            try {
-                const res = await fetch(AI_ENDPOINT, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: text })
-                });
-                const data = await res.json();
-                const ans = (data.text || data.answer || data.reply || 'No pude responder.');
-                aiRespond(escapeHtml(ans).replace(/\n/g, '<br>'));
-            } catch (e) { aiRespond('No me pude conectar con la IA. Probá de nuevo.'); }
-        }
-        // Abre/cierra el panel del asistente (desde el botón flotante ✨ IA)
-        function openAi() {
-            document.getElementById('ai-fab').classList.add('hidden');
-            document.getElementById('ai-panel').classList.remove('hidden');
+        // ---- Botón "+" : agregar un evento ----
+        // Abre Opciones en la pestaña Eventos (form a mano + "Subir flyer / invitación").
+        function openAddEvent() {
+            if (document.getElementById('admin-panel').classList.contains('hidden')) toggleAdminPanel();
+            resetEventoForm();
+            showTab('eventos');
             lucide.createIcons();
-            setTimeout(() => { const el = document.getElementById('ai-input'); if (el) el.focus(); }, 60);
-        }
-        function closeAi() {
-            document.getElementById('ai-panel').classList.add('hidden');
-            document.getElementById('ai-fab').classList.remove('hidden');
-            lucide.createIcons();
-        }
-        // Dictado por voz (gratis, del navegador)
-        let _recog = null;
-        function aiMic() {
-            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SR) { aiRespond('Tu navegador no permite dictado por voz. Probá con Chrome.'); return; }
-            if (_recog) { _recog.stop(); _recog = null; return; }
-            _recog = new SR();
-            _recog.lang = 'es-AR'; _recog.interimResults = false; _recog.maxAlternatives = 1;
-            const mic = document.getElementById('ai-mic');
-            mic.classList.add('text-red-500');
-            _recog.onresult = e => { document.getElementById('ai-input').value = e.results[0][0].transcript; };
-            _recog.onend = () => { mic.classList.remove('text-red-500'); _recog = null; };
-            _recog.onerror = () => { mic.classList.remove('text-red-500'); _recog = null; };
-            _recog.start();
-        }
-        // Por ahora la "IA" entiende pedidos de crear eventos (sin costo). La IA
-        // conversacional se enciende cuando conectemos el servicio (ver chat).
-        function aiSend() {
-            const input = document.getElementById('ai-input');
-            const text = input.value.trim();
-            if (!text) return;
-            const p = parseFlyer(text);
-            if (p.fecha) {
-                if (document.getElementById('admin-panel').classList.contains('hidden')) toggleAdminPanel();
-                showTab('eventos');
-                if (p.titulo) document.getElementById('ev-titulo').value = p.titulo;
-                document.getElementById('ev-fecha').value = p.fecha;
-                if (p.hora) document.getElementById('ev-hora').value = p.hora;
-                if (p.lugar) document.getElementById('ev-lugar').value = p.lugar;
-                refreshLugarMaps();
-                lucide.createIcons();
-                aiRespond('📅 Te preparé el evento con lo que entendí. Revisalo y tocá <b>"Agregar evento"</b>.');
-            } else if (AI_ENDPOINT) {
-                aiAsk(text);
-            } else {
-                aiRespond('Puedo crear eventos si me los decís con fecha, por ejemplo:<br><b>"Cumple de Juan el 9 de julio a las 16 en Camacua 2655"</b>.<br>También podés tocar <b>+</b> para subir un flyer. (La IA para charlar de todo se activa al conectar el servicio.)');
-            }
-            input.value = '';
-            aiAutoGrow(input);
         }
 
         // Deslizar en la pantalla principal: hacia la derecha = ayer, hacia la izquierda = mañana

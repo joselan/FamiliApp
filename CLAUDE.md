@@ -52,18 +52,17 @@ y un service worker (`sw.js`).
     (ver abajo). Conviven en `config` para no tener que tocar las reglas de Firestore.
 - **Google Maps**: `GMAPS_KEY` (en `index.html`) ya configurada y restringida al dominio
   → autocompletado y validación de direcciones funcionando.
-- **IA conversacional ENCENDIDA**: `AI_ENDPOINT` apunta al Worker de Cloudflare
-  `https://familiapp-ia.joselanglois.workers.dev` (Gemini; la clave queda secreta en
-  Cloudflare, no en la app). El asistente de texto funciona.
-  - **PENDIENTE (cuando el dueño esté en la compu)**: actualizar el código del Worker en
-    Cloudflare a la versión que **acepta imágenes** (visión). El código nuevo está en
-    `INSTRUCTIVO.md`. Hasta hacerlo, el **botón de cámara de la lista de compras** (y la
-    visión por IA en general) no reconoce productos; la lista escrita a mano sí anda.
+- **IA RETIRADA**: se sacó todo lo de IA por pedido del dueño. Ya no existen el asistente
+  flotante "✨ IA", el panel de chat/voz ni el `AI_ENDPOINT` (Worker de Cloudflare), ni
+  la cámara con visión de la lista de compras. El OCR de flyer (Tesseract, local) **sí**
+  sigue (no es IA conversacional).
 
 ## Funcionalidades clave (estado actual)
 
-- **Encabezado**: fecha grande (tocar = calendario), franja de clima a todo el ancho
-  con "📍 Liniers" y botón **Opciones** como hamburguesa (☰). Debajo, fila de **adultos**.
+- **Encabezado**: fecha grande (tocar = calendario; el botón **Opciones** ☰ va sobrio en
+  gris claro al final de esa barra, separado del clima). Franja de clima a todo el ancho
+  en una sola línea: **Liniers** + temperatura actual + emoji (al doble) + máx/mín chicas.
+  Debajo, fila de **adultos**.
 - **Chicos (Pipe y Pili)**: foto/avatar por clima+día, menú y actividades, y sus eventos
   en la misma columna.
 - **Adultos (José y Flor)**: fila propia full-width debajo del clima, dos columnas.
@@ -74,14 +73,13 @@ y un service worker (`sw.js`).
   - Tarjeta con **calendario grande** y **countdown de colores** la última semana
     (amarillo casi blanco a 7 días → verde llamativo el día del evento, `calColors()`).
   - Popup con toda la info + botones **Google Maps** y **Waze** si hay dirección.
-- **Asistente IA**: **botón flotante "✨ IA"** (abajo a la derecha) que abre un panel
-  con chat, micrófono (dictado por voz) y "+" (agregar evento a mano / subir flyer).
-  Se cierra con la ✕ o tocando afuera. Crea eventos desde texto/voz; con `AI_ENDPOINT`
-  conectado, además conversa (Gemini). Letra grande.
+  - **Calendarito** de cada tarjeta (`calIcon`): mes arriba en color de identidad y el
+    **número del día grande y centrado** llenando la parte de abajo.
+- **Botón flotante "+"** (`add-fab`, abajo a la derecha, azul y circular, bien grande):
+  abre Opciones → pestaña **Eventos** (form a mano + "Subir flyer / invitación").
 - **Lista de compras (compartida)**: en `config/compras` (un doc con `items[]`),
   sincronizada en vivo (`onSnapshot`) entre los dos celulares. Se abre desde Opciones.
-  Botón de **cámara**: saca/sube foto de un producto → la IA lo reconoce y pregunta antes
-  de agregarlo (requiere el Worker con visión, ver pendiente arriba).
+  Se agregan ítems escribiéndolos a mano (la cámara con IA se retiró).
 - **Recordatorios**: los eventos que se sincronizan a Google Calendar llevan avisos
   automáticos (con hora: 1 día y 2 hs antes; todo el día: el día anterior) → el celu
   notifica vía Google Calendar (no hay push propio de la PWA).
