@@ -72,18 +72,23 @@
                 <button onclick="changeDay(1)" class="text-gray-400 p-1 shrink-0 active:scale-90 transition-transform" aria-label="Día siguiente"><i data-lucide="chevron-right" class="w-12 h-12"></i></button>
             </div>
 
-            <!-- CLIMA (grande, con lugar) + OPCIONES -->
-            <div class="bg-white rounded-[2rem] card-shadow px-4 pt-2 pb-2.5">
-                <div class="flex items-center justify-between mb-1">
-                    <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" rel="noopener" class="flex items-center gap-1 text-gray-400 font-bold leading-none" style="font-size:0.95rem"><i data-lucide="map-pin" class="w-4 h-4"></i> Liniers</a>
-                    <button onclick="toggleAdminPanel()" class="bg-blue-600 text-white pl-3 pr-4 py-2 rounded-full card-shadow shrink-0 flex items-center gap-1.5 font-black leading-none" style="font-size:0.95rem" aria-label="Opciones"><i data-lucide="settings" class="w-5 h-5"></i> Opciones</button>
+            <!-- CLIMA + ADULTOS (arriba, al lado del clima) + OPCIONES (☰) -->
+            <div class="flex items-stretch gap-2">
+                <!-- CLIMA -->
+                <div class="flex-1 min-w-0 bg-white rounded-[2rem] card-shadow px-4 pt-2 pb-2.5 flex flex-col">
+                    <div class="flex items-center justify-between mb-1">
+                        <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" rel="noopener" class="flex items-center gap-1 text-gray-400 font-bold leading-none" style="font-size:0.9rem"><i data-lucide="map-pin" class="w-4 h-4"></i> Liniers</a>
+                        <button onclick="toggleAdminPanel()" class="bg-blue-600 text-white w-10 h-10 rounded-2xl card-shadow shrink-0 flex items-center justify-center ring-1 ring-blue-700/30 active:scale-95 transition-transform" aria-label="Opciones"><i data-lucide="menu" class="w-6 h-6"></i></button>
+                    </div>
+                    <span id="weather-temps" class="w-full flex-1 flex items-center justify-center gap-3 whitespace-nowrap overflow-hidden leading-none font-black">
+                        <span id="weather-now">--°</span>
+                        <span id="weather-icon" class="shrink-0"></span>
+                        <span id="temp-min" class="text-sky-400">--°</span>
+                        <span id="temp-max" class="text-red-500">--°</span>
+                    </span>
                 </div>
-                <span id="weather-temps" class="w-full flex items-center justify-center gap-3 whitespace-nowrap overflow-hidden leading-none font-black">
-                    <span id="weather-now">--°</span>
-                    <span id="weather-icon" class="shrink-0"></span>
-                    <span id="temp-min" class="text-sky-400">--°</span>
-                    <span id="temp-max" class="text-red-500">--°</span>
-                </span>
+                <!-- ADULTOS: José (verde) y Flor (rojo) con sus eventos -->
+                <div id="adults-card" class="w-2/5 max-w-[210px] shrink-0 bg-white rounded-[2rem] card-shadow px-3 py-2.5"></div>
             </div>
         </header>
 
@@ -228,7 +233,16 @@
                 <div id="addr-options" class="hidden mb-3 space-y-2"></div>
                 <label class="block text-xs font-black uppercase text-gray-400 mb-1">Para</label>
                 <select id="ev-nino" class="w-full bg-gray-100 rounded-2xl px-4 py-3 mb-4 outline-none focus:ring-2 focus:ring-blue-500 font-bold">
-                    <option value="ambos">Los dos</option><option value="pipe">Pipe</option><option value="pili">Pili</option>
+                    <optgroup label="Chicos">
+                        <option value="ambos">Pipe y Pili</option>
+                        <option value="pipe">Pipe</option>
+                        <option value="pili">Pili</option>
+                    </optgroup>
+                    <optgroup label="Adultos">
+                        <option value="jose">José</option>
+                        <option value="flor">Flor</option>
+                        <option value="adultos">José y Flor</option>
+                    </optgroup>
                 </select>
                 <label class="flex items-center gap-2 mb-5 text-sm font-bold cursor-pointer">
                     <input id="ev-gcal" type="checkbox" checked class="w-5 h-5 rounded accent-blue-600"> Agregar también a Google Calendar
@@ -598,12 +612,43 @@
                     .sort((a, b) => (a.fecha + (a.hora || '')).localeCompare(b.fecha + (b.hora || '')));
                 renderEventColumn(pipeEl, 'pipe');
                 renderEventColumn(piliEl, 'pili');
+                renderAdults();
                 lucide.createIcons();
             } catch (e) {
                 const err = '<li class="text-gray-400 text-xs px-1">No se pudieron cargar</li>';
                 if (pipeEl) pipeEl.innerHTML = err;
                 if (piliEl) piliEl.innerHTML = err;
             }
+        }
+        // Colores de identidad de los adultos
+        const ADULT_COLOR = { jose: '#16a34a', flor: '#dc2626' };
+        // Franja compacta de adultos (arriba, al lado del clima): José (verde) y Flor (rojo).
+        function renderAdults() {
+            const card = document.getElementById('adults-card');
+            if (!card) return;
+            const bloque = (who, name) => {
+                const color = ADULT_COLOR[who];
+                const evs = currentEvents.filter(e => eventAudience(e).includes(who)).slice(0, 3);
+                const rows = evs.length ? evs.map(e => {
+                    const d = new Date(e.fecha + 'T00:00');
+                    const mes = d.toLocaleDateString('es-AR', { month: 'short' }).replace('.', '').toUpperCase();
+                    return `<div onclick="openEventDetail('${e.id}')" class="flex items-center gap-2 cursor-pointer active:opacity-60 py-0.5">
+                                <div class="text-center leading-none shrink-0 w-7">
+                                    <div class="text-[16px] font-black text-gray-800 leading-none">${d.getDate()}</div>
+                                    <div class="text-[8px] uppercase text-gray-400 font-black tracking-wide">${mes}</div>
+                                </div>
+                                <span class="text-[12px] font-bold text-gray-700 truncate flex-1 min-w-0 leading-tight">${escapeHtml(e.titulo)}</span>
+                            </div>`;
+                }).join('') : '<p class="text-[11px] text-gray-300 font-bold pl-1 py-0.5">Sin eventos</p>';
+                return `<div class="min-w-0">
+                            <div class="flex items-center gap-1.5 mb-0.5">
+                                <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${color}"></span>
+                                <span class="text-[13px] font-black truncate" style="color:${color}">${name}</span>
+                            </div>
+                            ${rows}
+                        </div>`;
+            };
+            card.innerHTML = bloque('jose', 'José') + '<div class="border-t border-gray-100 my-1.5"></div>' + bloque('flor', 'Flor');
         }
         // Días que faltan para una fecha 'YYYY-MM-DD' (0 = hoy, 1 = mañana...)
         function daysUntil(fecha) {
@@ -645,13 +690,22 @@
             const headTx = hdL < 62 ? '#ffffff' : '#3f3f46';
             return { bg: `hsl(${hue} ${bgS}% ${bgL}%)`, header: `hsl(${hue} ${hdS}% ${hdL}%)`, headTx, tx };
         }
-        // Dibuja la columna de eventos de un chico. Los de "los dos" (o sin destinatario) aparecen en ambas.
+        // Nombre lindo del destinatario (para Calendar, etc.)
+        function audienceName(nino) {
+            return { ambos: 'Pipe y Pili', pipe: 'Pipe', pili: 'Pili', jose: 'José', flor: 'Flor', adultos: 'José y Flor' }[nino] || 'Pipe y Pili';
+        }
+        // A quiénes les corresponde un evento (lista de individuos).
+        // 'ambos' = los dos chicos; 'adultos' = José y Flor; vacío/legacy = los dos chicos.
+        function eventAudience(e) {
+            const v = e.nino;
+            if (v === 'pipe' || v === 'pili' || v === 'jose' || v === 'flor') return [v];
+            if (v === 'adultos') return ['jose', 'flor'];
+            return ['pipe', 'pili']; // 'ambos' o eventos viejos sin destinatario
+        }
+        // Dibuja la columna de eventos de un chico (o adulto). Filtra por destinatario.
         function renderEventColumn(el, kid) {
             if (!el) return;
-            const evs = currentEvents.filter(e => {
-                const n = (e.nino === 'pipe' || e.nino === 'pili') ? e.nino : 'ambos';
-                return n === kid || n === 'ambos';
-            }).slice(0, 8);
+            const evs = currentEvents.filter(e => eventAudience(e).includes(kid)).slice(0, 8);
             if (!evs.length) { el.innerHTML = ''; return; }
             el.innerHTML = evs.map(e => {
                 const d = new Date(e.fecha + 'T00:00');
@@ -1140,9 +1194,11 @@
             let fecha = new Date(e.fecha + 'T00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
             fecha = fecha.charAt(0).toUpperCase() + fecha.slice(1);
             const row = (icon, txt) => txt ? `<div class="flex items-center gap-3 py-3 border-t border-gray-100"><i data-lucide="${icon}" class="w-7 h-7 text-gray-400 shrink-0"></i><span class="font-semibold text-gray-700 text-lg">${escapeHtml(txt)}</span></div>` : '';
-            const quienHtml = e.nino === 'ambos'
-                ? '<span class="text-blue-600 font-black">Pipe</span> <span class="text-gray-400">y</span> <span class="text-pink-600 font-black">Pili</span>'
-                : (e.nino === 'pipe' ? '<span class="text-blue-600 font-black">Pipe</span>' : '<span class="text-pink-600 font-black">Pili</span>');
+            const quienChip = { pipe: '<span class="text-blue-600 font-black">Pipe</span>', pili: '<span class="text-pink-600 font-black">Pili</span>', jose: '<span style="color:#16a34a" class="font-black">José</span>', flor: '<span style="color:#dc2626" class="font-black">Flor</span>' };
+            const sep = ' <span class="text-gray-400">y</span> ';
+            const quienHtml = e.nino === 'ambos' ? (quienChip.pipe + sep + quienChip.pili)
+                : e.nino === 'adultos' ? (quienChip.jose + sep + quienChip.flor)
+                : (quienChip[e.nino] || (quienChip.pipe + sep + quienChip.pili));
             const quienRow = `<div class="flex items-center gap-3 py-3 border-t border-gray-100"><i data-lucide="users" class="w-7 h-7 text-gray-400 shrink-0"></i><span class="font-semibold text-lg">${quienHtml}</span></div>`;
             const flyer = e.flyer ? `
                     <div class="mt-5 border-t border-gray-100 pt-4">
@@ -1240,7 +1296,7 @@
             const body = {
                 summary: ev.titulo,
                 location: ev.lugar || undefined,
-                description: 'Creado desde FamiliApp · ' + (ev.nino === 'ambos' ? 'Pipe y Pili' : ev.nino),
+                description: 'Creado desde FamiliApp · ' + audienceName(ev.nino),
                 start, end
             };
             const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
