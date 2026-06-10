@@ -163,6 +163,8 @@
                 <button onclick="toggleAdminPanel()" class="text-gray-400 p-1" aria-label="Cerrar"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
 
+            <!-- ACCESOS: lista de compras y caja fuerte -->
+            <button onclick="openShop()" class="w-full mb-3 bg-emerald-600 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="shopping-cart" class="w-5 h-5"></i> Lista de compras</button>
             <!-- CAJA FUERTE: documentos y datos importantes (cifrados) -->
             <button onclick="openVault()" class="w-full mb-4 bg-gray-900 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="lock" class="w-5 h-5"></i> Documentos y datos (caja fuerte)</button>
 
@@ -289,6 +291,22 @@
                 </div>
             </div>
             <div id="vault-body" class="flex-1"></div>
+        </div>
+    </div>
+
+    <!-- LISTA DE COMPRAS (compartida, se sincroniza en vivo) -->
+    <div id="shop-modal" class="hidden fixed inset-0 z-[60] bg-zinc-50 overflow-y-auto">
+        <div class="max-w-xl mx-auto p-4 min-h-full flex flex-col">
+            <div class="flex items-center justify-between mb-4 pt-2">
+                <h2 class="text-2xl font-black flex items-center gap-2"><i data-lucide="shopping-cart" class="w-6 h-6"></i> Lista de compras</h2>
+                <button onclick="closeShop()" class="text-gray-400 p-1" aria-label="Salir"><i data-lucide="x" class="w-7 h-7"></i></button>
+            </div>
+            <div class="flex gap-2 mb-4">
+                <input id="shop-input" type="text" placeholder="Agregar… (ej. leche)" onkeydown="if(event.key==='Enter')shopAdd()" class="flex-1 bg-white rounded-2xl px-4 py-3 text-lg outline-none card-shadow border border-gray-100">
+                <button onclick="shopAdd()" aria-label="Agregar" class="bg-emerald-600 text-white w-14 rounded-2xl flex items-center justify-center shrink-0"><i data-lucide="plus" class="w-7 h-7"></i></button>
+            </div>
+            <div id="shop-list" class="space-y-2 flex-1"></div>
+            <button id="shop-clear" onclick="shopClearDone()" class="hidden mt-4 mb-2 w-full bg-gray-100 text-gray-600 font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="trash-2" class="w-5 h-5"></i> Borrar lo comprado</button>
         </div>
     </div>
 
@@ -1199,6 +1217,64 @@
         }
         // ================= fin caja fuerte =================
 
+        // ================= LISTA DE COMPRAS (compartida, en vivo) =================
+        let shopItems = [];
+        let shopUnsub = null;
+        const SHOP_DOC = 'compras'; // doc en la colección 'config' (no toca reglas)
+        function openShop() {
+            document.getElementById('shop-modal').classList.remove('hidden');
+            if (!shopUnsub) {
+                shopUnsub = db.collection('config').doc(SHOP_DOC).onSnapshot(d => {
+                    shopItems = (d.exists && Array.isArray(d.data().items)) ? d.data().items : [];
+                    renderShop();
+                }, () => { renderShop(); });
+            }
+            renderShop();
+            lucide.createIcons();
+            setTimeout(() => { const el = document.getElementById('shop-input'); if (el) el.focus(); }, 60);
+        }
+        function closeShop() { document.getElementById('shop-modal').classList.add('hidden'); }
+        function shopSave() {
+            return db.collection('config').doc(SHOP_DOC).set({ items: shopItems }, { merge: true }).catch(() => {});
+        }
+        function shopAdd() {
+            const inp = document.getElementById('shop-input');
+            const t = (inp.value || '').trim();
+            if (!t) return;
+            shopItems.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), t, done: false });
+            inp.value = '';
+            renderShop();           // pinta enseguida
+            shopSave();
+        }
+        function shopToggle(id) {
+            const it = shopItems.find(x => x.id === id); if (!it) return;
+            it.done = !it.done; renderShop(); shopSave();
+        }
+        function shopDelete(id) {
+            shopItems = shopItems.filter(x => x.id !== id); renderShop(); shopSave();
+        }
+        function shopClearDone() {
+            shopItems = shopItems.filter(x => !x.done); renderShop(); shopSave();
+        }
+        function renderShop() {
+            const box = document.getElementById('shop-list'); if (!box) return;
+            const orden = shopItems.slice().sort((a, b) => (a.done === b.done) ? 0 : (a.done ? 1 : -1)); // pendientes arriba
+            if (!orden.length) {
+                box.innerHTML = '<p class="text-gray-400 text-center py-10 text-lg">La lista está vacía.<br>Agregá lo que falta. 🛒</p>';
+            } else {
+                box.innerHTML = orden.map(it => `
+                    <div class="bg-white rounded-2xl card-shadow border border-gray-100 px-4 py-3 flex items-center gap-3">
+                        <button onclick="shopToggle('${it.id}')" aria-label="Marcar" class="w-8 h-8 rounded-full border-2 shrink-0 flex items-center justify-center ${it.done ? 'bg-emerald-500 border-emerald-500' : 'border-gray-300'}">${it.done ? '<i data-lucide="check" class="w-5 h-5 text-white"></i>' : ''}</button>
+                        <span class="flex-1 text-lg break-words ${it.done ? 'line-through text-gray-400' : 'text-gray-800 font-semibold'}">${escapeHtml(it.t)}</span>
+                        <button onclick="shopDelete('${it.id}')" aria-label="Borrar" class="text-gray-300 p-1 shrink-0"><i data-lucide="x" class="w-5 h-5"></i></button>
+                    </div>`).join('');
+            }
+            const clear = document.getElementById('shop-clear');
+            if (clear) clear.classList.toggle('hidden', !shopItems.some(x => x.done));
+            lucide.createIcons();
+        }
+        // ================= fin lista de compras =================
+
         function openEventDetail(id) {
             const e = currentEvents.find(x => x.id === id);
             if (!e) return;
@@ -1304,11 +1380,16 @@
                 start = { date: ev.fecha };
                 end = { date: next.toISOString().split('T')[0] };
             }
+            // Recordatorios automáticos en el celu (vía Google Calendar):
+            // eventos con hora -> aviso 1 día antes y 2 hs antes; todo el día -> el día anterior.
+            const reminders = ev.hora
+                ? { useDefault: false, overrides: [{ method: 'popup', minutes: 1440 }, { method: 'popup', minutes: 120 }] }
+                : { useDefault: false, overrides: [{ method: 'popup', minutes: 600 }] };
             const body = {
                 summary: ev.titulo,
                 location: ev.lugar || undefined,
                 description: 'Creado desde FamiliApp · ' + audienceName(ev.nino),
-                start, end
+                start, end, reminders
             };
             const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
                 method: 'POST',
@@ -1854,7 +1935,8 @@
                 !document.getElementById('admin-panel').classList.contains('hidden') ||
                 !document.getElementById('detail-modal').classList.contains('hidden') ||
                 !document.getElementById('photo-modal').classList.contains('hidden') ||
-                !document.getElementById('vault-modal').classList.contains('hidden');
+                !document.getElementById('vault-modal').classList.contains('hidden') ||
+                !document.getElementById('shop-modal').classList.contains('hidden');
             el.addEventListener('touchstart', e => {
                 if (e.touches.length !== 1) { x0 = null; return; }
                 x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;
