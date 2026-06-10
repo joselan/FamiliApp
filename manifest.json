@@ -1,7 +1,7 @@
 {
   "name": "FamiliApp",
   "short_name": "FamiliApp",
-  "description": "Clima y menú diario de Pipe y Pili",
+  "description": "Comida, clima, cole y eventos de la familia (Pipe, Pili, José y Flor)",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f4f4f5",

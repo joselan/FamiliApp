@@ -2,7 +2,7 @@
 // Estrategia: "red primero" para TODO lo del mismo origen, con la caché solo
 // como respaldo offline. Así, estando con internet, siempre se ve la última
 // versión (HTML e imágenes) sin quedar pegado en versiones viejas.
-const CACHE = 'familiapp-v51';
+const CACHE = 'familiapp-v52';
 // Caché aparte (no se borra al actualizar) para el archivo que se comparte
 // desde WhatsApp u otras apps hacia FamiliApp.
 const SHARE_CACHE = 'familiapp-share';
@@ -15,6 +15,8 @@ const ASSETS = [
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
+  './apple-touch-icon.png',
+  './favicon-32.png',
   './pipe_normal.webp',
   './pili_normal.webp',
   './pipe_frio.webp',
