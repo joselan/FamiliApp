@@ -665,9 +665,9 @@
                     const d = new Date(e.fecha + 'T00:00');
                     const mes = d.toLocaleDateString('es-AR', { month: 'short' }).replace('.', '').toUpperCase();
                     return `<div onclick="openEventDetail('${e.id}')" class="flex items-center gap-2 cursor-pointer active:opacity-60 py-0.5">
-                                <div class="text-center leading-none shrink-0 w-8">
-                                    <div class="text-[17px] font-black text-gray-800 leading-none">${d.getDate()}</div>
-                                    <div class="text-[9px] uppercase text-gray-400 font-black tracking-wide">${mes}</div>
+                                <div class="shrink-0 w-8 rounded-[4px] overflow-hidden border border-gray-200 text-center leading-none">
+                                    <div class="text-[7px] font-black uppercase text-white py-[1.5px] tracking-wide" style="background:${color}">${mes}</div>
+                                    <div class="text-[15px] font-black text-gray-900 py-[2px] leading-none">${d.getDate()}</div>
                                 </div>
                                 <span class="text-[13px] font-bold text-gray-700 truncate flex-1 min-w-0 leading-tight">${escapeHtml(e.titulo)}</span>
                             </div>`;
@@ -734,6 +734,20 @@
             if (v === 'adultos') return ['jose', 'flor'];
             return ['pipe', 'pili']; // 'ambos' o eventos viejos sin destinatario
         }
+        // Colores de identidad de cada integrante (para el encabezado del calendario de sus eventos)
+        const MEMBER_COLOR = { pipe: '#2563eb', pili: '#db2777', jose: '#16a34a', flor: '#dc2626' };
+        // Mini calendario estilo ícono clásico: anillos arriba, encabezado de color
+        // con el mes en blanco, y el número del día grande en negro.
+        function calIcon(mes, day, color) {
+            const ring = '<span class="w-[2px] h-[7px] rounded-full bg-gray-400 block"></span>';
+            return `<div class="shrink-0 w-12">
+                        <div class="flex justify-center gap-[3px] mb-[-2px] relative z-10">${ring.repeat(6)}</div>
+                        <div class="rounded-[7px] overflow-hidden border border-gray-200 bg-white" style="box-shadow:0 1px 3px rgba(0,0,0,.15)">
+                            <div class="text-[9px] font-black uppercase tracking-wide text-white leading-none py-[3px]" style="background:${color}">${mes}</div>
+                            <div class="text-[22px] font-black text-gray-900 leading-none pt-1 pb-1.5">${day}</div>
+                        </div>
+                    </div>`;
+        }
         // Dibuja la columna de eventos de un chico (o adulto). Filtra por destinatario.
         function renderEventColumn(el, kid) {
             if (!el) return;
@@ -742,22 +756,15 @@
             el.innerHTML = evs.map(e => {
                 const d = new Date(e.fecha + 'T00:00');
                 const diff = daysUntil(e.fecha);
-                const c = calColors(diff);
                 const mes = d.toLocaleDateString('es-AR', { month: 'short' }).replace('.', '').toUpperCase();
-                const dia = d.toLocaleDateString('es-AR', { weekday: 'short' }).replace('.', '');
+                const color = MEMBER_COLOR[kid] || '#64748b';
                 const sub = `${e.hora ? escapeHtml(e.hora) + ' · ' : ''}${escapeHtml(e.lugar || '')}`;
                 // Countdown SOLO la última semana, y adentro de la tarjeta (no afuera).
                 const cd = (diff >= 0 && diff <= 7) ? `<p class="text-[11px] font-bold text-gray-500 mt-1">${countdownLabel(diff)}</p>` : '';
                 return `
-                    <li onclick="openEventDetail('${e.id}')" class="bg-white rounded-[1.5rem] card-shadow overflow-hidden cursor-pointer active:scale-[0.98] transition-transform flex items-stretch">
-                        <div class="shrink-0 w-14 flex flex-col text-center leading-none">
-                            <div class="text-[10px] font-black uppercase tracking-wide py-1" style="background:${c.header};color:${c.headTx}">${mes}</div>
-                            <div class="flex-1 flex flex-col items-center justify-center py-1.5" style="background:${c.bg}">
-                                <div class="text-[24px] font-black leading-none" style="color:${c.tx}">${d.getDate()}</div>
-                                <div class="text-[9px] font-bold uppercase mt-0.5" style="color:${c.tx};opacity:.7">${dia}</div>
-                            </div>
-                        </div>
-                        <div class="min-w-0 flex-1 px-3 py-2.5 flex flex-col justify-center">
+                    <li onclick="openEventDetail('${e.id}')" class="bg-white rounded-[1.5rem] card-shadow cursor-pointer active:scale-[0.98] transition-transform flex items-center gap-2.5 p-2.5">
+                        ${calIcon(mes, d.getDate(), color)}
+                        <div class="min-w-0 flex-1 flex flex-col justify-center">
                             <p class="font-bold text-[16px] leading-snug line-clamp-2" style="min-height:2.6em">${escapeHtml(e.titulo)}</p>
                             ${cd}
                             ${sub ? `<p class="text-[11px] text-gray-400 mt-0.5 line-clamp-1">${sub}</p>` : ''}
