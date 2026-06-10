@@ -59,7 +59,7 @@
     </div>
 
     <!-- APP -->
-    <main id="app-container" class="w-full mx-auto p-3 pb-48 min-h-screen flex flex-col gap-3 hidden">
+    <main id="app-container" class="w-full mx-auto p-3 pb-64 min-h-screen flex flex-col gap-3 hidden">
         <!-- FECHA (franja completa) -->
         <header class="flex flex-col gap-2">
             <!-- Fecha grande de punta a punta; flechas grandes en las puntas; tocar el centro abre el calendario -->
@@ -123,19 +123,19 @@
     </main>
 
     <!-- ASISTENTE (IA) -->
-    <div id="ai-bar" class="hidden fixed bottom-0 inset-x-0 z-40 p-3">
-        <div id="ai-response" class="hidden max-w-3xl mx-auto mb-2 bg-white rounded-2xl card-shadow border border-gray-100 px-4 py-3 text-lg text-gray-700 max-h-60 overflow-y-auto leading-snug"></div>
-        <div id="ai-menu" class="hidden max-w-3xl mx-auto mb-2 bg-white rounded-2xl card-shadow border border-gray-100 p-2 space-y-1 font-bold text-gray-700 text-lg">
-            <button onclick="aiAddEvent()" class="w-full text-left px-4 py-3 rounded-xl hover:bg-gray-50 flex items-center gap-3"><i data-lucide="calendar-plus" class="w-6 h-6 text-blue-600"></i> Agregar evento a mano</button>
-            <button onclick="aiPickFile()" class="w-full text-left px-4 py-3 rounded-xl hover:bg-gray-50 flex items-center gap-3"><i data-lucide="paperclip" class="w-6 h-6 text-emerald-600"></i> Subir flyer / archivo</button>
+    <div id="ai-bar" class="hidden fixed bottom-0 inset-x-0 z-40 px-3 pt-3 pb-6">
+        <div id="ai-response" class="hidden max-w-3xl mx-auto mb-3 bg-white rounded-[1.75rem] card-shadow border border-gray-100 px-5 py-4 text-2xl text-gray-700 max-h-72 overflow-y-auto leading-relaxed"></div>
+        <div id="ai-menu" class="hidden max-w-3xl mx-auto mb-3 bg-white rounded-[1.75rem] card-shadow border border-gray-100 p-3 space-y-1 font-bold text-gray-700 text-2xl">
+            <button onclick="aiAddEvent()" class="w-full text-left px-5 py-4 rounded-2xl hover:bg-gray-50 flex items-center gap-4"><i data-lucide="calendar-plus" class="w-8 h-8 text-blue-600 shrink-0"></i> Agregar evento a mano</button>
+            <button onclick="aiPickFile()" class="w-full text-left px-5 py-4 rounded-2xl hover:bg-gray-50 flex items-center gap-4"><i data-lucide="paperclip" class="w-8 h-8 text-emerald-600 shrink-0"></i> Subir flyer / archivo</button>
         </div>
-        <div class="max-w-3xl mx-auto bg-white rounded-[2rem] card-shadow border border-gray-200 p-3">
-            <textarea id="ai-input" rows="2" placeholder="Preguntá o pedí algo…" oninput="aiAutoGrow(this)" onkeydown="aiKey(event)" class="w-full bg-transparent outline-none text-xl resize-none px-1 pt-1 leading-snug placeholder:text-gray-400"></textarea>
-            <div class="flex items-center justify-between mt-1">
-                <button onclick="aiPlus()" class="bg-gray-100 text-gray-700 font-bold rounded-full pl-3 pr-4 h-12 flex items-center gap-1"><i data-lucide="plus" class="w-6 h-6"></i> Agregar</button>
-                <div class="flex items-center gap-2">
-                    <button onclick="aiMic()" id="ai-mic" aria-label="Hablar" class="bg-gray-100 text-gray-600 w-12 h-12 rounded-full flex items-center justify-center"><i data-lucide="mic" class="w-6 h-6"></i></button>
-                    <button onclick="aiSend()" aria-label="Enviar" class="bg-black text-white w-12 h-12 rounded-full flex items-center justify-center"><i data-lucide="arrow-up" class="w-6 h-6"></i></button>
+        <div class="max-w-3xl mx-auto bg-white rounded-[2.25rem] card-shadow border border-gray-200 p-4">
+            <textarea id="ai-input" rows="2" placeholder="Preguntá o pedí algo…" oninput="aiAutoGrow(this)" onkeydown="aiKey(event)" class="w-full bg-transparent outline-none text-3xl resize-none px-2 pt-1 leading-snug placeholder:text-gray-400"></textarea>
+            <div class="flex items-center justify-between mt-2">
+                <button onclick="aiPlus()" class="bg-gray-100 text-gray-700 font-bold text-xl rounded-full pl-4 pr-5 h-16 flex items-center gap-2"><i data-lucide="plus" class="w-8 h-8"></i> Agregar</button>
+                <div class="flex items-center gap-3">
+                    <button onclick="aiMic()" id="ai-mic" aria-label="Hablar" class="bg-gray-100 text-gray-600 w-16 h-16 rounded-full flex items-center justify-center"><i data-lucide="mic" class="w-8 h-8"></i></button>
+                    <button onclick="aiSend()" aria-label="Enviar" class="bg-black text-white w-16 h-16 rounded-full flex items-center justify-center"><i data-lucide="arrow-up" class="w-8 h-8"></i></button>
                 </div>
             </div>
         </div>
@@ -1741,7 +1741,7 @@
             const r = document.getElementById('ai-response');
             r.innerHTML = msg; r.classList.remove('hidden');
         }
-        function aiAutoGrow(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 160) + 'px'; }
+        function aiAutoGrow(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 240) + 'px'; }
         function aiKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); aiSend(); } }
         // Pregunta conversacional a la IA (cuando hay intermediario configurado)
         async function aiAsk(text) {
