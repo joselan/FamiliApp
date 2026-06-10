@@ -68,22 +68,22 @@
             <div class="bg-white rounded-[2rem] card-shadow flex items-center px-1 py-2.5">
                 <button onclick="changeDay(-1)" class="text-gray-400 p-1 shrink-0 active:scale-90 transition-transform" aria-label="Día anterior"><i data-lucide="chevron-left" class="w-12 h-12"></i></button>
                 <div class="relative flex-1 min-w-0">
-                    <p id="today-date" class="text-center min-w-0 font-black tracking-tight leading-none whitespace-nowrap overflow-hidden">—</p>
-                    <input id="date-picker" type="date" onchange="jumpToDate(this.value)" aria-label="Elegir fecha en el calendario" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    <p id="today-date" onclick="openCalendar()" class="text-center min-w-0 font-black tracking-tight leading-none whitespace-nowrap overflow-hidden cursor-pointer">—</p>
                 </div>
                 <button onclick="changeDay(1)" class="text-gray-400 p-1 shrink-0 active:scale-90 transition-transform" aria-label="Día siguiente"><i data-lucide="chevron-right" class="w-12 h-12"></i></button>
                 <!-- Opciones (☰): sobrio, en blanco, separado de la tarjeta de clima -->
                 <button onclick="toggleAdminPanel()" class="bg-gray-100 text-gray-500 w-10 h-10 rounded-full shrink-0 ml-1 flex items-center justify-center active:scale-90 transition-transform" aria-label="Opciones"><i data-lucide="menu" class="w-6 h-6"></i></button>
             </div>
 
-            <!-- CLIMA (grande, todo el ancho): Liniers + temperatura + emoji en una sola línea -->
-            <div class="bg-white rounded-[2rem] card-shadow px-4 py-3">
-                <span id="weather-temps" class="w-full flex items-center justify-center gap-2.5 whitespace-nowrap overflow-hidden leading-none font-black">
-                    <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" rel="noopener" class="flex items-center gap-1 text-gray-500 shrink-0"><i data-lucide="map-pin" class="w-[0.7em] h-[0.7em] shrink-0"></i> Liniers</a>
-                    <span id="weather-now">--°</span>
+            <!-- CLIMA: "Liniers" chico a la izquierda + las 3 temperaturas (mismo tamaño,
+                 distinto color) y el emoji al doble, centrados -->
+            <div class="bg-white rounded-[2rem] card-shadow px-4 py-3 flex items-center gap-2">
+                <a href="https://www.google.com/search?q=clima+Liniers" target="_blank" rel="noopener" class="flex items-center gap-1 text-gray-500 font-black text-lg shrink-0"><i data-lucide="map-pin" class="w-4 h-4 shrink-0"></i> Liniers</a>
+                <span id="weather-temps" class="flex-1 flex items-center justify-center gap-2.5 whitespace-nowrap overflow-hidden leading-none font-black">
+                    <span id="weather-now" class="text-gray-800">--°</span>
                     <span id="weather-icon" class="shrink-0"></span>
-                    <span id="temp-min" class="text-sky-400 text-[0.7em]">--°</span>
-                    <span id="temp-max" class="text-red-500 text-[0.7em]">--°</span>
+                    <span id="temp-min" class="text-sky-400">--°</span>
+                    <span id="temp-max" class="text-red-500">--°</span>
                 </span>
             </div>
             <!-- ADULTOS: fila propia debajo del clima — José (verde) y Flor (rojo) con sus eventos -->
@@ -123,10 +123,31 @@
         </section>
     </main>
 
-    <!-- Botón flotante "+" : agregar un evento (abre Opciones → Eventos) -->
-    <button id="add-fab" onclick="openAddEvent()" aria-label="Agregar evento" class="hidden fixed bottom-6 right-5 z-40 bg-blue-600 text-white w-16 h-16 rounded-full shadow-xl ring-4 ring-blue-600/20 flex items-center justify-center active:scale-95 transition-transform">
-        <i data-lucide="plus" class="w-10 h-10"></i>
-    </button>
+    <!-- CALENDARIO PROPIO: se abre al tocar la fecha. Muestra puntos de color por
+         integrante en los días con eventos. Tocar un día salta a ese día. -->
+    <div id="cal-modal" class="hidden fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4" onclick="if(event.target===this)closeCalendar()">
+        <div class="bg-white w-full max-w-md rounded-[2rem] p-5 card-shadow max-h-[90dvh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-3">
+                <button onclick="calMonth(-1)" class="text-gray-400 p-1 active:scale-90 transition-transform" aria-label="Mes anterior"><i data-lucide="chevron-left" class="w-8 h-8"></i></button>
+                <h2 id="cal-title" class="text-xl font-black capitalize">—</h2>
+                <button onclick="calMonth(1)" class="text-gray-400 p-1 active:scale-90 transition-transform" aria-label="Mes siguiente"><i data-lucide="chevron-right" class="w-8 h-8"></i></button>
+            </div>
+            <div class="grid grid-cols-7 gap-1 text-center text-xs font-black text-gray-400 mb-1">
+                <div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div><div>D</div>
+            </div>
+            <div id="cal-grid" class="grid grid-cols-7 gap-1"></div>
+            <div class="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-4 text-xs font-bold text-gray-600">
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background:#2563eb"></span>Pipe</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background:#db2777"></span>Pili</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background:#16a34a"></span>José</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background:#dc2626"></span>Flor</span>
+            </div>
+            <div class="flex gap-2 mt-4">
+                <button onclick="pickCalDay(todayStr())" class="flex-1 bg-blue-50 text-blue-700 font-bold py-2.5 rounded-2xl">Hoy</button>
+                <button onclick="closeCalendar()" class="flex-1 bg-gray-100 text-gray-600 font-bold py-2.5 rounded-2xl">Cerrar</button>
+            </div>
+        </div>
+    </div>
 
     <!-- PANEL CONFIG -->
     <div id="admin-panel" class="hidden fixed inset-0 z-50 flex items-start justify-center bg-black/50 px-4 pt-5 pb-4">
@@ -310,7 +331,6 @@
             if (user && ALLOWED.includes(user.email)) {
                 document.getElementById('login-container').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
-                document.getElementById('add-fab').classList.remove('hidden');
                 if (!appStarted) { appStarted = true; initApp(); }
             } else if (user) {
                 const err = document.getElementById('login-error');
@@ -379,6 +399,57 @@
             lucide.createIcons();
         }
 
+        // ---- Calendario propio (se abre al tocar la fecha) ----
+        // Muestra el mes con puntos de color por integrante en los días con eventos.
+        let calY, calM; // año y mes (0-11) que se está mirando
+        const CAL_COLOR = { pipe: '#2563eb', pili: '#db2777', jose: '#16a34a', flor: '#dc2626' };
+        const CAL_ORDER = ['pipe', 'pili', 'jose', 'flor'];
+        function openCalendar() {
+            calY = selDate.getFullYear(); calM = selDate.getMonth();
+            document.getElementById('cal-modal').classList.remove('hidden');
+            renderCalendar();
+        }
+        function closeCalendar() { document.getElementById('cal-modal').classList.add('hidden'); }
+        function calMonth(delta) {
+            calM += delta;
+            if (calM < 0) { calM = 11; calY--; }
+            if (calM > 11) { calM = 0; calY++; }
+            renderCalendar();
+        }
+        function pickCalDay(ds) { closeCalendar(); jumpToDate(ds); }
+        function renderCalendar() {
+            const grid = document.getElementById('cal-grid');
+            const title = document.getElementById('cal-title');
+            if (!grid || !title) return;
+            title.innerText = new Date(calY, calM, 1).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+            // Día 'YYYY-MM-DD' -> set de integrantes con evento ese día
+            const byDay = {};
+            (allEvents || []).forEach(e => {
+                if (!e.fecha) return;
+                (byDay[e.fecha] = byDay[e.fecha] || new Set());
+                eventAudience(e).forEach(m => byDay[e.fecha].add(m));
+            });
+            const startPad = (new Date(calY, calM, 1).getDay() + 6) % 7; // lunes = 0
+            const dim = new Date(calY, calM + 1, 0).getDate();
+            const hoy = todayStr(), sel = fmtDate(selDate);
+            let cells = '';
+            for (let i = 0; i < startPad; i++) cells += '<div></div>';
+            for (let day = 1; day <= dim; day++) {
+                const ds = `${calY}-${String(calM + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const mem = byDay[ds] ? CAL_ORDER.filter(m => byDay[ds].has(m)) : [];
+                const dots = mem.map(m => `<span class="w-1.5 h-1.5 rounded-full" style="background:${CAL_COLOR[m]}"></span>`).join('');
+                const isHoy = ds === hoy, isSel = ds === sel;
+                const ring = isSel ? 'ring-2 ring-blue-500' : '';
+                const bg = isSel ? 'bg-blue-50' : (isHoy ? 'bg-gray-100' : '');
+                cells += `<button onclick="pickCalDay('${ds}')" class="aspect-square rounded-xl flex flex-col items-center justify-center gap-0.5 ${bg} ${ring} active:scale-95 transition-transform">
+                            <span class="text-sm font-bold ${isHoy ? 'text-blue-600' : 'text-gray-700'}">${day}</span>
+                            <span class="flex gap-0.5 items-center h-1.5">${dots}</span>
+                        </button>`;
+            }
+            grid.innerHTML = cells;
+            lucide.createIcons();
+        }
+
         // Pinta todo lo que depende del día seleccionado
         function renderDay() {
             const ds = fmtDate(selDate);
@@ -387,7 +458,6 @@
             wd = wd.charAt(0).toUpperCase() + wd.slice(1);
             const mo = selDate.toLocaleDateString('es-AR', { month: 'short' }).replace('.', '');
             document.getElementById('today-date').innerText = `${wd} ${selDate.getDate()} ${mo}`;
-            const dp = document.getElementById('date-picker'); if (dp) dp.value = ds; // el calendario abre en este día
             applyWeather(ds);
             loadMenuFor(ds);
             renderSpecials(ds);
@@ -600,7 +670,8 @@
         }
 
         // ---- Eventos ----
-        let currentEvents = [];
+        let currentEvents = [];   // solo los futuros (para las columnas)
+        let allEvents = [];       // todos (para los puntos del calendario propio)
         let editingEventId = null;   // si está seteado, "Guardar" edita ese evento en vez de crear uno nuevo
         let editingFlyer = null;     // flyer del evento que se está editando (para conservarlo si no se sube otro)
         async function loadEvents() {
@@ -609,7 +680,8 @@
             try {
                 const snap = await db.collection('eventos').get();
                 const hoy = todayStr();
-                currentEvents = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                allEvents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                currentEvents = allEvents
                     .filter(e => e.fecha >= hoy)
                     .sort((a, b) => (a.fecha + (a.hora || '')).localeCompare(b.fecha + (b.hora || '')));
                 renderEventColumn(pipeEl, 'pipe');
@@ -635,12 +707,9 @@
                 const rows = evs.length ? evs.map(e => {
                     const d = new Date(e.fecha + 'T00:00');
                     const mes = d.toLocaleDateString('es-AR', { month: 'short' }).replace('.', '').toUpperCase();
-                    return `<div onclick="openEventDetail('${e.id}')" class="flex items-center gap-2 cursor-pointer active:opacity-60 py-0.5">
-                                <div class="shrink-0 w-8 rounded-[4px] overflow-hidden border border-gray-200 text-center leading-none">
-                                    <div class="text-[7px] font-black uppercase text-white py-[1.5px] tracking-wide" style="background:${color}">${mes}</div>
-                                    <div class="text-[15px] font-black text-gray-900 py-[2px] leading-none">${d.getDate()}</div>
-                                </div>
-                                <span class="text-[13px] font-bold text-gray-700 truncate flex-1 min-w-0 leading-tight">${escapeHtml(e.titulo)}</span>
+                    return `<div onclick="openEventDetail('${e.id}')" class="flex items-center gap-2 cursor-pointer active:opacity-60 py-1">
+                                ${calIcon(mes, d.getDate(), color)}
+                                <span class="text-[13px] font-bold text-gray-700 line-clamp-2 flex-1 min-w-0 leading-tight">${escapeHtml(e.titulo)}</span>
                             </div>`;
                 }).join('') : '<p class="text-[12px] text-gray-300 font-bold pl-1 py-0.5">Sin eventos</p>';
                 return `<div class="flex items-center gap-1.5 mb-1">
@@ -648,9 +717,11 @@
                             <span class="text-[15px] font-black truncate" style="color:${color}">${name}</span>
                         </div>${rows}`;
             };
-            card.innerHTML = `<div class="grid grid-cols-2 gap-4">
+            // "+" para agregar evento, justo en el centro entre las columnas de José y Flor.
+            card.innerHTML = `<div class="grid grid-cols-[1fr_auto_1fr] gap-3 items-start">
                 <div class="min-w-0">${bloque('jose', 'José')}</div>
-                <div class="min-w-0 border-l border-gray-100 pl-4">${bloque('flor', 'Flor')}</div>
+                <button onclick="openAddEvent()" aria-label="Agregar evento" class="self-center shrink-0 bg-blue-600 text-white w-12 h-12 rounded-full shadow-lg ring-4 ring-blue-600/20 flex items-center justify-center active:scale-95 transition-transform"><i data-lucide="plus" class="w-7 h-7"></i></button>
+                <div class="min-w-0">${bloque('flor', 'Flor')}</div>
             </div>`;
         }
         // Días que faltan para una fecha 'YYYY-MM-DD' (0 = hoy, 1 = mañana...)
@@ -1879,7 +1950,8 @@
                 !document.getElementById('detail-modal').classList.contains('hidden') ||
                 !document.getElementById('photo-modal').classList.contains('hidden') ||
                 !document.getElementById('vault-modal').classList.contains('hidden') ||
-                !document.getElementById('shop-modal').classList.contains('hidden');
+                !document.getElementById('shop-modal').classList.contains('hidden') ||
+                !document.getElementById('cal-modal').classList.contains('hidden');
             el.addEventListener('touchstart', e => {
                 if (e.touches.length !== 1) { x0 = null; return; }
                 x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;

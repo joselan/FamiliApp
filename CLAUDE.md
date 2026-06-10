@@ -59,10 +59,15 @@ y un service worker (`sw.js`).
 
 ## Funcionalidades clave (estado actual)
 
-- **Encabezado**: fecha grande (tocar = calendario; el botón **Opciones** ☰ va sobrio en
-  gris claro al final de esa barra, separado del clima). Franja de clima a todo el ancho
-  en una sola línea: **Liniers** + temperatura actual + emoji (al doble) + máx/mín chicas.
+- **Encabezado**: fecha grande (tocar = **calendario propio**, ver abajo; el botón
+  **Opciones** ☰ va sobrio en gris claro al final de esa barra, separado del clima). Franja
+  de clima: **"Liniers"** chico a la izquierda + las **3 temperaturas del mismo tamaño y
+  distinto color** (actual gris, mín celeste, máx roja) con el emoji al doble, centradas.
   Debajo, fila de **adultos**.
+- **Calendario propio** (`cal-modal`, se abre al tocar la fecha; `openCalendar`/
+  `renderCalendar`): vista de mes con flechas de mes, **puntos de color por integrante** en
+  los días con eventos (Pipe azul, Pili rosa, José verde, Flor roja — `CAL_COLOR`), botón
+  "Hoy" y leyenda. Tocar un día salta a ese día. Usa `allEvents` (todos, no solo futuros).
 - **Chicos (Pipe y Pili)**: foto/avatar por clima+día, menú y actividades, y sus eventos
   en la misma columna.
 - **Adultos (José y Flor)**: fila propia full-width debajo del clima, dos columnas.
@@ -73,10 +78,11 @@ y un service worker (`sw.js`).
   - Tarjeta con **calendario grande** y **countdown de colores** la última semana
     (amarillo casi blanco a 7 días → verde llamativo el día del evento, `calColors()`).
   - Popup con toda la info + botones **Google Maps** y **Waze** si hay dirección.
-  - **Calendarito** de cada tarjeta (`calIcon`): mes arriba en color de identidad y el
-    **número del día grande y centrado** llenando la parte de abajo.
-- **Botón flotante "+"** (`add-fab`, abajo a la derecha, azul y circular, bien grande):
-  abre Opciones → pestaña **Eventos** (form a mano + "Subir flyer / invitación").
+  - **Calendarito** de cada tarjeta (`calIcon`, mismo para chicos y adultos): mes arriba en
+    color de identidad y el **número del día grande y centrado** llenando la parte de abajo.
+- **Botón "+"** (azul, circular): va **centrado entre las columnas de José y Flor** en la
+  franja de adultos (`renderAdults`, columna del medio del grid). Abre Opciones → pestaña
+  **Eventos** (form a mano + "Subir flyer / invitación") vía `openAddEvent`.
 - **Lista de compras (compartida)**: en `config/compras` (un doc con `items[]`),
   sincronizada en vivo (`onSnapshot`) entre los dos celulares. Se abre desde Opciones.
   Se agregan ítems escribiéndolos a mano (la cámara con IA se retiró).
