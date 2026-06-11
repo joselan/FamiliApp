@@ -1,104 +1,74 @@
-# Plan: regenerar avatares de Pipe y Pili con Gemini (opción A)
+# Avatares de Pipe y Pili — estado y pipeline (ACTUALIZADO 2026-06-11)
 
-Este documento es para que una sesión de Claude Code pueda ejecutar el plan completo
-sin contexto previo. El dueño (José) ya aprobó este flujo.
+Documento para que cualquier sesión de Claude Code retome el trabajo sin contexto
+previo. El dueño (José) dirige; este es el estado real del proyecto.
 
-## Objetivo
+## Decisiones tomadas (no re-preguntar)
 
-Reemplazar las fotos de avatar de los chicos generando, con la API de imágenes de
-Gemini, todas las variantes de ropa que usa `avatarCandidates()` en `index.html`,
-a partir de una **foto base nueva** (los dos chicos juntos con uniforme de colegio
-de verano: remera manga corta y pantalón corto) + fotos de las prendas reales.
+- **Estilo nuevo: dibujo 3D tipo Pixar** (NO fotorrealista). Los PNG fotorrealistas
+  que están en la raíz del repo (`pipe_normal.png`, `pili_frio.png`, etc.) son de una
+  tanda anterior DESCARTADA. Los `.webp` actuales (fotos reales) se reemplazan.
+- **Generación MANUAL por el dueño** en la app de Gemini (gemini.google.com), gratis.
+  NO usar la API de imágenes con `GEMINI_API_KEY`: el free tier tiene la generación
+  de imágenes en `limit: 0` (error 429) y el dueño decidió NO activar facturación.
+- **Pili rota 3 looks de finde**: unicornio, Minnie, princesa (la calza rosa quedó
+  afuera). Pipe: Boca, Argentina, Real Madrid.
+- `pipe_futbol`: equipo de la Selección Argentina + botines (el dueño guardó esa
+  imagen como "pipe_argentina" → renombrar a `pipe_futbol.webp` al integrar).
+- `pili_argentina`: imagen extra generada; DÓNDE usarla está pendiente de decisión
+  del dueño (opciones: mismos días de fútbol que Pipe / 4to look de finde / guardar).
 
-## Qué necesita la sesión antes de arrancar
+## Flujo de archivos (IMPORTANTE)
 
-1. **`GEMINI_API_KEY`** como variable de entorno (configurada en el environment de
-   Claude Code en la web). Verificar con `test -n "$GEMINI_API_KEY"`.
-2. **Foto base** adjunta en el chat (los dos juntos, uniforme de verano).
-3. **Fotos de las prendas** adjuntas (pueden venir de a tandas; generar lo que haya):
-   - [ ] Uniforme de invierno de Pipe (buzo + pantalón largo)
-   - [ ] Campera de abrigo de Pipe
-   - [ ] Uniforme de invierno de Pili
-   - [ ] Campera de abrigo de Pili
-   - [ ] Equipo de fútbol + botines (Pipe)
-   - [ ] Piloto + botas de lluvia (+ paraguas si hay) (Pili)
-   - [ ] Camiseta de Boca (Pipe)
-   - [ ] Camiseta de Argentina (Pipe)
-   - [ ] Ropa de calle libre (Pipe)
-   - [ ] Ropa de unicornio (Pili)
-   - [ ] Ropa de Minnie (Pili)
-   - [ ] Conjunto rosa (Pili)
+Los adjuntos del chat NO llegan al disco de este entorno. El intercambio es por la
+carpeta **"FamiliApp" de Google Drive** del dueño (MCP Google_Drive conectado;
+carpeta id `14tX8nXznFmZwyoQiXtYKY8NvbMF4Mq9J`). El dueño sube ahí; Claude baja con
+`mcp__Google_Drive__download_file_content` (base64 → decodificar con python; los
+resultados grandes se persisten a .txt — decodificar desde ese archivo, NUNCA
+transcribir base64 a mano; para respuestas inline usar un subagente que parsea su
+propio transcript .jsonl).
 
-## Archivos destino (14)
+## Estado de las imágenes finales (estilo Pixar)
 
-| Archivo | Contenido | Prompt |
-|---|---|---|
-| `pipe_normal.webp` | Uniforme verano (recorte de la foto base) | 1 |
-| `pili_normal.webp` | Uniforme verano (recorte de la foto base) | 2 |
-| `pipe_frio.webp` | Uniforme invierno | 3 |
-| `pipe_mucho_frio.webp` | Uniforme invierno + campera | 4 |
-| `pili_frio.webp` | Uniforme invierno | 5 |
-| `pili_mucho_frio.webp` | Uniforme invierno + campera | 6 |
-| `pipe_futbol.webp` | Equipo de fútbol + botines | 7 |
-| `pili_lluvia.webp` | Piloto + paraguas + botas | 8 |
-| `pipe_finde1.webp` | Camiseta de Boca | 9 |
-| `pipe_finde2.webp` | Camiseta de Argentina | 10 |
-| `pipe_finde3.webp` | Ropa de calle libre | 11 |
-| `pili_finde1.webp` | Unicornio | 12 |
-| `pili_finde2.webp` | Minnie | 13 |
-| `pili_finde3.webp` | Conjunto rosa | 14 |
+Generadas por el dueño (al 11/6 a la noche; las marcadas ☁️ ya están en Drive):
+- [ ] `pipe_normal` (base, uniforme verano) — hecha, falta subir a Drive
+- [ ] `pili_normal` (base, uniforme verano) — hecha, falta subir a Drive
+- [ ] `pipe_frio` — hecha, falta subir
+- [ ] `pipe_mucho_frio` — hecha, falta subir
+- [ ] `pili_frio` — hecha, falta subir
+- [ ] `pili_mucho_frio` — hecha, falta subir
+- [ ] `pipe_futbol` (guardada como "pipe_argentina") — hecha, falta subir
+- [ ] `pili_argentina` (destino a definir) — hecha, falta subir
+- [ ] `pipe_finde3` (Real Madrid) — hecha, falta subir
+- [ ] `pipe_finde1` (Boca) — PENDIENTE de generar
+- [ ] `pipe_finde2` (Argentina, ropa de finde) — PENDIENTE
+- [ ] `pili_lluvia` (piloto + botas + paraguas) — PENDIENTE
+- [ ] `pili_finde1` (unicornio) — PENDIENTE
+- [ ] `pili_finde2` (Minnie) — PENDIENTE
+- [ ] `pili_finde3` (princesa) — PENDIENTE
 
-Las variantes por clima de fútbol/lluvia/finde (`pipe_futbol_frio.webp`, etc.) son
-**opcionales** (la app cae a la versión sin sufijo). Ronda 2, solo si José la pide:
-repetir el prompt agregando "Agregale encima un buzo o campera liviana, como para un
-día fresco (12–17 °C)" (`_frio`) o "Agregale encima una campera bien abrigada, como
-para un día de mucho frío (menos de 12 °C)" (`_mucho_frio`).
+Los prompts que usa el dueño están en el historial del chat (sesión
+session_01BnWCytJdJyNnuoW9UsT4fW); patrón: imagen base del chico + foto de la
+prenda + "mantené cara/pose/estilo 3D, cambiá SOLO la ropa, vertical 3:4".
 
-## Pipeline
+## Prendas de referencia (ya descargadas en /tmp/avatares/ de la sesión del 11/6;
+re-descargar de Drive si la sesión es nueva)
 
-1. Verificar `GEMINI_API_KEY` y guardar las imágenes adjuntas del chat en una carpeta
-   de trabajo (p. ej. `/tmp/avatares/`).
-2. Listar modelos disponibles (`GET /v1beta/models`) y usar el **mejor modelo de
-   imagen** disponible (p. ej. `gemini-3-pro-image-preview` o, si no está,
-   `gemini-2.5-flash-image`). SDK `google-genai` (pip) o REST con `curl`.
-3. Generar **de a una** imagen por prompt (abajo), adjuntando la foto base (imagen A)
-   y la foto de la prenda (imagen B) donde corresponda. Pedir salida vertical 3:4.
-   Para los prompts 3 en adelante usar como imagen A el resultado individual de los
-   prompts 1 y 2 (no la foto de los dos juntos).
-4. **Mostrar cada resultado a José** (SendUserFile) y esperar su OK antes de
-   publicar; regenerar las que pida (la cara tiene que ser fiel).
-5. Convertir las aprobadas a `.webp` (Pillow o `cwebp`, calidad ~80, tamaño máx.
-   ~800 px de alto) con los nombres exactos de la tabla, en la raíz del repo.
-6. Subir la versión del caché en `sw.js` (`const CACHE = 'familiapp-vNN'`).
-7. Commit en la rama de trabajo, push, y push a `main` (fast-forward) según el flujo
-   de publicación de `CLAUDE.md`. Las fotos `.png` viejas de la raíz pueden quedar.
+buzo_nieves.jpg, pantalon_nieves.jpg, campera_nieves.jpg (uniforme invierno NSLN),
+camiseta_boca.avif, camiseta_argentina (JM5897...webp), botines (adid9045...webp),
+vestido_unicornio (2bb5844d...webp), calza rosa (17710727...webp, DESCARTADA),
+minnie_remera.webp, piloto_pili.webp, botas_pili.webp, vestido_princesa_pili.webp.
 
-## Prompts
+## Pipeline de integración (cuando el dueño avise que subió a Drive)
 
-Reglas comunes: mantener exactamente cara, peinado y proporciones del nene/a de la
-imagen A; de pie, cuerpo entero de la cabeza a los pies, mirando al frente; fondo
-liso claro; formato vertical 3:4; cambiar ÚNICAMENTE la ropa; reproducir fiel
-colores, escudos y estampados de la prenda de la imagen B.
+1. Listar la carpeta de Drive y bajar las imágenes nuevas (ver "Flujo de archivos").
+2. Revisarlas (Read) y mandárselas al dueño (SendUserFile) si hace falta confirmar.
+3. Convertir a `.webp` con los nombres EXACTOS de la lista (Pillow, calidad ~80,
+   alto máx ~1000 px, mantener 3:4). `pipe_argentina` → `pipe_futbol.webp`.
+4. Reemplazar en la raíz del repo. NO borrar los png viejos salvo pedido.
+5. Subir versión de caché en `sw.js` (`const CACHE = 'familiapp-vNN'`).
+6. Commit en la rama de trabajo, push, y push a `main` (flujo de `CLAUDE.md`).
+7. Avisar al dueño que recargue la PWA (~2-3 min).
 
-1. **pipe_normal** (A = foto de los dos): "Generá una imagen SOLO del nene (el varón),
-   recortándolo y completando la escena. Mantené su ropa actual (uniforme del colegio:
-   remera manga corta y pantalón corto)." + reglas comunes.
-2. **pili_normal** (A = foto de los dos): ídem 1 pero "SOLO de la nena".
-3. **pipe_frio** (B = uniforme invierno Pipe): "Cambiá la ropa: uniforme de invierno
-   del colegio de la imagen B (buzo manga larga y pantalón largo)."
-4. **pipe_mucho_frio** (B = campera Pipe): "Uniforme de invierno del colegio y encima
-   la campera abrigada de la imagen B, cerrada, como para un día de mucho frío."
-5. **pili_frio** (B = uniforme invierno Pili): igual que 3.
-6. **pili_mucho_frio** (B = campera Pili): igual que 4.
-7. **pipe_futbol** (B = equipo fútbol): "Equipo de fútbol completo como el de la
-   imagen B: camiseta, short, medias de fútbol largas y botines."
-8. **pili_lluvia** (B = piloto/botas): "Piloto de la imagen B sobre el uniforme del
-   colegio, botas de lluvia, y sostiene un paraguas abierto con una mano."
-9. **pipe_finde1** (B = camiseta Boca): "Ropa cómoda de finde: camiseta de Boca
-   Juniors de la imagen B, short o pantalón deportivo, zapatillas."
-10. **pipe_finde2** (B = camiseta Argentina): ídem 9 con la camiseta de la Selección.
-11. **pipe_finde3** (B = ropa libre): "La ropa de calle de la imagen B, zapatillas."
-12. **pili_finde1** (B = unicornio): "El conjunto con unicornio de la imagen B
-    (remera o vestido), calzado cómodo."
-13. **pili_finde2** (B = Minnie): "El conjunto de Minnie Mouse de la imagen B."
-14. **pili_finde3** (B = conjunto rosa): "El conjunto rosa de la imagen B."
+Si el dueño quiere cablear `pili_argentina`: tocar `avatarCandidates()` en
+`index.html` según la opción que elija.
