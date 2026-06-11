@@ -30,16 +30,22 @@ propio transcript .jsonl).
 
 ## Estado de las imágenes finales (estilo Pixar)
 
-Generadas por el dueño (al 11/6 a la noche; las marcadas ☁️ ya están en Drive):
-- [ ] `pipe_normal` (base, uniforme verano) — hecha, falta subir a Drive
-- [ ] `pili_normal` (base, uniforme verano) — hecha, falta subir a Drive
-- [ ] `pipe_frio` — hecha, falta subir
-- [ ] `pipe_mucho_frio` — hecha, falta subir
-- [ ] `pili_frio` — hecha, falta subir
-- [ ] `pili_mucho_frio` — hecha, falta subir
-- [ ] `pipe_futbol` (guardada como "pipe_argentina") — hecha, falta subir
-- [ ] `pili_argentina` (destino a definir) — hecha, falta subir
-- [ ] `pipe_finde3` (Real Madrid) — hecha, falta subir
+El dueño sube a Drive → carpeta "Avatares" dentro de "FamiliApp"
+(id `1O53k8otJ4f6mBLJYpANpbOincdjRV0le`). Integradas = ya convertidas a .webp,
+en el repo y publicadas en main.
+
+- [x] `pipe_normal` (base, "Pipe calor.png") — INTEGRADA 12/6
+- [x] `pili_normal` (base, "Pili calor.png") — INTEGRADA 12/6
+- [x] `pipe_frio` — INTEGRADA 12/6
+- [x] `pipe_mucho_frio` — INTEGRADA 12/6
+- [x] `pili_frio` — INTEGRADA 12/6
+- [ ] `pili_mucho_frio` — el dueño dijo que la hizo pero NO estaba en Drive;
+      mientras tanto `pili_mucho_frio.webp` = copia provisoria de la de frío.
+      Cuando aparezca en Drive, reemplazar.
+- [x] `pipe_futbol` (subida como "pipe_argentina.png") — INTEGRADA 12/6
+- [x] `pili_argentina.webp` — convertida y en el repo, SIN cablear (decisión
+      pendiente del dueño: días de fútbol de Pipe / 4to finde / guardar)
+- [x] `pipe_finde3` (Real Madrid, "Pipe Real.png") — INTEGRADA 12/6
 - [ ] `pipe_finde1` (Boca) — PENDIENTE de generar
 - [ ] `pipe_finde2` (Argentina, ropa de finde) — PENDIENTE
 - [ ] `pili_lluvia` (piloto + botas + paraguas) — PENDIENTE
