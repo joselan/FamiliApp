@@ -13,10 +13,17 @@ previo. El dueño (José) dirige; este es el estado real del proyecto.
   de imágenes en `limit: 0` (error 429) y el dueño decidió NO activar facturación.
 - **Pili rota 3 looks de finde**: unicornio, Minnie, princesa (la calza rosa quedó
   afuera). Pipe: Boca, Argentina, Real Madrid.
-- `pipe_futbol`: equipo de la Selección Argentina + botines (el dueño guardó esa
-  imagen como "pipe_argentina" → renombrar a `pipe_futbol.webp` al integrar).
+- **Lógica semanal de ropa (regla del dueño, 12/6/26)**:
+  - Lun a jue: los dos de uniforme según clima.
+  - Viernes: Pili de uniforme; Pipe de particular pero NUNCA con ropa de Boca
+    (regla del colegio) → rota pipe_finde2 (Argentina) y pipe_finde3 (Real
+    Madrid), con pipe_futbol (equipo de Argentina) como fallback.
+  - Findes y feriados: los dos con ropa libre (ahí Boca sí está permitido).
+- `pipe_futbol`: equipo de la Selección Argentina + botines (subida como
+  "pipe_argentina"). Se usa SOLO como fallback del viernes de Pipe; la regla
+  vieja "día con fútbol en el horario → ropa de fútbol" se eliminó: NO reactivarla.
 - `pili_argentina`: imagen extra generada; DÓNDE usarla está pendiente de decisión
-  del dueño (opciones: mismos días de fútbol que Pipe / 4to look de finde / guardar).
+  del dueño (opciones: 4to look de finde / días de partido / guardar).
 
 ## Flujo de archivos (IMPORTANTE)
 
@@ -42,11 +49,8 @@ en el repo y publicadas en main.
 - [ ] `pili_mucho_frio` — el dueño dijo que la hizo pero NO estaba en Drive;
       mientras tanto `pili_mucho_frio.webp` = copia provisoria de la de frío.
       Cuando aparezca en Drive, reemplazar.
-- [x] `pipe_futbol` (subida como "pipe_argentina.png") — convertida y en el repo,
-      pero la regla "día con fútbol → ropa de fútbol" se ELIMINÓ a pedido del
-      dueño (12/6): los días de colegio van SIEMPRE de uniforme según el clima.
-      NO reactivarla. Uso futuro de esta imagen: a decidir (junto con
-      pili_argentina).
+- [x] `pipe_futbol` (subida como "pipe_argentina.png") — en el repo; se usa como
+      fallback del viernes de Pipe (ver "Lógica semanal" arriba).
 - [x] `pili_argentina.webp` — convertida y en el repo, SIN cablear (decisión
       pendiente del dueño: días de fútbol de Pipe / 4to finde / guardar)
 - [x] `pipe_finde3` (Real Madrid, "Pipe Real.png") — INTEGRADA 12/6
