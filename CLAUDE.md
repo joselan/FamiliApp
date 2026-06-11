@@ -102,13 +102,17 @@ y un service worker (`sw.js`).
   dueño y enganchados al `manifest` y al `<head>`. (Para verlo en el celu hay que
   reinstalar la PWA.)
 
-## Pendiente — Fotos de avatares (RECORDARLE al dueño cuando diga que está en la compu)
+## Pendiente — Fotos de avatares (PLAN NUEVO: ver `AVATARES.md`)
+
+**El plan vigente está en `AVATARES.md`**: regenerar TODAS las variantes con la API
+de imágenes de Gemini (`GEMINI_API_KEY` como variable de entorno del environment) a
+partir de la foto base nueva del dueño (los dos con uniforme de verano) + fotos de
+las prendas. Si el dueño dice "seguí con los avatares" o adjunta fotos de prendas,
+leer `AVATARES.md` y ejecutar ese pipeline.
 
 La lógica de avatares ya elige la ropa por clima/día (`AVATAR_STYLE = 'foto'`,
-`updateAvatars`/`avatarCandidates` en `index.html`). Ya están las fotos **base**
-(`pipe`/`pili` × `_normal`/`_frio`/`_mucho_frio`). Faltan las **versiones especiales**
-(el dueño las arma). Formato: vertical 3:4, cuerpo entero, fondo claro, mismo encuadre.
-Puede mandar PNG/JPG y se convierten a `.webp`. Mientras falten, cae a la foto base
+`updateAvatars`/`avatarCandidates` en `index.html`). Formato: vertical 3:4, cuerpo
+entero, fondo claro, mismo encuadre. Mientras falte una variante, cae a la foto base
 (no se rompe nada).
 
 - **Finde/feriados (rotan, `FINDE_VARIANTS = 3`):**
