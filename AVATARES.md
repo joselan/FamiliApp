@@ -42,7 +42,11 @@ en el repo y publicadas en main.
 - [ ] `pili_mucho_frio` — el dueño dijo que la hizo pero NO estaba en Drive;
       mientras tanto `pili_mucho_frio.webp` = copia provisoria de la de frío.
       Cuando aparezca en Drive, reemplazar.
-- [x] `pipe_futbol` (subida como "pipe_argentina.png") — INTEGRADA 12/6
+- [x] `pipe_futbol` (subida como "pipe_argentina.png") — convertida y en el repo,
+      pero la regla "día con fútbol → ropa de fútbol" se ELIMINÓ a pedido del
+      dueño (12/6): los días de colegio van SIEMPRE de uniforme según el clima.
+      NO reactivarla. Uso futuro de esta imagen: a decidir (junto con
+      pili_argentina).
 - [x] `pili_argentina.webp` — convertida y en el repo, SIN cablear (decisión
       pendiente del dueño: días de fútbol de Pipe / 4to finde / guardar)
 - [x] `pipe_finde3` (Real Madrid, "Pipe Real.png") — INTEGRADA 12/6
