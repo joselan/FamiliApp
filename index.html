@@ -543,16 +543,32 @@
 
         // ---- Clima ----
         async function fetchWeather() {
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=-34.6370&longitude=-58.5231`
+                + `&current=temperature_2m,weather_code`
+                + `&daily=temperature_2m_max,temperature_2m_min,temperature_2m_mean,weather_code`
+                + `&past_days=7&forecast_days=16&timezone=America/Argentina/Buenos_Aires`;
             try {
-                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=-34.6370&longitude=-58.5231&current_weather=true&daily=temperature_2m_max,temperature_2m_min,temperature_2m_mean,weather_code&past_days=7&forecast_days=16&timezone=America/Argentina/Buenos_Aires`);
+                const res = await fetch(url);
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const data = await res.json();
-                currentTemp = Math.round(data.current_weather.temperature);
+                if (data && data.error) throw new Error(data.reason || 'API error');
+                // 1) Pronóstico diario primero: es lo más importante (máx/mín y la ropa).
+                //    Se procesa antes que la temperatura actual para que un problema con
+                //    esta última no tire abajo TODO el clima (antes quedaba en guiones).
                 const dy = data.daily;
-                weatherByDate = {};
-                dy.time.forEach((t, i) => {
-                    weatherByDate[t] = { max: dy.temperature_2m_max[i], min: dy.temperature_2m_min[i], mean: dy.temperature_2m_mean[i], code: dy.weather_code[i] };
-                });
+                const next = {};
+                if (dy && Array.isArray(dy.time)) {
+                    dy.time.forEach((t, i) => {
+                        next[t] = { max: dy.temperature_2m_max[i], min: dy.temperature_2m_min[i], mean: dy.temperature_2m_mean[i], code: dy.weather_code[i] };
+                    });
+                }
+                weatherByDate = next;
+                // 2) Temperatura actual: soporta el formato nuevo ('current' → temperature_2m)
+                //    y el viejo ('current_weather' → temperature), por si la API cambia.
+                const cur = data.current || data.current_weather;
+                currentTemp = cur && cur.temperature_2m != null ? Math.round(cur.temperature_2m)
+                            : cur && cur.temperature != null ? Math.round(cur.temperature)
+                            : null;
             } catch (e) {
                 weatherByDate = {}; currentTemp = null;
             } finally {
