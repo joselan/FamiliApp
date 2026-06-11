@@ -5,9 +5,9 @@ previo. El dueño (José) dirige; este es el estado real del proyecto.
 
 ## Decisiones tomadas (no re-preguntar)
 
-- **Estilo nuevo: dibujo 3D tipo Pixar** (NO fotorrealista). Los PNG fotorrealistas
-  que están en la raíz del repo (`pipe_normal.png`, `pili_frio.png`, etc.) son de una
-  tanda anterior DESCARTADA. Los `.webp` actuales (fotos reales) se reemplazan.
+- **Estilo nuevo: dibujo 3D tipo Pixar** (NO fotorrealista). La tanda fotorrealista
+  anterior se DESCARTÓ y sus PNG se borraron del repo el 12/6 a pedido del dueño
+  (recuperables del historial de git). Los `.webp` de la raíz son los avatares en uso.
 - **Generación MANUAL por el dueño** en la app de Gemini (gemini.google.com), gratis.
   NO usar la API de imágenes con `GEMINI_API_KEY`: el free tier tiene la generación
   de imágenes en `limit: 0` (error 429) y el dueño decidió NO activar facturación.
@@ -79,7 +79,7 @@ minnie_remera.webp, piloto_pili.webp, botas_pili.webp, vestido_princesa_pili.web
 2. Revisarlas (Read) y mandárselas al dueño (SendUserFile) si hace falta confirmar.
 3. Convertir a `.webp` con los nombres EXACTOS de la lista (Pillow, calidad ~80,
    alto máx ~1000 px, mantener 3:4). `pipe_argentina` → `pipe_futbol.webp`.
-4. Reemplazar en la raíz del repo. NO borrar los png viejos salvo pedido.
+4. Reemplazar en la raíz del repo (los png fotorrealistas viejos ya se borraron).
 5. Subir versión de caché en `sw.js` (`const CACHE = 'familiapp-vNN'`).
 6. Commit en la rama de trabajo, push, y push a `main` (flujo de `CLAUDE.md`).
 7. Avisar al dueño que recargue la PWA (~2-3 min).
