@@ -96,7 +96,8 @@ y un service worker (`sw.js`).
   desde Opciones (`openAutos`/`openCarDetail`/`serviceForm`). Conviven en `config` para no
   tocar las reglas de Firestore.
 - **Empleadas domésticas**: fichas en `config/empleadas` (`empleadas[]`: nombre, tarea,
-  teléfono, días, horario, sueldo, notas) con botones de **Llamar/WhatsApp** y un
+  teléfono, días, horario, sueldo, **vacaciones** `vacDesde`/`vacHasta`, notas) con
+  botones de **Llamar/WhatsApp** y un
   **registro de pagos** (`pagos[]` inline: fecha, monto, nota). Se abre desde Opciones
   (`openEmpleadas`/`empDetail`/`pagoForm`).
 - **Recordatorios**: los eventos que se sincronizan a Google Calendar llevan avisos

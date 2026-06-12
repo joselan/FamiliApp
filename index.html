@@ -1722,6 +1722,13 @@
                         <div><label class="${lbl}">Horario</label><input id="emp-horario" placeholder="9 a 13" value="${e.horario ? escapeHtml(e.horario) : ''}" class="${inp}"></div>
                     </div>
                     <div><label class="${lbl}">Sueldo</label><input id="emp-sueldo" placeholder="Por hora / por mes" value="${e.sueldo ? escapeHtml(e.sueldo) : ''}" class="${inp}"></div>
+                    <div>
+                        <label class="${lbl}">Vacaciones</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <input id="emp-vacDesde" type="date" value="${e.vacDesde || ''}" class="${inp}" aria-label="Vacaciones desde">
+                            <input id="emp-vacHasta" type="date" value="${e.vacHasta || ''}" class="${inp}" aria-label="Vacaciones hasta">
+                        </div>
+                    </div>
                     <div><label class="${lbl}">Notas</label><textarea id="emp-notas" rows="2" class="${inp}">${e.notas ? escapeHtml(e.notas) : ''}</textarea></div>
                     <button onclick="empSave('${id || ''}')" class="w-full bg-violet-600 text-white font-bold py-3 rounded-2xl">Guardar</button>
                 </div>`);
@@ -1735,6 +1742,7 @@
                 tarea: gv('emp-tarea').trim(), telefono: gv('emp-telefono').trim(),
                 dias: gv('emp-dias').trim(), horario: gv('emp-horario').trim(),
                 sueldo: gv('emp-sueldo').trim(), notas: gv('emp-notas').trim(),
+                vacDesde: gv('emp-vacDesde'), vacHasta: gv('emp-vacHasta'),
                 pagos: Array.isArray(base.pagos) ? base.pagos : []
             };
             if (id) { const i = empData.empleadas.findIndex(x => x.id === id); if (i >= 0) empData.empleadas[i] = obj; else empData.empleadas.push(obj); }
@@ -1779,6 +1787,7 @@
                         ${info('Días', escapeHtml(e.dias || ''))}
                         ${info('Horario', escapeHtml(e.horario || ''))}
                         ${info('Sueldo', escapeHtml(e.sueldo || ''))}
+                        ${info('Vacaciones', (e.vacDesde || e.vacHasta) ? escapeHtml([fmtFecha(e.vacDesde), fmtFecha(e.vacHasta)].filter(Boolean).join(' al ')) : '')}
                         ${info('Teléfono', escapeHtml(e.telefono || ''))}
                     </div>
                     ${e.notas ? `<p class="mt-2 whitespace-pre-wrap break-words text-gray-700 text-sm">${escapeHtml(e.notas)}</p>` : ''}
