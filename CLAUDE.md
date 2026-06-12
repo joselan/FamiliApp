@@ -86,6 +86,19 @@ y un service worker (`sw.js`).
 - **Lista de compras (compartida)**: en `config/compras` (un doc con `items[]`),
   sincronizada en vivo (`onSnapshot`) entre los dos celulares. Se abre desde Opciones.
   Se agregan ítems escribiéndolos a mano (la cámara con IA se retiró).
+- **Mantenimiento de la casa**: lista de tareas pendientes compartida en vivo
+  (`config/mantenimiento`, doc con `items[]`, `onSnapshot`). Se abre desde Opciones.
+  Se agregan tareas a mano, se marcan como hechas, se **modifican** (lápiz) o se borran.
+- **Vehículos**: administración de los autos de la familia. Metadatos de cada auto en
+  `config/vehiculos` (`autos[]`); cada **service/cambio** es un doc auto-id en `config`
+  con `vkind:'service'` (campos `autoId`, `fecha`, `tipo`, `km`, `detalle`, `costo`) y el
+  **comprobante** (foto/PDF, base64, ~700 KB máx, imágenes comprimidas) adentro. Se abre
+  desde Opciones (`openAutos`/`openCarDetail`/`serviceForm`). Conviven en `config` para no
+  tocar las reglas de Firestore.
+- **Empleadas domésticas**: fichas en `config/empleadas` (`empleadas[]`: nombre, tarea,
+  teléfono, días, horario, sueldo, notas) con botones de **Llamar/WhatsApp** y un
+  **registro de pagos** (`pagos[]` inline: fecha, monto, nota). Se abre desde Opciones
+  (`openEmpleadas`/`empDetail`/`pagoForm`).
 - **Recordatorios**: los eventos que se sincronizan a Google Calendar llevan avisos
   automáticos (con hora: 1 día y 2 hs antes; todo el día: el día anterior) → el celu
   notifica vía Google Calendar (no hay push propio de la PWA).

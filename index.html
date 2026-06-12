@@ -160,7 +160,14 @@
             <!-- ACCESOS: lista de compras y caja fuerte -->
             <button onclick="openShop()" class="w-full mb-3 bg-emerald-600 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="shopping-cart" class="w-5 h-5"></i> Lista de compras</button>
             <!-- CAJA FUERTE: documentos y datos importantes (cifrados) -->
-            <button onclick="openVault()" class="w-full mb-4 bg-gray-900 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="lock" class="w-5 h-5"></i> Documentos y datos encriptados</button>
+            <button onclick="openVault()" class="w-full mb-3 bg-gray-900 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="lock" class="w-5 h-5"></i> Documentos y datos encriptados</button>
+
+            <!-- CASA: tareas de mantenimiento pendientes -->
+            <button onclick="openCasa()" class="w-full mb-3 bg-amber-500 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="wrench" class="w-5 h-5"></i> Mantenimiento de la casa</button>
+            <!-- AUTOS: service, cambios y comprobantes -->
+            <button onclick="openAutos()" class="w-full mb-3 bg-slate-700 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="car" class="w-5 h-5"></i> Vehículos de la familia</button>
+            <!-- EMPLEADAS: fichas y pagos -->
+            <button onclick="openEmpleadas()" class="w-full mb-4 bg-violet-600 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="users" class="w-5 h-5"></i> Empleadas domésticas</button>
 
             <!-- TABS -->
             <div class="grid grid-cols-4 gap-1 bg-gray-100 p-1 rounded-2xl mb-5 text-xs font-bold">
@@ -302,6 +309,45 @@
             </div>
             <div id="shop-list" class="space-y-2 flex-1"></div>
             <button id="shop-clear" onclick="shopClearDone()" class="hidden mt-4 mb-2 w-full bg-gray-100 text-gray-600 font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="trash-2" class="w-5 h-5"></i> Borrar lo comprado</button>
+        </div>
+    </div>
+
+    <!-- MANTENIMIENTO DE LA CASA (tareas pendientes, compartida y en vivo) -->
+    <div id="casa-modal" class="hidden fixed inset-0 z-[60] bg-zinc-50 overflow-y-auto">
+        <div class="max-w-xl mx-auto p-4 min-h-full flex flex-col">
+            <div class="flex items-center justify-between mb-4 pt-2">
+                <h2 class="text-2xl font-black flex items-center gap-2"><i data-lucide="wrench" class="w-6 h-6"></i> Mantenimiento de la casa</h2>
+                <button onclick="closeCasa()" class="text-gray-400 p-1" aria-label="Salir"><i data-lucide="x" class="w-7 h-7"></i></button>
+            </div>
+            <div class="flex gap-2 mb-3">
+                <input id="casa-input" type="text" placeholder="Agregar tarea… (ej. arreglar canilla)" onkeydown="if(event.key==='Enter')casaAdd()" class="flex-1 min-w-0 bg-white rounded-2xl px-4 py-3 text-lg outline-none card-shadow border border-gray-100">
+                <button onclick="casaAdd()" aria-label="Agregar" class="bg-amber-500 text-white w-14 rounded-2xl flex items-center justify-center shrink-0"><i data-lucide="plus" class="w-7 h-7"></i></button>
+            </div>
+            <div id="casa-list" class="space-y-2 flex-1"></div>
+            <button id="casa-clear" onclick="casaClearDone()" class="hidden mt-4 mb-2 w-full bg-gray-100 text-gray-600 font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="trash-2" class="w-5 h-5"></i> Borrar las hechas</button>
+        </div>
+    </div>
+
+    <!-- VEHÍCULOS (autos: service, cambios y comprobantes) -->
+    <div id="autos-modal" class="hidden fixed inset-0 z-[60] bg-zinc-50 overflow-y-auto">
+        <div class="max-w-xl mx-auto p-4 min-h-full flex flex-col">
+            <div class="flex items-center justify-between mb-4 pt-2">
+                <h2 class="text-2xl font-black flex items-center gap-2"><i data-lucide="car" class="w-6 h-6"></i> Vehículos</h2>
+                <button onclick="closeAutos()" class="text-gray-400 p-1" aria-label="Salir"><i data-lucide="x" class="w-7 h-7"></i></button>
+            </div>
+            <div id="autos-body" class="flex-1"></div>
+            <input id="autos-file" type="file" accept="image/*,application/pdf" class="hidden" onchange="autoCompFile(this.files[0])">
+        </div>
+    </div>
+
+    <!-- EMPLEADAS DOMÉSTICAS (fichas y registro de pagos) -->
+    <div id="empleadas-modal" class="hidden fixed inset-0 z-[60] bg-zinc-50 overflow-y-auto">
+        <div class="max-w-xl mx-auto p-4 min-h-full flex flex-col">
+            <div class="flex items-center justify-between mb-4 pt-2">
+                <h2 class="text-2xl font-black flex items-center gap-2"><i data-lucide="users" class="w-6 h-6"></i> Empleadas domésticas</h2>
+                <button onclick="closeEmpleadas()" class="text-gray-400 p-1" aria-label="Salir"><i data-lucide="x" class="w-7 h-7"></i></button>
+            </div>
+            <div id="empleadas-body" class="flex-1"></div>
         </div>
     </div>
 
@@ -1349,6 +1395,433 @@
         }
         // ================= fin lista de compras =================
 
+        // Helpers compartidos por las secciones nuevas (casa / autos / empleadas).
+        function gv(id) { const e = document.getElementById(id); return e ? e.value : ''; }
+        function fmtFecha(s) { if (!s) return ''; const p = String(s).split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : s; }
+        function fileToDataURL(file) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); }); }
+        function dataUrlToBlobUrl(dataUrl, mime) { const bytes = b64dec(dataUrl.split(',')[1]); return URL.createObjectURL(new Blob([bytes], { type: mime || 'application/octet-stream' })); }
+        const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+        // ================= MANTENIMIENTO DE LA CASA (tareas, compartida y en vivo) =================
+        let casaItems = [];
+        let casaUnsub = null;
+        const CASA_DOC = 'mantenimiento'; // doc en la colección 'config' (no toca reglas)
+        function openCasa() {
+            document.getElementById('casa-modal').classList.remove('hidden');
+            if (!casaUnsub) {
+                casaUnsub = db.collection('config').doc(CASA_DOC).onSnapshot(d => {
+                    casaItems = (d.exists && Array.isArray(d.data().items)) ? d.data().items : [];
+                    renderCasa();
+                }, () => { renderCasa(); });
+            }
+            renderCasa();
+            lucide.createIcons();
+            setTimeout(() => { const el = document.getElementById('casa-input'); if (el) el.focus(); }, 60);
+        }
+        function closeCasa() { document.getElementById('casa-modal').classList.add('hidden'); }
+        function casaSave() { return db.collection('config').doc(CASA_DOC).set({ items: casaItems }, { merge: true }).catch(() => {}); }
+        function casaAdd() {
+            const inp = document.getElementById('casa-input');
+            const t = (inp.value || '').trim();
+            if (!t) return;
+            casaItems.push({ id: newId(), t, done: false });
+            inp.value = '';
+            renderCasa();
+            casaSave();
+        }
+        function casaToggle(id) { const it = casaItems.find(x => x.id === id); if (!it) return; it.done = !it.done; renderCasa(); casaSave(); }
+        function casaEdit(id) {
+            const it = casaItems.find(x => x.id === id); if (!it) return;
+            const t = prompt('Modificar tarea:', it.t);
+            if (t == null) return;
+            const v = t.trim(); if (!v) return;
+            it.t = v; renderCasa(); casaSave();
+        }
+        function casaDelete(id) { casaItems = casaItems.filter(x => x.id !== id); renderCasa(); casaSave(); }
+        function casaClearDone() { casaItems = casaItems.filter(x => !x.done); renderCasa(); casaSave(); }
+        function renderCasa() {
+            const box = document.getElementById('casa-list'); if (!box) return;
+            const orden = casaItems.slice().sort((a, b) => (a.done === b.done) ? 0 : (a.done ? 1 : -1)); // pendientes arriba
+            if (!orden.length) {
+                box.innerHTML = '<p class="text-gray-400 text-center py-10 text-lg">No hay tareas pendientes.<br>Agregá lo que haya que arreglar. 🔧</p>';
+            } else {
+                box.innerHTML = orden.map(it => `
+                    <div class="bg-white rounded-2xl card-shadow border border-gray-100 px-4 py-3 flex items-center gap-3">
+                        <button onclick="casaToggle('${it.id}')" aria-label="Marcar" class="w-8 h-8 rounded-full border-2 shrink-0 flex items-center justify-center ${it.done ? 'bg-amber-500 border-amber-500' : 'border-gray-300'}">${it.done ? '<i data-lucide="check" class="w-5 h-5 text-white"></i>' : ''}</button>
+                        <span class="flex-1 text-lg break-words ${it.done ? 'line-through text-gray-400' : 'text-gray-800 font-semibold'}">${escapeHtml(it.t)}</span>
+                        <button onclick="casaEdit('${it.id}')" aria-label="Modificar" class="text-gray-300 p-1 shrink-0"><i data-lucide="pencil" class="w-5 h-5"></i></button>
+                        <button onclick="casaDelete('${it.id}')" aria-label="Borrar" class="text-gray-300 p-1 shrink-0"><i data-lucide="x" class="w-5 h-5"></i></button>
+                    </div>`).join('');
+            }
+            const clear = document.getElementById('casa-clear');
+            if (clear) clear.classList.toggle('hidden', !casaItems.some(x => x.done));
+            lucide.createIcons();
+        }
+        // ================= fin mantenimiento de la casa =================
+
+        // ================= VEHÍCULOS (autos: service, cambios y comprobantes) =================
+        // Metadatos de los autos en config/vehiculos (autos[]). Cada registro de service/cambio
+        // es un doc auto-id en 'config' con vkind:'service' y el comprobante (base64) adentro.
+        let autosData = { autos: [] };
+        let autoCurrentId = null;       // auto que se está viendo
+        let autoServices = [];          // registros del auto actual
+        let autoCompPending = null;     // comprobante cargado en el form { dataUrl, mime, name }
+        let autoEditingService = null;  // id del registro que se edita (o null)
+        const AUTOS_DOC = 'vehiculos';
+        function autoBody(html) { document.getElementById('autos-body').innerHTML = html; lucide.createIcons(); }
+        function autosSaveMeta() { return db.collection('config').doc(AUTOS_DOC).set({ autos: autosData.autos }, { merge: true }).catch(() => {}); }
+        async function openAutos() {
+            document.getElementById('autos-modal').classList.remove('hidden');
+            autoBody('<p class="text-gray-400 p-4">Cargando…</p>');
+            try {
+                const d = await db.collection('config').doc(AUTOS_DOC).get();
+                autosData = (d.exists && Array.isArray(d.data().autos)) ? { autos: d.data().autos } : { autos: [] };
+            } catch (e) { autosData = { autos: [] }; }
+            renderAutosList();
+        }
+        function closeAutos() { document.getElementById('autos-modal').classList.add('hidden'); }
+        function renderAutosList() {
+            autoCurrentId = null;
+            const cards = autosData.autos.map(a => `
+                <div class="bg-white rounded-2xl card-shadow p-4 flex items-center gap-3 cursor-pointer active:opacity-70 mb-2" onclick="openCarDetail('${a.id}')">
+                    <i data-lucide="car" class="w-6 h-6 text-slate-500 shrink-0"></i>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-black truncate">${escapeHtml(a.nombre || 'Auto')}</p>
+                        <p class="text-sm text-gray-400 truncate">${escapeHtml([a.marca, a.modelo, a.anio].filter(Boolean).join(' '))}${a.patente ? ' · ' + escapeHtml(a.patente) : ''}</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-gray-300 shrink-0"></i>
+                </div>`).join('');
+            autoBody(`
+                <button onclick="carForm()" class="w-full mb-4 bg-slate-700 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="plus" class="w-5 h-5"></i> Agregar auto</button>
+                ${autosData.autos.length ? cards : '<p class="text-gray-400 text-center py-10">Todavía no cargaste ningún auto.</p>'}`);
+        }
+        function carForm(id) {
+            const a = (id ? autosData.autos.find(x => x.id === id) : {}) || {};
+            const inp = 'w-full bg-gray-100 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-slate-500';
+            autoBody(`
+                <button onclick="renderAutosList()" class="text-gray-500 font-bold mb-3 flex items-center gap-1"><i data-lucide="chevron-left" class="w-5 h-5"></i> Volver</button>
+                <div class="bg-white rounded-2xl card-shadow p-5 space-y-3">
+                    <input id="car-nombre" placeholder="Nombre (ej. Auto de José)" value="${a.nombre ? escapeHtml(a.nombre) : ''}" class="${inp}">
+                    <div class="grid grid-cols-2 gap-3">
+                        <input id="car-marca" placeholder="Marca" value="${a.marca ? escapeHtml(a.marca) : ''}" class="${inp}">
+                        <input id="car-modelo" placeholder="Modelo" value="${a.modelo ? escapeHtml(a.modelo) : ''}" class="${inp}">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <input id="car-anio" inputmode="numeric" placeholder="Año" value="${a.anio ? escapeHtml(a.anio) : ''}" class="${inp}">
+                        <input id="car-patente" placeholder="Patente" value="${a.patente ? escapeHtml(a.patente) : ''}" class="${inp}">
+                    </div>
+                    <button onclick="carSave('${id || ''}')" class="w-full bg-slate-700 text-white font-bold py-3 rounded-2xl">Guardar</button>
+                </div>`);
+        }
+        async function carSave(id) {
+            const nombre = gv('car-nombre').trim();
+            if (!nombre) { alert('Poné un nombre para el auto.'); return; }
+            const obj = { id: id || newId(), nombre, marca: gv('car-marca').trim(), modelo: gv('car-modelo').trim(), anio: gv('car-anio').trim(), patente: gv('car-patente').trim() };
+            if (id) { const i = autosData.autos.findIndex(x => x.id === id); if (i >= 0) autosData.autos[i] = obj; else autosData.autos.push(obj); }
+            else autosData.autos.push(obj);
+            await autosSaveMeta();
+            if (id) openCarDetail(id); else renderAutosList();
+        }
+        async function carDelete(id) {
+            if (!confirm('¿Borrar este auto y todos sus registros? No se puede deshacer.')) return;
+            try { const snap = await db.collection('config').where('autoId', '==', id).get(); await Promise.all(snap.docs.map(d => d.ref.delete())); } catch (e) { }
+            autosData.autos = autosData.autos.filter(x => x.id !== id);
+            await autosSaveMeta();
+            renderAutosList();
+        }
+        async function openCarDetail(id) {
+            autoCurrentId = id;
+            autoBody('<p class="text-gray-400 p-4">Cargando…</p>');
+            try {
+                const snap = await db.collection('config').where('autoId', '==', id).get();
+                autoServices = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.fecha || '').localeCompare(a.fecha || '') || (b.createdAt || 0) - (a.createdAt || 0));
+            } catch (e) { autoServices = []; }
+            renderCarDetail();
+        }
+        function renderCarDetail() {
+            const a = autosData.autos.find(x => x.id === autoCurrentId);
+            if (!a) { renderAutosList(); return; }
+            const rows = autoServices.map(s => `
+                <div class="bg-white rounded-2xl card-shadow p-4 cursor-pointer active:opacity-70" onclick="serviceView('${s.id}')">
+                    <div class="flex items-center gap-2">
+                        <span class="flex-1 font-bold truncate">${escapeHtml(s.tipo || 'Registro')}</span>
+                        ${s.comp ? '<i data-lucide="paperclip" class="w-4 h-4 text-gray-400 shrink-0"></i>' : ''}
+                        <span class="text-sm text-gray-400 shrink-0">${fmtFecha(s.fecha)}</span>
+                    </div>
+                    ${(s.km || s.costo) ? `<p class="text-sm text-gray-500 mt-1">${[s.km ? escapeHtml(s.km) + ' km' : '', s.costo ? '$' + escapeHtml(s.costo) : ''].filter(Boolean).join(' · ')}</p>` : ''}
+                </div>`).join('');
+            autoBody(`
+                <button onclick="renderAutosList()" class="text-gray-500 font-bold mb-3 flex items-center gap-1"><i data-lucide="chevron-left" class="w-5 h-5"></i> Volver</button>
+                <div class="bg-white rounded-2xl card-shadow p-5 mb-4">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="min-w-0">
+                            <h3 class="text-xl font-black truncate">${escapeHtml(a.nombre)}</h3>
+                            <p class="text-sm text-gray-400">${escapeHtml([a.marca, a.modelo, a.anio].filter(Boolean).join(' '))}${a.patente ? ' · ' + escapeHtml(a.patente) : ''}</p>
+                        </div>
+                        <div class="flex gap-1 shrink-0">
+                            <button onclick="carForm('${a.id}')" class="text-gray-400 p-1" aria-label="Editar"><i data-lucide="pencil" class="w-5 h-5"></i></button>
+                            <button onclick="carDelete('${a.id}')" class="text-red-400 p-1" aria-label="Borrar"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="serviceForm()" class="w-full mb-4 bg-slate-700 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="plus" class="w-5 h-5"></i> Agregar service / cambio</button>
+                <div class="space-y-2">${autoServices.length ? rows : '<p class="text-gray-400 text-center py-8">Sin registros todavía.</p>'}</div>`);
+        }
+        function serviceForm(id) {
+            autoEditingService = id || null;
+            const s = (id ? autoServices.find(x => x.id === id) : {}) || {};
+            autoCompPending = (id && s.comp) ? { dataUrl: s.comp, mime: s.compMime, name: s.compName || 'comprobante' } : null;
+            const inp = 'w-full bg-gray-100 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-slate-500';
+            const lbl = 'block text-xs font-black uppercase text-gray-400 mb-1';
+            autoBody(`
+                <button onclick="renderCarDetail()" class="text-gray-500 font-bold mb-3 flex items-center gap-1"><i data-lucide="chevron-left" class="w-5 h-5"></i> Volver</button>
+                <div class="bg-white rounded-2xl card-shadow p-5 space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="${lbl}">Fecha</label><input id="sv-fecha" type="date" value="${s.fecha || ''}" class="${inp}"></div>
+                        <div><label class="${lbl}">Km</label><input id="sv-km" inputmode="numeric" value="${s.km ? escapeHtml(s.km) : ''}" class="${inp}"></div>
+                    </div>
+                    <div><label class="${lbl}">Tipo</label>
+                        <input id="sv-tipo" list="sv-tipos" placeholder="Service, filtro, frenos…" value="${s.tipo ? escapeHtml(s.tipo) : ''}" class="${inp}">
+                        <datalist id="sv-tipos"><option value="Service general"><option value="Cambio de aceite"><option value="Cambio de filtro"><option value="Frenos"><option value="Neumáticos"><option value="Batería"><option value="Correa de distribución"><option value="VTV"><option value="Seguro"><option value="Patente"></datalist>
+                    </div>
+                    <div><label class="${lbl}">Detalle</label><textarea id="sv-detalle" rows="2" placeholder="Qué se hizo, dónde…" class="${inp}">${s.detalle ? escapeHtml(s.detalle) : ''}</textarea></div>
+                    <div><label class="${lbl}">Costo ($)</label><input id="sv-costo" inputmode="numeric" value="${s.costo ? escapeHtml(s.costo) : ''}" class="${inp}"></div>
+                    <div>
+                        <button onclick="document.getElementById('autos-file').click()" class="w-full bg-slate-100 text-slate-700 font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="upload" class="w-5 h-5"></i> Subir comprobante (foto o PDF)</button>
+                        <div id="sv-comp" class="mt-2"></div>
+                    </div>
+                    <button onclick="serviceSave()" class="w-full bg-slate-700 text-white font-bold py-3 rounded-2xl">Guardar</button>
+                </div>`);
+            renderCompPending();
+        }
+        function renderCompPending() {
+            const box = document.getElementById('sv-comp'); if (!box) return;
+            if (!autoCompPending) { box.innerHTML = ''; return; }
+            const isImg = (autoCompPending.mime || '').startsWith('image/');
+            box.innerHTML = `<div class="flex items-center gap-2 bg-gray-50 rounded-xl p-2 border border-gray-100">
+                ${isImg ? `<img src="${autoCompPending.dataUrl}" class="w-12 h-12 object-cover rounded-lg shrink-0">` : '<i data-lucide="file-text" class="w-8 h-8 text-gray-400 shrink-0"></i>'}
+                <span class="flex-1 text-sm truncate">${escapeHtml(autoCompPending.name || 'comprobante')}</span>
+                <button onclick="autoCompRemove()" class="text-red-400 p-1 shrink-0" aria-label="Quitar"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>`;
+            lucide.createIcons();
+        }
+        function autoCompRemove() { autoCompPending = null; const f = document.getElementById('autos-file'); if (f) f.value = ''; renderCompPending(); }
+        async function autoCompFile(file) {
+            if (!file) return;
+            try {
+                let dataUrl, mime = file.type || 'application/octet-stream', name = file.name || 'comprobante';
+                if (mime.startsWith('image/')) {
+                    let q = 0.7, bytes;
+                    do { dataUrl = await compressImageFile(file, 1600, q); bytes = b64dec(dataUrl.split(',')[1]); q -= 0.15; } while (bytes.length > 700 * 1024 && q > 0.2);
+                    mime = 'image/jpeg';
+                } else {
+                    if (file.size > 700 * 1024) { alert('El comprobante es muy grande (máx ~700 KB). Probá con un PDF más liviano o una foto.'); return; }
+                    dataUrl = await fileToDataURL(file);
+                }
+                autoCompPending = { dataUrl, mime, name };
+                renderCompPending();
+            } catch (e) { alert('No se pudo cargar el comprobante.'); }
+        }
+        async function serviceSave() {
+            const tipo = gv('sv-tipo').trim();
+            const fecha = gv('sv-fecha');
+            if (!tipo && !fecha) { alert('Poné al menos el tipo o la fecha del registro.'); return; }
+            const data = {
+                vkind: 'service', autoId: autoCurrentId, fecha, tipo,
+                km: gv('sv-km').trim(), detalle: gv('sv-detalle').trim(), costo: gv('sv-costo').trim(),
+                comp: autoCompPending ? autoCompPending.dataUrl : null,
+                compMime: autoCompPending ? autoCompPending.mime : null,
+                compName: autoCompPending ? autoCompPending.name : null
+            };
+            try {
+                if (autoEditingService) {
+                    data.createdAt = (autoServices.find(x => x.id === autoEditingService) || {}).createdAt || Date.now();
+                    await db.collection('config').doc(autoEditingService).set(data);
+                } else {
+                    data.createdAt = Date.now();
+                    await db.collection('config').add(data);
+                }
+            } catch (e) { alert('No se pudo guardar el registro.'); return; }
+            openCarDetail(autoCurrentId);
+        }
+        function serviceView(id) {
+            const s = autoServices.find(x => x.id === id);
+            if (!s) { renderCarDetail(); return; }
+            let comp = '';
+            if (s.comp) {
+                if ((s.compMime || '').startsWith('image/')) comp = `<img src="${s.comp}" alt="comprobante" class="w-full rounded-xl mt-4">`;
+                else { const url = dataUrlToBlobUrl(s.comp, s.compMime); comp = `<a href="${url}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 font-bold px-4 py-3 rounded-xl mt-4"><i data-lucide="external-link" class="w-5 h-5"></i> Abrir ${escapeHtml(s.compName || 'comprobante')}</a>`; }
+            }
+            const meta = [fmtFecha(s.fecha), s.km ? s.km + ' km' : '', s.costo ? '$' + s.costo : ''].filter(Boolean).join(' · ');
+            autoBody(`
+                <button onclick="renderCarDetail()" class="text-gray-500 font-bold mb-3 flex items-center gap-1"><i data-lucide="chevron-left" class="w-5 h-5"></i> Volver</button>
+                <div class="bg-white rounded-2xl card-shadow p-5">
+                    <div class="flex items-start justify-between gap-2 mb-1">
+                        <h3 class="text-xl font-black">${escapeHtml(s.tipo || 'Registro')}</h3>
+                        <div class="flex gap-1 shrink-0">
+                            <button onclick="serviceForm('${s.id}')" class="text-gray-400 p-1" aria-label="Editar"><i data-lucide="pencil" class="w-5 h-5"></i></button>
+                            <button onclick="serviceDelete('${s.id}')" class="text-red-400 p-1" aria-label="Borrar"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                        </div>
+                    </div>
+                    ${meta ? `<p class="text-sm text-gray-500">${escapeHtml(meta)}</p>` : ''}
+                    ${s.detalle ? `<p class="mt-3 whitespace-pre-wrap break-words text-gray-800">${escapeHtml(s.detalle)}</p>` : ''}
+                    ${comp}
+                </div>`);
+        }
+        async function serviceDelete(id) {
+            if (!confirm('¿Borrar este registro? No se puede deshacer.')) return;
+            try { await db.collection('config').doc(id).delete(); } catch (e) { }
+            openCarDetail(autoCurrentId);
+        }
+        // ================= fin vehículos =================
+
+        // ================= EMPLEADAS DOMÉSTICAS (fichas y registro de pagos) =================
+        // Todo en config/empleadas (empleadas[]), cada una con sus pagos[] adentro (solo texto).
+        let empData = { empleadas: [] };
+        let empCurrentId = null;
+        const EMP_DOC = 'empleadas';
+        function empBody(html) { document.getElementById('empleadas-body').innerHTML = html; lucide.createIcons(); }
+        function empSaveMeta() { return db.collection('config').doc(EMP_DOC).set({ empleadas: empData.empleadas }, { merge: true }).catch(() => {}); }
+        async function openEmpleadas() {
+            document.getElementById('empleadas-modal').classList.remove('hidden');
+            empBody('<p class="text-gray-400 p-4">Cargando…</p>');
+            try {
+                const d = await db.collection('config').doc(EMP_DOC).get();
+                empData = (d.exists && Array.isArray(d.data().empleadas)) ? { empleadas: d.data().empleadas } : { empleadas: [] };
+            } catch (e) { empData = { empleadas: [] }; }
+            renderEmpList();
+        }
+        function closeEmpleadas() { document.getElementById('empleadas-modal').classList.add('hidden'); }
+        function renderEmpList() {
+            empCurrentId = null;
+            const cards = empData.empleadas.map(e => `
+                <div class="bg-white rounded-2xl card-shadow p-4 flex items-center gap-3 cursor-pointer active:opacity-70 mb-2" onclick="empDetail('${e.id}')">
+                    <i data-lucide="user" class="w-6 h-6 text-violet-500 shrink-0"></i>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-black truncate">${escapeHtml(e.nombre || 'Sin nombre')}</p>
+                        <p class="text-sm text-gray-400 truncate">${escapeHtml([e.tarea, e.dias].filter(Boolean).join(' · '))}</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-gray-300 shrink-0"></i>
+                </div>`).join('');
+            empBody(`
+                <button onclick="empForm()" class="w-full mb-4 bg-violet-600 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="plus" class="w-5 h-5"></i> Agregar empleada</button>
+                ${empData.empleadas.length ? cards : '<p class="text-gray-400 text-center py-10">Todavía no cargaste a nadie.</p>'}`);
+        }
+        function empForm(id) {
+            const e = (id ? empData.empleadas.find(x => x.id === id) : {}) || {};
+            const inp = 'w-full bg-gray-100 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-violet-500';
+            const lbl = 'block text-xs font-black uppercase text-gray-400 mb-1';
+            empBody(`
+                <button onclick="${id ? `empDetail('${id}')` : 'renderEmpList()'}" class="text-gray-500 font-bold mb-3 flex items-center gap-1"><i data-lucide="chevron-left" class="w-5 h-5"></i> Volver</button>
+                <div class="bg-white rounded-2xl card-shadow p-5 space-y-3">
+                    <div><label class="${lbl}">Nombre</label><input id="emp-nombre" value="${e.nombre ? escapeHtml(e.nombre) : ''}" class="${inp}"></div>
+                    <div><label class="${lbl}">Tarea / rol</label><input id="emp-tarea" placeholder="Limpieza, niñera, jardín…" value="${e.tarea ? escapeHtml(e.tarea) : ''}" class="${inp}"></div>
+                    <div><label class="${lbl}">Teléfono</label><input id="emp-telefono" inputmode="tel" value="${e.telefono ? escapeHtml(e.telefono) : ''}" class="${inp}"></div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="${lbl}">Días</label><input id="emp-dias" placeholder="Lun y Jue" value="${e.dias ? escapeHtml(e.dias) : ''}" class="${inp}"></div>
+                        <div><label class="${lbl}">Horario</label><input id="emp-horario" placeholder="9 a 13" value="${e.horario ? escapeHtml(e.horario) : ''}" class="${inp}"></div>
+                    </div>
+                    <div><label class="${lbl}">Sueldo</label><input id="emp-sueldo" placeholder="Por hora / por mes" value="${e.sueldo ? escapeHtml(e.sueldo) : ''}" class="${inp}"></div>
+                    <div><label class="${lbl}">Notas</label><textarea id="emp-notas" rows="2" class="${inp}">${e.notas ? escapeHtml(e.notas) : ''}</textarea></div>
+                    <button onclick="empSave('${id || ''}')" class="w-full bg-violet-600 text-white font-bold py-3 rounded-2xl">Guardar</button>
+                </div>`);
+        }
+        async function empSave(id) {
+            const nombre = gv('emp-nombre').trim();
+            if (!nombre) { alert('Poné un nombre.'); return; }
+            const base = id ? (empData.empleadas.find(x => x.id === id) || {}) : {};
+            const obj = {
+                id: id || newId(), nombre,
+                tarea: gv('emp-tarea').trim(), telefono: gv('emp-telefono').trim(),
+                dias: gv('emp-dias').trim(), horario: gv('emp-horario').trim(),
+                sueldo: gv('emp-sueldo').trim(), notas: gv('emp-notas').trim(),
+                pagos: Array.isArray(base.pagos) ? base.pagos : []
+            };
+            if (id) { const i = empData.empleadas.findIndex(x => x.id === id); if (i >= 0) empData.empleadas[i] = obj; else empData.empleadas.push(obj); }
+            else empData.empleadas.push(obj);
+            await empSaveMeta();
+            empCurrentId = obj.id;
+            empDetail(obj.id);
+        }
+        async function empDelete(id) {
+            if (!confirm('¿Borrar esta ficha y sus pagos? No se puede deshacer.')) return;
+            empData.empleadas = empData.empleadas.filter(x => x.id !== id);
+            await empSaveMeta();
+            renderEmpList();
+        }
+        function empDetail(id) {
+            empCurrentId = id;
+            const e = empData.empleadas.find(x => x.id === id);
+            if (!e) { renderEmpList(); return; }
+            const pagos = (Array.isArray(e.pagos) ? e.pagos : []).slice().sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
+            const info = (label, val, extra = '') => val ? `<div class="flex justify-between gap-3 py-1"><span class="text-gray-400">${label}</span><span class="font-semibold text-right">${val}${extra}</span></div>` : '';
+            const tel = e.telefono ? e.telefono.replace(/[^\d+]/g, '') : '';
+            const pagosRows = pagos.map(p => `
+                <div class="bg-white rounded-2xl card-shadow p-3 flex items-center gap-3">
+                    <div class="flex-1 min-w-0">
+                        <p class="font-bold">$${escapeHtml(p.monto || '')}${p.nota ? ` <span class="font-normal text-gray-400">· ${escapeHtml(p.nota)}</span>` : ''}</p>
+                        <p class="text-sm text-gray-400">${fmtFecha(p.fecha)}</p>
+                    </div>
+                    <button onclick="pagoDelete('${p.id}')" class="text-gray-300 p-1 shrink-0" aria-label="Borrar pago"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>`).join('');
+            empBody(`
+                <button onclick="renderEmpList()" class="text-gray-500 font-bold mb-3 flex items-center gap-1"><i data-lucide="chevron-left" class="w-5 h-5"></i> Volver</button>
+                <div class="bg-white rounded-2xl card-shadow p-5 mb-4">
+                    <div class="flex items-start justify-between gap-2 mb-2">
+                        <h3 class="text-xl font-black truncate">${escapeHtml(e.nombre)}</h3>
+                        <div class="flex gap-1 shrink-0">
+                            <button onclick="empForm('${e.id}')" class="text-gray-400 p-1" aria-label="Editar"><i data-lucide="pencil" class="w-5 h-5"></i></button>
+                            <button onclick="empDelete('${e.id}')" class="text-red-400 p-1" aria-label="Borrar"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                        </div>
+                    </div>
+                    <div class="text-sm">
+                        ${info('Tarea', escapeHtml(e.tarea || ''))}
+                        ${info('Días', escapeHtml(e.dias || ''))}
+                        ${info('Horario', escapeHtml(e.horario || ''))}
+                        ${info('Sueldo', escapeHtml(e.sueldo || ''))}
+                        ${info('Teléfono', escapeHtml(e.telefono || ''))}
+                    </div>
+                    ${e.notas ? `<p class="mt-2 whitespace-pre-wrap break-words text-gray-700 text-sm">${escapeHtml(e.notas)}</p>` : ''}
+                    ${tel ? `<div class="flex gap-2 mt-4">
+                        <a href="tel:${tel}" class="flex-1 bg-gray-100 text-gray-700 font-bold py-2.5 rounded-xl flex items-center justify-center gap-2"><i data-lucide="phone" class="w-5 h-5"></i> Llamar</a>
+                        <a href="https://wa.me/${tel.replace('+', '')}" target="_blank" rel="noopener" class="flex-1 bg-emerald-50 text-emerald-700 font-bold py-2.5 rounded-xl flex items-center justify-center gap-2"><i data-lucide="message-circle" class="w-5 h-5"></i> WhatsApp</a>
+                    </div>` : ''}
+                </div>
+                <button onclick="pagoForm()" class="w-full mb-4 bg-violet-600 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2"><i data-lucide="plus" class="w-5 h-5"></i> Registrar pago</button>
+                <div class="space-y-2">${pagos.length ? pagosRows : '<p class="text-gray-400 text-center py-6">Sin pagos registrados.</p>'}</div>`);
+        }
+        function pagoForm() {
+            const inp = 'w-full bg-gray-100 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-violet-500';
+            const lbl = 'block text-xs font-black uppercase text-gray-400 mb-1';
+            empBody(`
+                <button onclick="empDetail('${empCurrentId}')" class="text-gray-500 font-bold mb-3 flex items-center gap-1"><i data-lucide="chevron-left" class="w-5 h-5"></i> Volver</button>
+                <div class="bg-white rounded-2xl card-shadow p-5 space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="${lbl}">Fecha</label><input id="pago-fecha" type="date" value="${todayStr()}" class="${inp}"></div>
+                        <div><label class="${lbl}">Monto ($)</label><input id="pago-monto" inputmode="numeric" class="${inp}"></div>
+                    </div>
+                    <div><label class="${lbl}">Nota</label><input id="pago-nota" placeholder="Quincena, extra…" class="${inp}"></div>
+                    <button onclick="pagoSave()" class="w-full bg-violet-600 text-white font-bold py-3 rounded-2xl">Guardar pago</button>
+                </div>`);
+        }
+        async function pagoSave() {
+            const e = empData.empleadas.find(x => x.id === empCurrentId); if (!e) { renderEmpList(); return; }
+            const monto = gv('pago-monto').trim();
+            if (!monto) { alert('Poné el monto.'); return; }
+            if (!Array.isArray(e.pagos)) e.pagos = [];
+            e.pagos.push({ id: newId(), fecha: gv('pago-fecha'), monto, nota: gv('pago-nota').trim() });
+            await empSaveMeta();
+            empDetail(empCurrentId);
+        }
+        async function pagoDelete(pid) {
+            const e = empData.empleadas.find(x => x.id === empCurrentId); if (!e) return;
+            if (!confirm('¿Borrar este pago?')) return;
+            e.pagos = (e.pagos || []).filter(p => p.id !== pid);
+            await empSaveMeta();
+            empDetail(empCurrentId);
+        }
+        // ================= fin empleadas domésticas =================
+
         function openEventDetail(id) {
             const e = currentEvents.find(x => x.id === id);
             if (!e) return;
@@ -1971,6 +2444,9 @@
                 !document.getElementById('photo-modal').classList.contains('hidden') ||
                 !document.getElementById('vault-modal').classList.contains('hidden') ||
                 !document.getElementById('shop-modal').classList.contains('hidden') ||
+                !document.getElementById('casa-modal').classList.contains('hidden') ||
+                !document.getElementById('autos-modal').classList.contains('hidden') ||
+                !document.getElementById('empleadas-modal').classList.contains('hidden') ||
                 !document.getElementById('cal-modal').classList.contains('hidden');
             el.addEventListener('touchstart', e => {
                 if (e.touches.length !== 1) { x0 = null; return; }
